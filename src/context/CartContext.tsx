@@ -1,0 +1,134 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+
+export type CartItem = {
+  product_id: string;
+  name: string;
+  price: number;
+  note: string;
+  image_url: string;
+  qty: number;
+};
+
+type CartCtx = {
+  branchId: string | null;
+  branchName: string | null;
+  items: CartItem[];
+  // تغيير الفرع يمسح العربة (زي ما المطلوب)
+  setBranch: (id: string, name: string) => void;
+  add: (item: Omit<CartItem, "qty">) => void;
+  inc: (productId: string) => void;
+  dec: (productId: string) => void;
+  remove: (productId: string) => void;
+  clear: () => void;
+  subtotal: number;
+  count: number;
+};
+
+const C = createContext<CartCtx | null>(null);
+const KEY = "lalas_cart_v1";
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [branchId, setBranchId] = useState<string | null>(null);
+  const [branchName, setBranchName] = useState<string | null>(null);
+  const [items, setItems] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as { branchId: string; branchName: string; items: CartItem[] };
+        setBranchId(d.branchId || null);
+        setBranchName(d.branchName || null);
+        setItems(Array.isArray(d.items) ? d.items : []);
+      }
+    } catch {
+      /* service worker غير مهم */
+    }
+  }, []);
+
+  const persist = (next: { branchId: string | null; branchName: string | null; items: CartItem[] }) => {
+    try {
+      sessionStorage.setItem(KEY, JSON.stringify(next));
+    } catch {
+      /* تجاهل */
+    }
+  };
+
+  const setBranch = useCallback((id: string, name: string) => {
+    const next = { branchId: id, branchName: name, items: [] };
+    setBranchId(id);
+    setBranchName(name);
+    setItems([]);
+    persist(next);
+  }, []);
+
+  const add = useCallback((item: Omit<CartItem, "qty">) => {
+    setItems((prev) => {
+      const found = prev.find((i) => i.product_id === item.product_id);
+      const next = found
+        ? prev.map((i) => (i.product_id === item.product_id ? { ...i, qty: Math.min(30, i.qty + 1) } : i))
+        : [...prev, { ...item, qty: 1 }];
+      persist({ branchId, branchName, items: next });
+      return next;
+    });
+  }, [branchId, branchName]);
+
+  const changeQty = useCallback(
+    (productId: string, delta: number) => {
+      setItems((prev) => {
+        const next = prev
+          .map((i) =>
+            i.product_id === productId ? { ...i, qty: Math.max(0, Math.min(30, i.qty + delta)) } : i
+          )
+          .filter((i) => i.qty > 0);
+        persist({ branchId, branchName, items: next });
+        return next;
+      });
+    },
+    [branchId, branchName]
+  );
+
+  const remove = useCallback(
+    (productId: string) => {
+      setItems((prev) => {
+        const next = prev.filter((i) => i.product_id !== productId);
+        persist({ branchId, branchName, items: next });
+        return next;
+      });
+    },
+    [branchId, branchName]
+  );
+
+  const clear = useCallback(() => {
+    const next = { branchId: null, branchName: null, items: [] };
+    setBranchId(null);
+    setBranchName(null);
+    setItems([]);
+    persist(next);
+  }, []);
+
+  const subtotal = useMemo(() => items.reduce((s, i) => s + i.price * i.qty, 0), [items]);
+  const count = useMemo(() => items.reduce((s, i) => s + i.qty, 0), [items]);
+
+  return (
+    <C.Provider
+      value={{ branchId, branchName, items, setBranch, add, inc: (p) => changeQty(p, 1), dec: (p) => changeQty(p, -1), remove, clear, subtotal, count }}
+    >
+      {children}
+    </C.Provider>
+  );
+}
+
+export function useCart() {
+  const ctx = useContext(C);
+  if (!ctx) throw new Error("CartProvider ناقص");
+  return ctx;
+}

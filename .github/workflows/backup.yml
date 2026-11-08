@@ -1,0 +1,46 @@
+# Weekly encrypted-at-rest database backup (pg_dump) stored as a PRIVATE artifact
+name: Supabase weekly backup
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # every Monday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgres client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Dump database
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }} # aws-1-<region>.pooler.supabase.com (runners have no IPv6, so the pooler URL is required)
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }} # postgres.<project-ref>
+        run: |
+          if [ -z "$SUPABASE_DB_PASSWORD" ] || [ -z "$SUPABASE_DB_HOST" ]; then
+            echo "::error::Set SUPABASE_DB_PASSWORD and SUPABASE_DB_HOST secrets"
+            exit 1
+          fi
+          mkdir -p backups
+          PGPASSWORD="$SUPABASE_DB_PASSWORD" pg_dump \
+            -h "$SUPABASE_DB_HOST" \
+            -U "${SUPABASE_DB_USER:-postgres}" \
+            -p 5432 \
+            -d postgres \
+            --no-owner --no-privileges \
+            -F c -f "backups/lalas-$(date -u +%Y%m%d-%H%M).dump"
+          ls -la backups/
+
+      - name: Upload artifact (private)
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backups/*.dump
+          retention-days: 30

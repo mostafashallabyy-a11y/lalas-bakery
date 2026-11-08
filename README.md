@@ -1,0 +1,138 @@
+# Lala's Bakery 💞 — موقع الطلبات الرسمي
+
+موقع فروع + منيو + طلبات + دفع انستا باي + تتبع مباشر + شاشات موظفين ومدير.
+مبني بـ **Vite + React + Tailwind** (RTL عربي أولًا، خط Cairo) و **Supabase** (Postgres + Auth + Realtime + Storage)، ويستضافه **Cloudflare Pages**.
+
+---
+
+## 🗂 هيكل المشروع
+
+```
+├── index.html                  صفحة الدخول (خط Cairo + RTL)
+├── src/
+│   ├── App.tsx                 كل الروابط
+│   ├── lib/                    اتصال Supabase + الأنواع + التنسيق + CSV
+│   ├── context/                عربة الشراء + جلسة الدخول
+│   ├── components/             مشترك (توست، نسخ، Turnstile، Banner أوفلاين)
+│   └── pages/                  الصفحات: الرئيسية، المنيو، العربة، الخلاص، الدفع، التتبع، آراء، شاشة الموظف، لوحة المدير
+├── supabase/
+│   ├── migrations/0001_init.sql    الجداول + التريجرات + Realtime + Storage
+│   ├── migrations/0002_security.sql RLS + الدوال RPC + التقارير
+│   └── seed.sql                 بيانات أولية: فرعين + منيو كامل
+├── .github/workflows/
+│   ├── ping.yml                تنبيه كل 3 أيام (يمنع إيقاف المشروع المجاني)
+│   └── backup.yml              نسخة احتياطية أسبوعية pg_dump
+├── public/_headers             ترويسات الأمان (CSP وغيرها)
+├── public/_redirects           توجيه SPA
+└── .env.example                قالب المتغيرات (بدون أسرار)
+```
+
+---
+
+## 🚀 خطوة بخطوة من الصفر (كل الخطوات مجانية)
+
+### 1) إنشاء مشروع Supabase
+1. ادخل <https://supabase.com> وسجل بحساب GitHub.
+2. **New project** → اختار اسم `lalas-bakery`، وجيب Password قوي (احفظه!)، اختار أقرب Region (Europe/Frankfurt رخيص وسريع لكل مصر).
+3. بعد دقيقة هيكون جاهز. من **Project Settings → API** خد:
+   - `Project URL`  ← ده `VITE_SUPABASE_URL`
+   - مفتاح `Publishable/Anon` (عام) ← ده `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - ⛔ **متاخدش مفتاح service_role ولا تحطه في أي ملف في المشروع ده**.
+4. من **Project Settings → Database** خد:
+   - `Connection string → URI` (Password اللي جبته) — ده للـ GitHub Actions فقط، وحطه كـ Secret مش في الملفات.
+
+### 2) تشغيل الجداول (Migrations)
+1. من الشريط الجانبي **SQL Editor** → **New query**.
+2. الصق محتوى `supabase/migrations/0001_init.sql` كله → **Run**.
+3. بعده `0002_security.sql` ثم `0003_grants.sql` ثم `0004_report_and_settings_fix.sql` → **Run** بالترتيب.
+4. بعده الصق `supabase/seed.sql` (بيجيب فرعين ومنيو كامل بصور عينات) → **Run**.
+5. تأكد: من **Table Editor** لازم تشوف `branches, categories, products, orders, order_items, order_events, order_status_public, feedback, profiles, settings, rate_log`.
+
+### 3) إقياد أسماء Auth بالأمان (مهم جدًا)
+1. من **Authentication → Settings** اقفل الـ **Allow new users to sign up** (تسجيل عام). يستحيل حد يفتح حساب لحاله.
+2. اعمل أول حساب للمدير (لك): **Authentication → Users → Add user** → اكتب إيميل + باسورد قوي → Create.
+3. ارجع لـ **SQL Editor** ونفّذ مرة واحدة فقط:
+
+```sql
+select promote_first_manager('manager-email-here@example.com');
+```
+
+الدالة دي مقفولة تلقائيًا أول ما يبقى فيه مدير مفعّل — محدش بعدهم يستخدمها.
+> كل حساب إضافي (موظف) بيتم عمله من لوحة **Authentication → Add user** بنفس الطريقة، وبعد التفعيل من لوحة المدير (شاشة الموظفين).
+
+### 4) إعدادات المدير من الموقع نفسه
+سجل دخول بالحساب → من المتصفح افتح `/staff` → لوحة المدير → **الإعدادات**:
+- **رقم انستا باي** (اللي بيظهر للعملاء في صفحة الدفع) — مهم قبل الإطلاق.
+- رسوم الترابيزة (5) والدليفري داخل العبور (50) لو حابب تغيّر.
+- **Turnstile Secret Key** — من كلاودفلر (الخطوة 6) — بعد ما تحطه، التحقق ضد الروبوتات يبقى إجباري من السيرفر.
+
+### 5) تشغيل محلي (اختياري)
+```bash
+cp .env.example .env      # وحط القيم الحقيقية جوه .env
+npm install
+npm run dev               # على http://localhost:5173
+```
+
+### 6) الحماية من الروبوتات (Cloudflare Turnstile)
+1. من <https://dash.cloudflare.com> → **Turnstile** → Add site → اختار **Managed** والنطاق بتاعك.
+2. خد **Site Key** وحطه في `VITE_TURNSTILE_SITE_KEY` (بيتصل بالواجهة).
+3. خد **Secret Key** وحطه في لوحة المدير → الإعدادات (بيتستভاد والتحقق من السيرفر).
+
+### 7) رفع على GitHub + Cloudflare Pages
+1. اعمل repo جديد على GitHub، وبعدها:
+   ```bash
+   git init && git add . && git commit -m "Lala's Bakery v1"
+   git branch -M main
+   git remote add origin https://github.com/USER/REPO.git
+   git push -u origin main
+   ```
+   ⚠️ لازم بينهم اتأكد: مفيش `.env` مترفع (الملف مش موجود في git بفضل `.gitignore`).
+2. <https://dash.cloudflare.com> → **Workers & Pages → Create → Pages → Connect to Git**:
+   - Build command: `npm run build`
+   - Build output: `dist`
+3. بعد أول وير، افتح الإعدادات → **Environment variables** → ضيف الثلاثة:
+   `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` / `VITE_TURNSTILE_SITE_KEY` ثم **Redeploy**.
+4. **Supabase Auth → URL Configuration**: حط URL الموقع النهائي كـ Site URL، وضيف نفس القيمة في Redirect URLs (عشان الاعتمادية).
+5. **Supabase Security**: قفل Realtime على `orders` غير ضروري — سياسة RLS بتمنع العارض (العملاء مش شايفين بيانات العملاء).
+
+### 8) نطاق كاستوم (بعدين)
+- من Cloudflare Pages → Custom domain → الربط على دومينك لما تكون جاهز (CNAME).
+- Cloudflare هيرفع TLS تلقائيًا.
+
+---
+
+## 🔒 أين الأمان في أكواد ده؟ (ملخص)
+
+| السؤال | الإجابة |
+| --- | --- |
+| السؤال | الإجابة |
+| --- | --- |
+| ليه السيرفر يحسب السعر؟ | الـ RPC `submit_order` بيقري الأسعار من جدول `products` الحقيقي، وانت بتبعت بس id وكمية — التلاعب في المبلغ من المتصفح مستحيل |
+| يكتب كمية خيالية؟ | الكمية مسموح من 1 لـ 30 لكل منتج، ولحد 60 منتج في الطلب، ومعاها حد للأولية: 5 طلبات لكل 30 دقيقة لكل IP |
+| يشيل اسم عميل؟ | التتبع عمومي: RPC `track_order` بيرجع **الحالة بس** + رقم الطلب، صفر بيانات شخصية |
+| يرمي دفع وهمي؟ | التأكيد شرطه إن الإجمالي بالظبط، والأحداث `order_events` بتسجل مين غيّر إيه وامتى |
+| رئيسي يعمل حسابات؟ | تسجيل عام مقتول + الحسابات الجديدة `is_active=false` + `promote_first_manager` مقفولة بعد أول مدير |
+| يكسر الحقول؟ | RLS على كل جدول، دور المدير بس هو اللي يعدل الأسعار والمنتجات والإعدادات |
+| رسالة/هندسة؟ | كل الإدخالات بتتقش من SQL (إزالة مساحات + حدود طول + قواعد تعبير)، وكل ما يطلع للعملاء مش فيه HTML خام |
+
+---
+
+## 🔄 صيانة مجانية (GitHub Actions)
+
+- **ping.yml**: كل 3 أيام بيحاول يجيب رد من قاعدة البيانات عشان Supabase المجاني ميتوقفش.
+  حط في Secrets: `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY`.
+- **backup.yml**: كل الاثنين بيعمل pg_dump كامل لقاعدة البيانات (Secrets المطلوبة: `SUPABASE_DB_HOST` = `aws-1-REGION.pooler.supabase.com` + `SUPABASE_DB_USER` = `postgres.REF` + `SUPABASE_DB_PASSWORD`).
+  النسخة بتترفع **Artifact خاص لمدة 30 يوم** — مش عام ولا منشور.
+
+---
+
+## 🧪 اختبار سريع قبل الإطلاق
+
+1. افتح الرئيسية → لازم تظهر الفروع (بعد seed) بالصور والوصف.
+2. اختار فرع → منيو لـ 4 تصنيفات → زوّد كام حاجة → العربة بتزيد والإجمالي مباشر.
+3. غيّرت فرع؟ العربة اتصفّرت (المطلوب).
+4. تكمل الطلب → اختار توصيل (سيت/ترابيزة/دليفري) → اسمك → تأكيد → هياخد **رقم طلب** (LB-1001) ودلوقتي بس هو الدفع.
+5. صفحة الدفع: انستا باي + زر نسخ + المبلغ + زر نسخ للـ `<رقم الطلب> <اسمك>`.
+6. من شاشة الموظف (حساب تاني في نفس الوقت) أكد الدفع والتحضير → من جهاز التتبع الحالة بتتغير **مباشرة** بنفس الرقم.
+7. رأيك: ابعت رسالة → شوفها في لوحة المدير.
+8. التقارير: الفترة دي → الأرقام + CSV.

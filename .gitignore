@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables — NEVER commit real keys
+.env
+.env.local
+.env.*.local
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+
+# Backup dumps (never commit DB dumps)
+backups/
+*.dump
+*.sql.gz
+
+# Local secrets (rotated passwords etc.) — never commit
+scripts/local/
