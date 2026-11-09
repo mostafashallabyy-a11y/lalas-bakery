@@ -4,8 +4,7 @@
 -- Adds:
 --   * shifts table: staff opens/closes shift with opening/expected/counted cash
 --   * void_requests table: staff requests void, manager approves
---   * RPCs: pos_create_order, shift_open, shift_close, void_request, void_approve, shift_reopen
---   * Trigger: closed shifts cannot be edited by staff; manager can reopen
+--   * RPCs: pos_create_order, shift_open, shift_close, void_request, void_approve, shift_reopen, staff_get_open_shift
 --   * Rate limits on sensitive RPCs
 -- ============================================================
 begin;
@@ -16,9 +15,9 @@ create table if not exists shifts (
   staff_id     uuid not null references auth.users(id) on delete restrict,
   branch_id    uuid not null references branches(id) on delete restrict,
   opening_cash numeric(10,2) not null check (opening_cash >= 0),
-  closing_cash numeric(10,2),                         -- expected = opening + cash sales - refunds
-  counted_cash numeric(10,2),                         -- what staff actually counted
-  difference   numeric(10,2),                         -- counted - expected
+  closing_cash numeric(10,2),
+  counted_cash numeric(10,2),
+  difference   numeric(10,2),
   note         text default '' check (char_length(note) <= 300),
   status       text not null default 'open' check (status in ('open','closed','reopened')),
   opened_at    timestamptz not null default now(),
@@ -48,8 +47,6 @@ create policy shifts_staff_own on shifts for all to authenticated
   using (auth.uid() = staff_id) with check (auth.uid() = staff_id);
 create policy shifts_manager_all on shifts for all to authenticated
   using (is_manager()) with check (is_manager());
-create policy shifts_staff_read_own_branch on shifts for select to authenticated
-  using (is_staff() and branch_id in (select id from branches where id = (select branch_id from shifts where id = shifts.id)));
 
 -- ---- 4) RLS on void_requests ----
 alter table void_requests enable row level security; alter table void_requests force row level security;
@@ -57,18 +54,14 @@ create policy void_requests_staff_own on void_requests for all to authenticated
   using (auth.uid() = staff_id) with check (auth.uid() = staff_id);
 create policy void_requests_manager_all on void_requests for all to authenticated
   using (is_manager()) with check (is_manager());
-create policy void_requests_staff_read_own_branch on void_requests for select to authenticated
-  using (is_staff());
 
--- ---- 5) Rate limit helper already exists (rate_ok from 0002) ----
-
--- ---- 6) RPC: pos_create_order (staff, server-priced, source='pos') ----
+-- ---- 5) RPC: pos_create_order (staff, server-priced, source='pos') ----
 create or replace function pos_create_order(
   p_branch_id uuid,
   p_items jsonb,
   p_delivery_type text default 'pickup',
   p_customer_name text default null,
-  p_payment_method text default 'cash' check (p_payment_method in ('cash','instapay')),
+  p_payment_method text default 'cash',
   p_staff_note text default null
 )
 returns jsonb
@@ -93,7 +86,10 @@ begin
     raise exception 'غير مسموح' using errcode = '42501';
   end if;
 
-  -- validate name if provided
+  if p_payment_method not in ('cash','instapay') then
+    raise exception 'طريقة دفع غير صحيحة' using errcode = 'P0001';
+  end if;
+
   v_name := btrim(coalesce(p_customer_name,''));
   if char_length(v_name) > 60 then
     raise exception 'الاسم طويل زيادة عن اللزوم' using errcode = 'P0001';
@@ -170,7 +166,7 @@ begin
 end $$;
 grant execute on function pos_create_order(uuid, jsonb, text, text, text, text) to authenticated;
 
--- ---- 7) RPC: shift_open ----
+-- ---- 6) RPC: shift_open ----
 create or replace function shift_open(
   p_branch_id uuid,
   p_opening_cash numeric
@@ -207,7 +203,7 @@ begin
 end $$;
 grant execute on function shift_open(uuid, numeric) to authenticated;
 
--- ---- 8) RPC: shift_close ----
+-- ---- 7) RPC: shift_close ----
 create or replace function shift_close(
   p_shift_id uuid,
   p_counted_cash numeric,
@@ -238,7 +234,6 @@ begin
     return jsonb_build_object('ok', false, 'message', 'الفترة مغلقة بالفعل');
   end if;
 
-  -- expected = opening_cash + cash sales - approved cash refunds
   select coalesce(sum(o.total),0) into v_expected
   from orders o
   where o.branch_id = v_shift.branch_id
@@ -267,7 +262,7 @@ begin
 end $$;
 grant execute on function shift_close(uuid, numeric, text) to authenticated;
 
--- ---- 9) RPC: void_request ----
+-- ---- 8) RPC: void_request ----
 create or replace function void_request(
   p_order_id uuid,
   p_reason text
@@ -304,7 +299,7 @@ begin
 end $$;
 grant execute on function void_request(uuid, text) to authenticated;
 
--- ---- 10) RPC: void_approve (manager only) ----
+-- ---- 9) RPC: void_approve (manager only) ----
 create or replace function void_approve(
   p_void_id uuid,
   p_approved boolean,
@@ -339,7 +334,6 @@ begin
 
   if p_approved then
     select * into v_order from orders where id = v_void.order_id;
-    -- mark order as cancelled via status change (not hard delete)
     update orders set status = 'done' where id = v_void.order_id;
     insert into order_events (order_id, event_type, old_status, new_status, changed_by, note)
     values (v_void.order_id, 'status_changed', v_order.status, 'done', auth.uid(), coalesce(btrim(coalesce(p_note,'')),'تم إلغاء الطلب'));
@@ -349,7 +343,7 @@ begin
 end $$;
 grant execute on function void_approve(uuid, boolean, text) to authenticated;
 
--- ---- 11) RPC: shift_reopen (manager only) ----
+-- ---- 10) RPC: shift_reopen (manager only) ----
 create or replace function shift_reopen(
   p_shift_id uuid
 )
@@ -382,7 +376,7 @@ begin
 end $$;
 grant execute on function shift_reopen(uuid) to authenticated;
 
--- ---- 12) RPC: staff_get_open_shift ----
+-- ---- 11) RPC: staff_get_open_shift ----
 create or replace function staff_get_open_shift()
 returns jsonb
 language plpgsql
@@ -408,7 +402,7 @@ begin
 end $$;
 grant execute on function staff_get_open_shift() to authenticated;
 
--- ---- 13) Grants for tables ----
+-- ---- 12) Grants ----
 grant all on shifts to authenticated;
 grant all on void_requests to authenticated;
 
