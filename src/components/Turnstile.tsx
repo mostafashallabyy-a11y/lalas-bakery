@@ -59,7 +59,8 @@ export function Turnstile({ onChange }: { onChange: (token: string) => void }) {
       cancelled = true;
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
     };
-  }, [onChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [TURNSTILE_SITE_KEY]);
 
   if (!TURNSTILE_SITE_KEY) return null;
 
