@@ -241,8 +241,7 @@ grant execute on function manager_staff_performance(date, date, uuid) to authent
 
 -- ---- 5) Demo seed data (clearly marked) ----
 insert into branches (name, description, services, promo_brief, logo, cover_image, is_active, sort_order)
-values
-  ('فرع demo التجريبي', 'فرع تجريبي لأغراض العرض التوضيحي فقط — لا يوجد فعلياً', ARRAY['دليفري', 'واي فاي'], 'هذا فرع تجريبي لأغراض الاختبار فقط', '', '', true, 99)
-on conflict (name) do nothing;
+select 'فرع demo التجريبي', 'فرع تجريبي لأغراض العرض التوضيحي فقط — لا يوجد فعلياً', ARRAY['دليفري', 'واي فاي'], 'هذا فرع تجريبي لأغراض الاختبار فقط', '', '', true, 99
+where not exists (select 1 from branches where name = 'فرع demo التجريبي');
 
 commit;
