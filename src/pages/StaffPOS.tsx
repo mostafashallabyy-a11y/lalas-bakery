@@ -19,6 +19,8 @@ export default function StaffPOS() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ order_number: string; total: number } | null>(null);
   const [shiftOpen, setShiftOpen] = useState<boolean | null>(null);
+  const [countedCash, setCountedCash] = useState("");
+  const [shiftCloseNote, setShiftCloseNote] = useState("");
 
   const subtotal = useMemo(() => cart.reduce((s, i) => s + i.line_total, 0), [cart]);
 
@@ -70,6 +72,33 @@ export default function StaffPOS() {
     if (e) return setError(e.message);
     setShiftOpen(true);
     setSuccess(null);
+  };
+
+  const closeShift = async () => {
+    if (!shiftOpen) return setError("لا توجد فترة عمل مفتوحة");
+    setBusy(true);
+    setError(null);
+    try {
+      // get current open shift id
+      const { data: shiftData, error: shiftErr } = await supabase.rpc("staff_get_open_shift");
+      if (shiftErr) throw shiftErr;
+      const shiftId = (shiftData as any)?.shift_id;
+      if (!shiftId) throw new Error("لا توجد فترة عمل مفتوحة");
+      const { data, error: e } = await supabase.rpc("shift_close", {
+        p_shift_id: shiftId,
+        p_counted_cash: Number(countedCash) || 0,
+        p_note: shiftCloseNote.trim() || null,
+      });
+      if (e) throw e;
+      setShiftOpen(false);
+      setCountedCash("");
+      setShiftCloseNote("");
+      setSuccess({ order_number: "إغلاق فترة العمل", total: Number(data.expected_cash) || 0 });
+    } catch (e: unknown) {
+      setError((e as Error).message || "حصلت مشكلة في إغلاق فترة العمل");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitOrder = async () => {
@@ -205,6 +234,23 @@ export default function StaffPOS() {
               {busy ? "يتم التسجيل…" : `تم الدفع وتسجيل الطلب (${paymentMethod === "cash" ? "كاش" : "انستا باي"})`}
             </button>
           </div>
+        </div>
+      )}
+
+      {shiftOpen && cart.length === 0 && (
+        <div className="card p-4 space-y-2">
+          <h3 className="font-extrabold text-brand-800">إغلاق فترة العمل 💰</h3>
+          <div>
+            <label className="label">المبلغ الذي تم عدّه (ج.م)</label>
+            <input className="input" type="number" step="0.1" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} placeholder="أدخل المبلغ المُعد" />
+          </div>
+          <div>
+            <label className="label">ملاحظة (اختياري)</label>
+            <input className="input" value={shiftCloseNote} onChange={(e) => setShiftCloseNote(e.target.value)} maxLength={300} placeholder="ملاحظة" />
+          </div>
+          <button className="btn-primary w-full" disabled={busy || !countedCash} onClick={closeShift}>
+            {busy ? "يتم الإغلاق…" : "إغلاق فترة العمل"}
+          </button>
         </div>
       )}
     </div>
