@@ -7,6 +7,7 @@ import BranchPage from "./pages/Branch";
 import CartPage from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
+import OrderPage from "./pages/Order";
 import Track from "./pages/Track";
 import FeedbackPage from "./pages/Feedback";
 import StaffLogin from "./pages/StaffLogin";
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/pay/:orderNumber" element={<Payment />} />
+            <Route path="/order/:orderNumber" element={<OrderPage />} />
             <Route path="/track" element={<Track />} />
             <Route path="/feedback" element={<FeedbackPage />} />
 

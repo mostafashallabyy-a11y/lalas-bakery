@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, type Branch } from "../lib/types";
+import { supabase, withTimeout, type Branch } from "../lib/types";
 import { useCart } from "../context/CartContext";
 import { Spinner, EmptyBox } from "../components/Common";
 
@@ -11,15 +11,17 @@ export default function Home() {
   const { setBranch } = useCart();
 
   useEffect(() => {
-    supabase
-      .from("branches")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order")
-      .then(({ data, error }) => {
-        if (error) setError("مش قادرين نجيب الفروع دلوقتي — جرّب تحدّث الصفحة 🥲");
-        else setBranches((data as Branch[]) ?? []);
-      });
+    withTimeout<Branch[]>(
+      supabase
+        .from("branches")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order")
+    ).then((res) => {
+      if (!res) setError("الفروع مش نازلة دلوقتي — اتأكد من النت وجرّب تاني 🥲");
+      else if (res.error) setError("مش قادرين نجيب الفروع دلوقتي — جرّب تحدّث الصفحة 🥲");
+      else setBranches(res.data ?? []);
+    });
   }, []);
 
   if (error) return <EmptyBox msg={error} />;

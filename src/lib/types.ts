@@ -18,6 +18,32 @@ export const supabase = createClient(url || "https://placeholder.invalid", key |
 
 export const TURNSTILE_SITE_KEY = turnstileSiteKey;
 
+// ===== حماية من السبنر اللانهائي: أي استعلام للزبون له مهلة قصوى =====
+// لو الاستعلام اتعلق (مشبك شبكة/جلسة قديمة) نرجّع null بدل ما نعلق الواجهة للأبد
+export type QueryResult<T> = {
+  data: T | null;
+  error: { message: string } | null;
+};
+
+export function withTimeout<T>(
+  p: PromiseLike<{ data: T | null; error: unknown }>,
+  ms = 12000
+): Promise<QueryResult<T> | null> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve({ data: v.data as T | null, error: v.error ? { message: String(v.error) } : null });
+      },
+      (e) => {
+        clearTimeout(timer);
+        resolve({ data: null, error: { message: String(e) } });
+      }
+    );
+  });
+}
+
 // ===== أنواع مشتركة (نماذج مبسطة للجداول) =====
 export type Branch = {
   id: string;

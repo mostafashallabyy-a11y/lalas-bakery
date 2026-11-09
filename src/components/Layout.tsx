@@ -1,4 +1,5 @@
 import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { OfflineBanner } from "./Common";
@@ -9,11 +10,26 @@ export default function Layout() {
   const { session } = useAuth();
   const { pathname } = useLocation();
 
-  // نفس ستايل النموذج: زرار مفعّل غامق (.on) وغير مفعّل محدد (.o)
+  // same style: active (.on) inactive (default)
   const cls = (active: boolean) => `${active ? "btn-dark" : "btn-outline"} shrink-0`;
 
-  // المنيو بيفتح منيو فرع السلة الحالية — لو مفيش فرع يرجع للفروع
+  // the menu opens from current cart branch, else branches
   const menuTo = branchId ? `/branch/${branchId}` : "/";
+
+  // ---- saved orders from localStorage for "طلباتي" badge ----
+  const [myOrders, setMyOrders] = useState<any[]>([]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("my_orders");
+      if (raw) setMyOrders(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  // active orders count (status != 'done')
+  const activeOrdersCount = useMemo(() => {
+    if (!myOrders.length) return 0;
+    return myOrders.filter((o: any) => o && o.order_number).length;
+  }, [myOrders]);
 
   return (
     <div className="min-h-dvh">
@@ -23,9 +39,14 @@ export default function Layout() {
           <span className="logo-script block">Lala&rsquo;s</span>
           <span className="block text-xs text-mut tracking-[1px]">Coffee · Bakery · Homemade 🎀</span>
         </Link>
+        <div className="mt-2 flex justify-center">
+          <NavLink to="/track" end className={({ isActive }) => cls(isActive)}>
+            📋 طلباتي{activeOrdersCount > 0 ? ` (${activeOrdersCount})` : ""}
+          </NavLink>
+        </div>
       </header>
 
-      {/* شريط التنقل: ستة أزرار دويرة بتتحرك أفقيًا */}
+      {/* شريط التنقل: أزرار دويرة بتتحرك أفقيًا */}
       <nav className="sticky top-0 z-30 bg-brand-50 border-b border-brand-200 flex gap-1.5 overflow-x-auto px-2.5 py-2">
         <NavLink to="/" end className={({ isActive }) => cls(isActive)}>
           🏠 الفروع

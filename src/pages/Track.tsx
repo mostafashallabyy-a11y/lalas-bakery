@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase, type TrackResult, type OrderStatus } from "../lib/types";
 import { STATUS, fmtFull } from "../lib/format";
 import { Spinner } from "../components/Common";
@@ -10,9 +11,23 @@ export default function Track() {
   const [result, setResult] = useState<TrackResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [trackKey, setTrackKey] = useState<string | null>(null);
+  const { search } = useLocation();
 
-  const fetchStatus = async (num: string) => {
-    const { data, error: e } = await supabase.rpc("track_order", { p_order_number: num });
+  // Parse URL for tracking_key param
+  useEffect(() => {
+    const urlParams = new URLSearchParams(search);
+    const parsedKey = urlParams.get("k");
+    if (parsedKey) setTrackKey(parsedKey);
+  }, [search]);
+
+  const fetchStatus = async (num: string, key?: string | null) => {
+    // If we have a key, use the secure RPC; otherwise fall back to legacy (less secure, but works for old orders)
+    const rpcName = key ? "track_order_by_key" : "track_order";
+    const params = key
+      ? { p_order_number: num, p_tracking_key: key }
+      : { p_order_number: num };
+    const { data, error: e } = await supabase.rpc(rpcName, params);
     if (e) {
       setError("حصلت مشكلة في التتبع — جرّب تاني 🥲");
       return;
@@ -29,7 +44,7 @@ export default function Track() {
     setBusy(true);
     setError(null);
     setResult(null);
-    await fetchStatus(num);
+    await fetchStatus(num, trackKey);
     setBusy(false);
   };
 
@@ -71,6 +86,9 @@ export default function Track() {
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
         />
+        {trackKey && (
+          <p className="text-xs text-mut mt-1">مفتاح التتبع محفوظ — هيتم التحقق تلقائيًا.</p>
+        )}
         <button className="btn-primary mt-1.5" onClick={submit} disabled={busy}>
           {busy ? "…" : "تابع"}
         </button>
@@ -89,7 +107,6 @@ export default function Track() {
             </span>
           </div>
 
-          {/* خط الحالة الأفقي: 3 خانات وردية، المفعّل يبقى غامق زي النموذج */}
           <div className="flex gap-1.5 my-3">
             {STEPS.map((s, i) => (
               <div key={s} className={`st-step ${i <= activeIdx ? "on" : ""}`}>
@@ -101,7 +118,7 @@ export default function Track() {
           <div className="msg-box">{STATUS[result.status ?? "received"].msg}</div>
 
           <p className="m-0 mt-3 text-center">
-            <button className="text-xs font-bold underline text-brand-800" onClick={() => fetchStatus(result.order_number!)}>
+            <button className="text-xs font-bold underline text-brand-800" onClick={() => fetchStatus(result.order_number!, trackKey)}>
               تحديث يدوي ↺
             </button>
           </p>

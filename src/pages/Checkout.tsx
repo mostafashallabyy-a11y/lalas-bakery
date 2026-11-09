@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { supabase } from "../lib/types";
+import { supabase, withTimeout } from "../lib/types";
 import { useCart } from "../context/CartContext";
 import { money, DELIVERY_OPTIONS, type DeliveryKey } from "../lib/format";
 import { ErrorBox, EmptyBox } from "../components/Common";
@@ -31,32 +31,57 @@ export default function Checkout() {
     }
     sessionStorage.setItem("lalas_name", clean);
     setBusy(true);
-    // ⚠️ السعر والرسوم بيتحسبوا تاني على السيرفر من أسعار قاعدة البيانات
-    const { data, error: rpcError } = await supabase.rpc("submit_order", {
+    // ⚠️ السعر والرسوم Betحسابوا تاني على السيرفر من أسعار قاعدة البيانات
+    const res = await withTimeout<{
+      ok: boolean;
+      order_number: string;
+      order_id: string;
+      tracking_key: string;
+      total: number;
+    }>(supabase.rpc("submit_order_v2", {
       p_branch_id: branchId,
       p_items: items.map((i) => ({ product_id: i.product_id, qty: i.qty })),
       p_delivery_type: delivery,
       p_customer_name: clean,
       p_turnstile_token: token || null,
-    });
+    }), 15000);
 
-    const res = data as
-      | { ok: boolean; order_number: string; order_id: string; total: number; message?: string }
-      | null;
-
-    try {
-      if (rpcError || !res || !res.ok) {
-        setError(
-          rpcError?.message || res?.message || "حصلت مشكلة في تسجيل الطلب — جرّب تاني بعد لحظات 🥲"
-        );
-        return;
-      }
-      sessionStorage.setItem("lalas_last_order", JSON.stringify(res));
-      clear();
-      navigate(`/pay/${res.order_number}`, { state: { name: clean } });
-    } finally {
+    if (!res) {
+      setError("المسار اتأخر — المحاولة تاني بعد لحظات 🥲");
       setBusy(false);
+      return;
     }
+
+    if (res.data?.ok && res.data?.order_number) {
+      // Save order to localStorage "my_orders" so it survives cart clear
+      const myOrdersStr = localStorage.getItem("my_orders");
+      const myOrders = myOrdersStr ? JSON.parse(myOrdersStr) : [];
+      const orderEntry = {
+        order_number: res.data.order_number,
+        tracking_key: res.data.tracking_key,
+        branch_id: branchId,
+        branch_name: branchName,
+        total: res.data.total,
+        date: new Date().toISOString(),
+      };
+      // Don't duplicate same order number
+      const already = myOrders.find((o: any) => o.order_number === res.data!.order_number);
+      if (!already) {
+        myOrders.unshift(orderEntry);
+        localStorage.setItem("my_orders", JSON.stringify(myOrders));
+      }
+
+      // Save last order for payment page
+      sessionStorage.setItem("lalas_last_order", JSON.stringify(res.data));
+
+      clear();
+      navigate(`/order/${res.data!.order_number}?k=${res.data!.tracking_key}`, {
+        state: { name: clean },
+      });
+    } else {
+      setError("حصلت مشكلة في تسجيل الطلب — جرّب تاني بعد لحظات 🥲");
+    }
+    setBusy(false);
   };
 
   return (
