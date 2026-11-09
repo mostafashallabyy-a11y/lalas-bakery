@@ -1,12 +1,25 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Spinner } from "../../components/Common";
+import { supabase } from "../../lib/types";
 
 // حاجز: موظف أو مدير مفعّل فقط
 export default function StaffLayout() {
   const { session, profile, loading } = useAuth();
   const { state } = useLocation() as { state?: { from?: string } };
+  const [lowStockCount, setLowStockCount] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("low_stock_alerts")
+        .select("id")
+        .eq("resolved", false);
+      setLowStockCount((data as { id: string }[] ?? []).length);
+    })();
+  }, []);
 
   if (loading) return <div className="py-10"><Spinner /></div>;
   if (!session) return <Navigate to="/staff/login" state={{ from: state?.from || location.pathname }} replace />;
@@ -29,9 +42,16 @@ export default function StaffLayout() {
           💰 كاشير الفرع (POS)
         </NavLink>
         {profile.role === "manager" && (
-          <NavLink to="/staff/admin" className={({ isActive }) => `${isActive ? "btn-dark" : "btn-outline"} shrink-0`}>
-            👑 لوحة الإدارة
-          </NavLink>
+          <>
+            <NavLink to="/staff/admin" className={({ isActive }) => `${isActive ? "btn-dark" : "btn-outline"} shrink-0`}>
+              👑 لوحة الإدارة
+            </NavLink>
+            {lowStockCount > 0 && (
+              <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded mt-1">
+                ⚠️ {lowStockCount} تنبيه مخزون
+              </span>
+            )}
+          </>
         )}
       </nav>
       <main className="max-w-[720px] w-full mx-auto px-3.5 pt-3.5 pb-20">

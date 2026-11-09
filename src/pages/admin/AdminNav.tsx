@@ -11,6 +11,7 @@ export default function AdminNav() {
     { to: "/staff/admin/reports", label: "التقارير" },
     { to: "/staff/admin/promos", label: "بروموات الفروع" },
     { to: "/staff/admin/inventory", label: "المخزون" },
+    { to: "/staff/admin/stock-report", label: "تقرير المخزون" },
   ];
 
   return (

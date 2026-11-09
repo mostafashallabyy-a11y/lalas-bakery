@@ -23,6 +23,7 @@ import StaffAdmin from "./pages/admin/StaffAdmin";
 import FeedbackAdmin from "./pages/admin/FeedbackAdmin";
 import PromosAdmin from "./pages/admin/PromosAdmin";
 import InventoryAdmin from "./pages/admin/InventoryAdmin";
+import StockReport from "./pages/admin/StockReport";
 import ReportsAdmin from "./pages/admin/ReportsAdmin";
 
 export default function App() {
@@ -55,6 +56,7 @@ export default function App() {
                 <Route path="reports" element={<ReportsAdmin />} />
                 <Route path="promos" element={<PromosAdmin />} />
                 <Route path="inventory" element={<InventoryAdmin />} />
+                <Route path="stock-report" element={<StockReport />} />
               </Route>
               <Route path="pos" element={<StaffPOS />} />
             </Route>
