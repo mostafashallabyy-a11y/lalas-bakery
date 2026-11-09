@@ -1,75 +1,70 @@
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { OfflineBanner } from "./Common";
 import { money } from "../lib/format";
 
 export default function Layout() {
-  const { count, subtotal, branchName } = useCart();
-  const { profile, signOut, session } = useAuth();
+  const { count, subtotal, branchId } = useCart();
+  const { session } = useAuth();
+  const { pathname } = useLocation();
+
+  // نفس ستايل النموذج: زرار مفعّل غامق (.on) وغير مفعّل محدد (.o)
+  const cls = (active: boolean) => `${active ? "btn-dark" : "btn-outline"} shrink-0`;
+
+  // المنيو بيفتح منيو فرع السلة الحالية — لو مفيش فرع يرجع للفروع
+  const menuTo = branchId ? `/branch/${branchId}` : "/";
 
   return (
-    <div className="min-h-dvh flex flex-col">
-      <header className="sticky top-0 z-40 backdrop-blur bg-brand-50/90 border-b border-brand-100">
-        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2 font-extrabold text-brand-700 text-lg">
-            <span aria-hidden>🥐</span> Lala's Bakery
-          </Link>
-
-          <nav className="flex items-center gap-1 text-sm font-bold">
-            <NavLink to="/track" className={({ isActive }) => `px-2.5 py-1.5 rounded-lg ${isActive ? "bg-brand-500 text-white" : "text-brand-800 hover:bg-brand-100"}`}>
-              تتبع طلبك
-            </NavLink>
-            <NavLink to="/feedback" className={({ isActive }) => `px-2.5 py-1.5 rounded-lg ${isActive ? "bg-brand-500 text-white" : "text-brand-800 hover:bg-brand-100"}`}>
-              رأيك يوصلنا
-            </NavLink>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            {session && profile ? (
-              <>
-                <Link
-                  to="/staff"
-                  className="pill bg-brand-100 text-brand-800 hover:bg-brand-200"
-                >
-                  {profile.is_active ? (profile.role === "manager" ? "👑 لوحة المدير" : "🧑‍🍳 شاشة الموظف") : "بانتظار التفعيل"}
-                </Link>
-                <button onClick={signOut} className="pill bg-white border border-brand-200 text-brand-800">
-                  خروج
-                </button>
-              </>
-            ) : (
-              <Link to="/staff/login" className="pill bg-white border border-brand-200 text-brand-800 hover:bg-brand-100">
-                للموظفين
-              </Link>
-            )}
-          </div>
-        </div>
+    <div className="min-h-dvh">
+      {/* الهيدر: وردي بحدود متقطعة وشعار كاتي في النص زي النموذج */}
+      <header className="bg-brand-100 border-b-2 border-dashed border-brand-200 px-3.5 py-2.5 text-center">
+        <Link to="/" className="inline-block">
+          <span className="logo-script block">Lala&rsquo;s</span>
+          <span className="block text-xs text-mut tracking-[1px]">Coffee · Bakery · Homemade 🎀</span>
+        </Link>
       </header>
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 pb-28">
+      {/* شريط التنقل: ستة أزرار دويرة بتتحرك أفقيًا */}
+      <nav className="sticky top-0 z-30 bg-brand-50 border-b border-brand-200 flex gap-1.5 overflow-x-auto px-2.5 py-2">
+        <NavLink to="/" end className={({ isActive }) => cls(isActive)}>
+          🏠 الفروع
+        </NavLink>
+        <NavLink to={menuTo} className={({ isActive }) => cls(isActive)}>
+          🍰 المنيو
+        </NavLink>
+        <NavLink to="/cart" className={({ isActive }) => cls(isActive)}>
+          🛒 السلة
+        </NavLink>
+        <NavLink to="/track" className={({ isActive }) => cls(isActive)}>
+          📍 تابع طلبك
+        </NavLink>
+        <NavLink to="/feedback" className={({ isActive }) => cls(isActive)}>
+          💌 رأيك
+        </NavLink>
+        <NavLink to={session ? "/staff" : "/staff/login"} className={({ isActive }) => cls(isActive)}>
+          🔐 الإدارة
+        </NavLink>
+      </nav>
+
+      <main className="max-w-[720px] w-full mx-auto px-3.5 pt-3.5 pb-[90px]">
         <OfflineBanner />
         <Outlet />
       </main>
 
-      {/* شريط العربة */}
-      {count > 0 && (
-        <Link
-          to="/cart"
-          className="fixed bottom-4 inset-x-4 max-w-2xl mx-auto bg-brand-500 text-white rounded-2xl shadow-lg px-5 py-3.5 flex items-center justify-between font-bold hover:bg-brand-600 transition"
-        >
-          <span className="flex items-center gap-2">
-            <span className="bg-white/20 rounded-full px-2.5 py-0.5 text-sm">{count}</span>
-            عربة {branchName ? `فرع ${branchName}` : ""}
-          </span>
-          <span>{money(subtotal)} 👀</span>
-        </Link>
+      {/* شريط السلة الثابت — يظهر في صفحة المنيو بس زي النموذج */}
+      {count > 0 && pathname.startsWith("/branch/") && (
+        <div className="fixed bottom-0 inset-x-0 z-40 bg-brand-100 border-t-2 border-dashed border-brand-200">
+          <div className="max-w-[720px] mx-auto flex items-center justify-between gap-3 px-3.5 py-2.5 pb-[calc(10px+env(safe-area-inset-bottom,0px))]">
+            <span className="font-bold">
+              🛒 {count} منتج · {money(subtotal)}
+            </span>
+            <Link to="/cart" className="btn-primary shrink-0">
+              السلة
+            </Link>
+          </div>
+        </div>
       )}
-
-      <footer className="bg-brand-100/60 border-t border-brand-100 py-6 text-center text-xs text-brand-800">
-        <p className="font-bold">Lala's Bakery 💞 — القهوة اللي بتدفي القلب</p>
-        <p className="mt-1">اتعمل بحب وقهوة كتير — الشكاوى والاقتراحات بترفع من <Link to="/feedback" className="underline">هنا</Link></p>
-      </footer>
     </div>
   );
 }

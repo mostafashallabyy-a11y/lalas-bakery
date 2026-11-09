@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase, type Category, type Product } from "../lib/types";
 import { useCart } from "../context/CartContext";
-import { money } from "../lib/format";
+import { money, productEmoji, categoryEmoji } from "../lib/format";
 import { Spinner, EmptyBox } from "../components/Common";
 
 export default function BranchPage() {
@@ -10,15 +10,26 @@ export default function BranchPage() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCat, setActiveCat] = useState<string>("all");
+  const [bName, setBName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const { items, add, inc, dec, branchId: cartBranch } = useCart();
+  const { items, add, inc, dec, branchId: cartBranch, branchName: cartBranchName } = useCart();
 
   const cart = useMemo(() => Object.fromEntries(items.map((i) => [i.product_id, i.qty])), [items]);
 
   useEffect(() => {
     if (!branchId) return;
-    // المنتجات بتتحمل مرة واحدة عند فتح الصفحة
     load();
+    // اسم الفرع: من السلة لو هي هي، وإلا نجيبه من قاعدة البيانات
+    if (cartBranch === branchId && cartBranchName) setBName(cartBranchName);
+    else
+      supabase
+        .from("branches")
+        .select("name")
+        .eq("id", branchId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.name) setBName(data.name);
+        });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
 
@@ -48,85 +59,81 @@ export default function BranchPage() {
   const shown = products.filter((p) => activeCat === "all" || p.category_id === activeCat);
 
   return (
-    <div className="py-4 space-y-4">
-      {cartBranch !== branchId && cartBranch && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl px-4 py-3 text-sm font-bold">
-          غيّرت الفرع؟ عربة القديمة هتتصفّر لو حابب تبدأ تانية من هنا.
-        </div>
-      )}
+    <div className="space-y-2.5">
+      <h2 className="text-[22px] font-bold text-brand-700 mt-1.5 mb-0">{bName}</h2>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      {/* لصقات الأقسام بايموجيها زي النموذج */}
+      <div className="flex gap-1.5 overflow-x-auto py-1">
         <button
           onClick={() => setActiveCat("all")}
-          className={`pill shrink-0 ${activeCat === "all" ? "bg-brand-500 text-white" : "bg-white border border-brand-200 text-brand-800"}`}
+          className={activeCat === "all" ? "btn-dark shrink-0" : "btn-outline shrink-0"}
         >
-          الكل
+          🍽 الكل
         </button>
         {categories.map((c) => (
           <button
             key={c.id}
             onClick={() => setActiveCat(c.id)}
-            className={`pill shrink-0 ${activeCat === c.id ? "bg-brand-500 text-white" : "bg-white border border-brand-200 text-brand-800"}`}
+            className={activeCat === c.id ? "btn-dark shrink-0" : "btn-outline shrink-0"}
           >
-            {c.name}
+            {categoryEmoji(c.name)} {c.name}
           </button>
         ))}
       </div>
 
-      <div className="grid gap-3">
-        {shown.length === 0 && <EmptyBox msg="القسم ده لسه فاضي في الفرع — قرب قريب 🥲" />}
+      {/* جريد منتجات متمركزة زي .g في النموذج */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
+        {shown.length === 0 && (
+          <div className="card p-3.5 text-mut text-sm col-span-full">
+            القسم ده لسه فاضي في الفرع — قرب قريب 🥲
+          </div>
+        )}
         {shown.map((p) => {
           const qty = cart[p.id] || 0;
           return (
-            <div key={p.id} className="card p-3 flex gap-3 items-stretch">
-              {p.image_url && (
+            <div key={p.id} className="prod-card">
+              {p.image_url ? (
                 <img
                   src={p.image_url}
                   alt={p.name}
                   loading="lazy"
-                  className="w-24 h-24 rounded-xl object-cover bg-brand-50 shrink-0"
+                  className="w-full h-[90px] object-cover rounded-[14px] mb-1.5 bg-brand-50"
                 />
+              ) : (
+                <div className="prod-emoji">{productEmoji(p.name)}</div>
               )}
-              <div className="flex-1 min-w-0 flex flex-col">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-extrabold text-brand-900">{p.name}</h3>
-                  <span className="font-extrabold text-brand-600 whitespace-nowrap">{money(p.price)}</span>
+              <b>{p.name}</b>
+              {p.note && <div className="text-mut text-sm">{p.note}</div>}
+              <div className="text-brand-700 font-bold">{money(p.price)}</div>
+              {qty > 0 ? (
+                <div className="flex items-center justify-center gap-2 mt-1.5 text-brand-900">
+                  <button className="btn-pill !px-3" onClick={() => inc(p.id)}>
+                    +
+                  </button>
+                  <b className="min-w-[20px]">{qty}</b>
+                  <button className="btn-outline !px-3" onClick={() => dec(p.id)}>
+                    −
+                  </button>
                 </div>
-                {p.note && <p className="text-xs text-brand-700/80 mt-1">{p.note}</p>}
-                <div className="mt-auto pt-2 flex items-center justify-end gap-2">
-                  {qty > 0 ? (
-                    <div className="flex items-center gap-2 bg-brand-100 rounded-xl px-2 py-1">
-                      <button onClick={() => inc(p.id)} className="w-8 h-8 rounded-lg bg-white font-extrabold text-brand-700 shadow-sm">+</button>
-                      <span className="font-extrabold text-brand-800">{qty}</span>
-                      <button onClick={() => dec(p.id)} className="w-8 h-8 rounded-lg bg-white font-extrabold text-brand-700 shadow-sm">−</button>
-                    </div>
-                  ) : (
-                    <button
-                      className="btn-primary !py-1.5 !px-4 text-sm"
-                      onClick={() =>
-                        add({
-                          product_id: p.id,
-                          name: p.name,
-                          price: Number(p.price),
-                          note: p.note || "",
-                          image_url: p.image_url || "",
-                        })
-                      }
-                    >
-                      زوّد للعربة +
-                    </button>
-                  )}
-                </div>
-              </div>
+              ) : (
+                <button
+                  className="btn-pill mt-1.5"
+                  onClick={() =>
+                    add({
+                      product_id: p.id,
+                      name: p.name,
+                      price: Number(p.price),
+                      note: p.note || "",
+                      image_url: p.image_url || "",
+                    })
+                  }
+                >
+                  Add to cart
+                </button>
+              )}
             </div>
           );
         })}
-      </div>
-
-      <div className="sticky bottom-24 flex justify-center">
-        <Link to="/cart" className="btn-soft shadow">
-          العربة وتأكيد الطلب 🛒
-        </Link>
       </div>
     </div>
   );

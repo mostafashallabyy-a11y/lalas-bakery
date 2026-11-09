@@ -8,30 +8,68 @@
 
 html,
 body {
-  font-family: "Cairo", system-ui, sans-serif;
-  background-color: #fdf2f8;
-  color: #4c0d31;
+  font-family: "Cairo", Tahoma, Arial, sans-serif;
+  background-color: #fbf3f4;
+  color: #4a2a33;
   min-height: 100%;
+  line-height: 1.6;
 }
 
-/* بطاقة مشتركة */
 @layer components {
+  /* البطاقة زي النموذج: خلفية بيضاء وحدود وردية ورُكن 18px */
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-brand-100;
+    @apply bg-white rounded-[18px] border border-brand-200;
   }
+  /* الأزرار دايرة النموذج 20px */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 text-white font-bold px-4 py-2.5 transition hover:bg-brand-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 text-white font-bold px-4 py-2 transition hover:bg-brand-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer;
+  }
+  .btn-pill {
+    @apply inline-flex items-center justify-center gap-1 rounded-full bg-brand-500 text-white font-bold px-4 py-1.5 text-sm cursor-pointer transition hover:bg-brand-600 active:scale-[0.98];
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-1 rounded-full border-[1.5px] border-brand-500 bg-transparent text-brand-700 font-bold px-4 py-1.5 text-sm cursor-pointer transition hover:bg-brand-100 active:scale-[0.98];
+  }
+  .btn-dark {
+    @apply inline-flex items-center justify-center gap-1 rounded-full bg-brand-700 text-brand-50 font-bold px-4 py-1.5 text-sm cursor-pointer transition active:scale-[0.98];
   }
   .btn-soft {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-100 text-brand-800 font-bold px-4 py-2.5 transition hover:bg-brand-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-100 text-brand-700 font-bold px-4 py-2 transition hover:bg-brand-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed;
   }
   .input {
-    @apply w-full rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-200;
+    @apply w-full rounded-xl border-[1.5px] border-brand-200 bg-brand-50 px-3 py-2 text-[15px] text-brand-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
   }
   .label {
-    @apply block text-sm font-bold text-brand-900 mb-1.5;
+    @apply block text-sm font-bold text-brand-900 mb-1;
   }
   .pill {
-    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-bold;
+    @apply inline-flex items-center rounded-full bg-brand-100 text-brand-700 px-2.5 py-0.5 text-[13px] font-bold;
+  }
+  /* الرسائل الوردية (.msg في النموذج) */
+  .msg-box {
+    @apply bg-brand-100 rounded-2xl px-3 py-2.5 text-brand-700;
+  }
+  /* التاج الصغير */
+  .tag {
+    @apply inline-block bg-brand-100 text-brand-700 rounded-[10px] px-2.5 py-0.5 text-[13px] leading-6;
+  }
+  /* شريط الحالات (تتبع الطلب) */
+  .st-step {
+    @apply flex-1 text-center px-1 py-2 rounded-xl bg-brand-100 text-[13px] text-mut;
+  }
+  .st-step.on {
+    @apply bg-brand-500 text-white font-bold;
+  }
+  /* المنيو: كارت منتج متمركز */
+  .prod-card {
+    @apply card p-3 text-center text-brand-900;
+  }
+  .prod-emoji {
+    @apply text-[44px] bg-brand-100 rounded-2xl px-2 py-1.5 inline-block;
+  }
+  /* شعار الهيدر الكاتي */
+  .logo-script {
+    font-family: "Brush Script MT", "Segoe Script", cursive;
+    @apply text-[34px] text-brand-700 leading-none;
   }
 }

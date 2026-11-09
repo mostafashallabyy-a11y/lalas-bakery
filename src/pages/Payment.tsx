@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase, type OrderStatus } from "../lib/types";
-import { money, STATUS } from "../lib/format";
+import { money } from "../lib/format";
 import { CopyButton, ErrorBox, Spinner } from "../components/Common";
 
 type PayInfo = {
@@ -20,7 +20,7 @@ export default function Payment() {
   const [info, setInfo] = useState<PayInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // الاسم بنخليه في الجلسة فقط (لا يعرض على السيرفر في info RPC) — للنسخ في ملاحظة التحويل
+  // الاسم بنخليه في الجلسة فقط — للنسخ في ملاحظة التحويل
   const customerName = sessionStorage.getItem("lalas_name") || "";
 
   useEffect(() => {
@@ -37,8 +37,8 @@ export default function Payment() {
       const { data, error: e } = await supabase.rpc("get_payment_info", {
         p_order_number: orderNumber,
       });
-      if (e || !data || !data.ok) {
-        setError((e as Error)?.message || "رقم الطلب مش موجود — اتأكد منه 🥲");
+      if (e || !(data as PayInfo | null)?.ok) {
+        setError((e as Error)?.message || "مش لاقيين الطلب ده، اتأكد من الرقم 💗");
       } else {
         setInfo(data as unknown as PayInfo);
       }
@@ -70,66 +70,47 @@ export default function Payment() {
   const noteText = `${orderNumber}${customerName ? " " + customerName : ""}`;
 
   return (
-    <div className="py-4 space-y-4">
-      <div className="card p-5 text-center space-y-1">
-        <p className="text-sm font-bold text-brand-800">رقم طلبك — احتفظ بيه للتتبع ⬇</p>
-        <p className="text-3xl font-extrabold text-brand-600 tracking-widest" dir="ltr">
-          {orderNumber}
-        </p>
-        <p className="pill mx-auto bg-brand-100 text-brand-800">
-          الحالة دلوقتي: {STATUS[info?.status ?? "received"].label} {STATUS[info?.status ?? "received"].emoji}
-        </p>
+    <div className="space-y-2.5">
+      {/* استقبال الطلب زي النموذج */}
+      <div className="card p-3.5 text-center">
+        <div className="text-[40px]">🎉</div>
+        <h2 className="text-[22px] font-bold text-brand-700 my-1">رقم طلبك {orderNumber}</h2>
+        <div className="text-mut text-sm">
+          {[customerName, info?.branch_name].filter(Boolean).join(" – ") || "\u00a0"}
+        </div>
+        {error && <ErrorBox msg={error} />}
       </div>
 
-      <div className="card p-5 space-y-4">
-        <h2 className="font-extrabold text-brand-700 text-lg">ادفع على انستا باي 💳</h2>
-
+      {/* خطوات الدفع زي النموذج */}
+      <div className="card p-3.5 text-brand-900">
+        <b>خطوات الدفع (InstaPay):</b>
         {instapay === "" ? (
           <ErrorBox msg="لسه المدير مظبطش رقم انستا باي — كلمنا في الفرع مباشرة ونظبطلك الطلب 🥺" />
         ) : (
-          <div className="flex items-center justify-between gap-2 bg-brand-50 rounded-xl px-3 py-3">
-            <span className="font-extrabold text-brand-900 text-lg" dir="ltr">
-              {instapay}
-            </span>
-            <CopyButton text={instapay} label="انسخ الرقم" />
-          </div>
+          <ol className="list-decimal pr-5 mt-2 space-y-1.5">
+            <li>
+              انسخ الرقم:{" "}
+              <b className="text-brand-700" dir="ltr">
+                {instapay}
+              </b>{" "}
+              <CopyButton text={instapay} />
+            </li>
+            <li>
+              حوّل <b>{info ? money(info.total) : "…"}</b>
+            </li>
+            <li>
+              اكتب في الملاحظة: <b>{noteText}</b> <CopyButton text={noteText} />
+            </li>
+          </ol>
         )}
-
-        <div className="bg-white border border-brand-100 rounded-xl px-3 py-3 text-sm font-bold text-brand-900">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              المبلغ المطلوب بالظبط:{" "}
-              {info ? (
-                <span className="text-brand-600 text-lg" dir="ltr">
-                  {money(info.total)}
-                </span>
-              ) : (
-                "…"
-              )}
-              {info && <span className="block text-xs text-brand-700 font-bold mt-1">فرع {info.branch_name}</span>}
-            </div>
-            {info && <CopyButton text={String(info.total)} label="انسخ المبلغ" />}
-          </div>
+        <div className="text-mut text-sm mt-2">
+          بنبدأ التحضير أول ما الدفع يتأكد، وتقدر تتابع طلبك برقمه.
         </div>
-
-        <div className="bg-brand-50 border border-brand-100 rounded-xl px-3 py-3 text-sm text-brand-900 space-y-2">
-          <p className="font-extrabold">اكتب ده في التعليقات بتاعة التحويل (انسخ والصق):</p>
-          <div className="flex items-center justify-between gap-2">
-            <code className="font-extrabold text-brand-700 break-all" dir="auto">
-              {noteText}
-            </code>
-            <CopyButton text={noteText} label="انسخ" />
-          </div>
-        </div>
-
-        {error && <ErrorBox msg={error} />}
-
-        <p className="text-xs text-brand-700 font-bold">
-          بعد ما تحوّل، الموظف هيثبّت الدفع والحالة هتتغيّر تلقائيًا هنا ومن صفحة التتبع 🌸
+        <p className="m-0 mt-3">
+          <Link to="/track" className="btn-primary">
+            تابع طلبك
+          </Link>
         </p>
-        <Link to="/track" className="btn-soft w-full">
-          تتبّع الطلب مباشرة ↺
-        </Link>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase, type TrackResult, type OrderStatus } from "../lib/types";
 import { STATUS, fmtFull } from "../lib/format";
-import { ErrorBox } from "../components/Common";
+import { Spinner } from "../components/Common";
 
 const STEPS: OrderStatus[] = ["received", "preparing", "done"];
 
@@ -18,19 +18,17 @@ export default function Track() {
       return;
     }
     const res = data as unknown as TrackResult;
+    if (!res?.ok) setError(res?.message || "مش لاقيين الطلب ده، اتأكد من الرقم 💗");
+    else setError(null);
     setResult(res);
-    if (!res?.ok) setError(res?.message || "مش لاقيين رقم الطلب ده");
-    if (res?.ok) setError(null);
   };
 
   const submit = async () => {
     const num = value.trim().toUpperCase();
-    if (!/^LB-\d+$/i.test(num)) {
-      setError("اكتب رقم الطلب بالظبط زي: LB-1001");
-      return;
-    }
+    if (!num) return;
     setBusy(true);
     setError(null);
+    setResult(null);
     await fetchStatus(num);
     setBusy(false);
   };
@@ -62,56 +60,51 @@ export default function Track() {
   const activeIdx = STEPS.indexOf((result?.status ?? "received") as OrderStatus);
 
   return (
-    <div className="py-4 space-y-4">
-      <h1 className="text-xl font-extrabold text-brand-700 text-center">وين الطلب؟ 👀</h1>
-      <div className="flex gap-2">
+    <div className="space-y-2.5">
+      <h2 className="text-[22px] font-bold text-brand-700 mt-1.5 mb-0">تابع طلبك 📍</h2>
+
+      <div className="card p-3.5">
         <input
           className="input"
-          placeholder="LB-1001"
-          dir="ltr"
+          placeholder="رقم الطلب مثال LB-1001"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
         />
-        <button className="btn-primary shrink-0" onClick={submit} disabled={busy}>
-          {busy ? "…" : "تتبّع 🔍"}
+        <button className="btn-primary mt-1.5" onClick={submit} disabled={busy}>
+          {busy ? "…" : "تابع"}
         </button>
       </div>
-      {error && <ErrorBox msg={error} />}
+
+      {busy && !result?.ok && <Spinner label="بندور على طلبك… 📍" />}
+
+      {error && <div className="card p-3.5 text-brand-900">{error}</div>}
 
       {result?.ok && (
-        <div className="card p-5 space-y-3">
-          <p className="text-center font-extrabold text-brand-600 text-xl" dir="ltr">
-            {result.order_number}
+        <div className="card p-3.5">
+          <div className="flex items-center justify-between text-brand-900">
+            <b>{result.order_number}</b>
+            <span className="text-mut text-sm">
+              {result.updated_at ? fmtFull(result.updated_at) : ""}
+            </span>
+          </div>
+
+          {/* خط الحالة الأفقي: 3 خانات وردية، المفعّل يبقى غامق زي النموذج */}
+          <div className="flex gap-1.5 my-3">
+            {STEPS.map((s, i) => (
+              <div key={s} className={`st-step ${i <= activeIdx ? "on" : ""}`}>
+                {STATUS[s].label}
+              </div>
+            ))}
+          </div>
+
+          <div className="msg-box">{STATUS[result.status ?? "received"].msg}</div>
+
+          <p className="m-0 mt-3 text-center">
+            <button className="text-xs font-bold underline text-brand-800" onClick={() => fetchStatus(result.order_number!)}>
+              تحديث يدوي ↺
+            </button>
           </p>
-          <p className="text-center text-xs text-brand-700">
-            آخر تحديث: {result.updated_at ? fmtFull(result.updated_at) : "الآن"}
-          </p>
-          <ol className="relative space-y-4 border-r-2 border-brand-200 pr-5 pt-1">
-            {STEPS.map((s, i) => {
-              const active = i <= activeIdx;
-              const meta = STATUS[s];
-              return (
-                <li key={s} className="relative">
-                  <span
-                    className={`absolute -right-[27px] w-9 h-9 rounded-full flex items-center justify-center text-lg border-2 ${
-                      active ? "bg-brand-500 text-white border-brand-500" : "bg-white border-brand-200 text-brand-300"
-                    }`}
-                  >
-                    {meta.emoji}
-                  </span>
-                  <p className={`font-extrabold ${active ? "text-brand-700" : "text-brand-400"}`}>{meta.label}</p>
-                  {i === activeIdx && <p className="text-sm text-brand-800 mt-1">{meta.msg}</p>}
-                </li>
-              );
-            })}
-          </ol>
-          <button
-            className="text-xs font-bold text-brand-800 underline mx-auto block"
-            onClick={() => fetchStatus(result.order_number!)}
-          >
-            تحديث يدوي ↺
-          </button>
         </div>
       )}
     </div>

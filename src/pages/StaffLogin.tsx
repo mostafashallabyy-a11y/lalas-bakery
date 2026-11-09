@@ -41,10 +41,10 @@ export default function StaffLogin() {
   };
 
   return (
-    <div className="py-8 max-w-sm mx-auto space-y-4">
-      <h1 className="text-xl font-extrabold text-brand-700 text-center">دخول الفريق 🧑‍🍳</h1>
-      <p className="text-sm text-brand-800 text-center font-bold">
-        للزملاء والمدير فقط — العملاء مش محتاجين حساب خالص 😊
+    <div className="py-8 max-w-sm mx-auto space-y-2.5">
+      <h2 className="text-[22px] font-bold text-brand-700 text-center mt-1.5">دخول الإدارة 🔐</h2>
+      <p className="text-sm text-mut">
+        للزملاء والمدير فقط — الدخول بالإيميل والباسورد (بدل الرمز السري في النسخة التجريبية).
       </p>
 
       <form className="card p-4 space-y-3" onSubmit={submit}>
@@ -61,7 +61,7 @@ export default function StaffLogin() {
           {busy ? "بنفحص بياناتك…" : "ادخل 🔐"}
         </button>
       </form>
-      <p className="text-center text-xs text-brand-800 font-bold">
+      <p className="text-center text-xs text-mut font-bold">
         حسابك مش مفعّل؟ كلم المدير يفعّلك. <br />
         <Link to="/" className="underline">رجوع للصفحة الرئيسية</Link>
       </p>

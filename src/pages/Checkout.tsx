@@ -17,7 +17,7 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   if (!branchId || items.length === 0) {
-    return <EmptyBox msg="عربتك فاضية 🥲 — ارجع لمنيو الفرع واختار حلوياتك الأول" />;
+    return <EmptyBox msg="السلة فاضية 🛒 اختار حاجة حلوة من المنيو." />;
   }
 
   const option = DELIVERY_OPTIONS.find((d) => d.key === delivery)!;
@@ -60,44 +60,38 @@ export default function Checkout() {
   };
 
   return (
-    <div className="py-4 space-y-4">
-      <h1 className="text-xl font-extrabold text-brand-700">طلبك تقريبًا جاهز 🎉</h1>
-      <p className="text-sm font-bold text-brand-800">
-        أول حاجة هتاخد <span className="text-brand-600">رقم الطلب</span> (زي LB-1001) — <span className="underline">قبل</span> أي دفع. بعدين تدفع على انستا باي بمبلغ بالظبط وبس.
-      </p>
-
-      <div className="card p-4 space-y-2">
-        <h2 className="font-extrabold text-brand-900">اختر طريقة الاستلام</h2>
-        {DELIVERY_OPTIONS.map((d) => (
-          <label
-            key={d.key}
-            className={`block rounded-xl border p-3 cursor-pointer transition ${
-              delivery === d.key ? "border-brand-400 bg-brand-50" : "border-brand-100 bg-white"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="d"
-                checked={delivery === d.key}
-                onChange={() => setDelivery(d.key)}
-                className="accent-brand-500"
-              />
-              <span className="font-bold text-brand-900">{d.label}</span>
-            </div>
-            <p className="mt-1 pr-6 text-xs text-brand-700">{d.desc}</p>
-          </label>
-        ))}
+    <div className="space-y-2.5">
+      <h2 className="text-[22px] font-bold text-brand-700 mt-1.5 mb-0">تأكيد طلبك 💗</h2>
+      <div className="text-mut text-sm">
+        هتاخد رقم طلبك الأول (زي LB-1001) — وبعدين الدفع على انستا باي بالمبلغ بالظبط.
       </div>
 
-      <div className="card p-4 space-y-2">
+      {/* طريقة الاستلام: نفس لصقات السلة */}
+      <div className="card p-3.5 text-brand-900">
+        <b>طريقة الاستلام</b>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {DELIVERY_OPTIONS.map((d) => (
+            <button
+              key={d.key}
+              className={`!px-3 ${delivery === d.key ? "btn-dark" : "btn-outline"}`}
+              onClick={() => setDelivery(d.key)}
+            >
+              {d.label}
+            </button>
+          ))}
+        </div>
+        {option.desc && <div className="msg-box mt-2">{option.desc}</div>}
+      </div>
+
+      {/* اسم صاحب الطلب */}
+      <div className="card p-3.5">
         <label htmlFor="cstm-name" className="label">
-          اسمك (مطلوب — بيتكتب في تفاصيل التحويل)
+          اسم صاحب الطلب
         </label>
         <input
           id="cstm-name"
           className="input"
-          placeholder="مثال: مروة أحمد"
+          placeholder="اسم صاحب الطلب"
           maxLength={60}
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -105,7 +99,8 @@ export default function Checkout() {
         />
       </div>
 
-      <div className="card p-4 space-y-1 text-sm font-bold text-brand-900">
+      {/* الإجمالي زي النموذج */}
+      <div className="card p-3.5 text-sm text-brand-900">
         <div className="flex justify-between">
           <span>فرع {branchName}</span>
           <span>{money(subtotal)}</span>
@@ -114,21 +109,26 @@ export default function Checkout() {
           <span>{option.label}</span>
           <span>{option.fee === 0 ? "مجانًا 🎉" : "+" + money(option.fee)}</span>
         </div>
-        <div className="flex justify-between text-lg pt-1 border-t border-brand-100">
-          <span>الإجمالي</span>
-          <span className="text-brand-600">{money(subtotal + option.fee)}</span>
+        <div className="flex items-center justify-between pt-1 mt-1 border-t border-brand-200">
+          <span className="text-base">الإجمالي</span>
+          <b className="text-[20px] text-brand-700">{money(subtotal + option.fee)}</b>
         </div>
       </div>
 
       <Turnstile onChange={setToken} />
       {error && <ErrorBox msg={error} />}
 
-      <button className="btn-primary w-full text-lg py-3" disabled={busy} onClick={submit}>
-        {busy ? "بيقفّل طلبك… ⏳" : "تأكيد الطلب ← رقم الطلب"}
-      </button>
+      <p className="m-0">
+        <button className="btn-primary w-full text-base" disabled={busy} onClick={submit}>
+          {busy ? "بيقفّل طلبك… ⏳" : "تأكيد الطلب والدفع"}
+        </button>
+      </p>
 
-      <p className="text-center text-xs text-brand-700">
-        عندك طلب من قبل؟ <Link to="/track" className="underline font-bold">تتبّعه هنا</Link>
+      <p className="text-center text-xs text-mut m-0">
+        عندك طلب من قبل؟{" "}
+        <Link to="/track" className="underline font-bold">
+          تابعه هنا
+        </Link>
       </p>
     </div>
   );
