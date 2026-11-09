@@ -93,7 +93,7 @@ begin
   end if;
 
   if v_prod.stock_qty < p_qty then
-    return jsonb_build_object('ok', false, 'message', 'الكمية المطلوبة غير متوفرة', 'available', v_prod.stock_qty) using errcode = 'P0002';
+    return jsonb_build_object('ok', false, 'message', 'الكمية المطلوبة غير متوفرة', 'available', v_prod.stock_qty);
   end if;
 
   v_new_qty := v_prod.stock_qty - p_qty;
