@@ -57,6 +57,20 @@ export type Branch = {
   promo_brief: string;
 };
 
+export type BranchPromo = {
+  id: string;
+  branch_id: string;
+  title: string;
+  text: string;
+  image_url: string;
+  link_url: string;
+  button_label: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Category = {
   id: string;
   name: string;

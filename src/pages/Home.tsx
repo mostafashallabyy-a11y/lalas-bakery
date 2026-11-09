@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase, withTimeout, type Branch } from "../lib/types";
 import { useCart } from "../context/CartContext";
 import { Spinner, EmptyBox } from "../components/Common";
+import PromoBanner from "../components/PromoBanner";
 
 export default function Home() {
   const [branches, setBranches] = useState<Branch[] | null>(null);
@@ -26,11 +27,12 @@ export default function Home() {
 
   if (error) return <EmptyBox msg={error} />;
   if (!branches) return <Spinner label="بنجهزلك قايمة الفروع… ☕" />;
-
   return (
     <div className="space-y-2.5">
       <h2 className="text-[22px] font-bold text-brand-700 mt-1.5 mb-0">أهلًا بيك في Lala&rsquo;s 💗</h2>
       <div className="text-mut text-sm">اختار فرعك وابدأ طلبك</div>
+
+      <PromoBanner />
 
       {branches.length === 0 && <EmptyBox msg="لسه مفيش فروع متاحة — قرب قريب 🥲" />}
 

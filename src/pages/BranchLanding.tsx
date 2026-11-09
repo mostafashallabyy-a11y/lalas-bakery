@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase, type Branch } from "../lib/types";
 import { Spinner, EmptyBox } from "../components/Common";
+import PromoBanner from "../components/PromoBanner";
 
 export default function BranchLanding() {
   const { id: branchId } = useParams<{ id: string }>();
@@ -35,6 +36,7 @@ export default function BranchLanding() {
           <img src={branch.cover_image} alt={branch.name} className="w-full h-full object-cover" />
         </div>
       )}
+      <PromoBanner branchId={branchId} />
       <div className="text-center">
         {/* شعار الفرع */}
         {branch.logo ? (
