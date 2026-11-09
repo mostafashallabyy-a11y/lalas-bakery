@@ -90,6 +90,26 @@ export default function BranchPage() {
         )}
         {shown.map((p) => {
           const qty = cart[p.id] || 0;
+          const trackStock = p.track_stock !== false;
+          const stockQty = trackStock ? p.stock_qty : Infinity;
+          const threshold = trackStock ? p.low_stock_threshold : 0;
+          const isOutOfStock = trackStock && stockQty <= 0;
+          const stockPercent = trackStock ? Math.min(100, Math.round((stockQty / Math.max(threshold, 1)) * 100)) : 100;
+
+          const stockBadge = () => {
+            if (!trackStock) return <span className="text-xs text-brand-400">بدون تتبع</span>;
+            if (stockQty <= 0) return <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded">خلصت النهارده 💔</span>;
+            if (stockQty <= threshold) return (
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-bold text-amber-700">باقي {stockQty} 🔥</span>
+                <div className="w-16 h-1 bg-amber-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, stockPercent)}%` }} />
+                </div>
+              </div>
+            );
+            return <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded">متاح {stockQty}</span>;
+          };
+
           return (
             <div key={p.id} className="prod-card">
               {p.image_url ? (
@@ -105,31 +125,37 @@ export default function BranchPage() {
               <b>{p.name}</b>
               {p.note && <div className="text-mut text-sm">{p.note}</div>}
               <div className="text-brand-700 font-bold">{money(p.price)}</div>
-              {qty > 0 ? (
-                <div className="flex items-center justify-center gap-2 mt-1.5 text-brand-900">
-                  <button className="btn-pill !px-3" onClick={() => inc(p.id)}>
-                    +
-                  </button>
-                  <b className="min-w-[20px]">{qty}</b>
-                  <button className="btn-outline !px-3" onClick={() => dec(p.id)}>
-                    −
-                  </button>
-                </div>
+              <div className="text-xs">{stockBadge()}</div>
+              {isOutOfStock ? (
+                <p className="text-xs text-center text-rose-700 mt-1">غير متاح حالياً</p>
               ) : (
-                <button
-                  className="btn-pill mt-1.5"
-                  onClick={() =>
-                    add({
-                      product_id: p.id,
-                      name: p.name,
-                      price: Number(p.price),
-                      note: p.note || "",
-                      image_url: p.image_url || "",
-                    })
-                  }
-                >
-                  Add to cart
-                </button>
+                qty > 0 ? (
+                  <div className="flex items-center justify-center gap-2 mt-1.5 text-brand-900">
+                    <button className="btn-pill !px-3" onClick={() => inc(p.id)}>
+                      +
+                    </button>
+                    <b className="min-w-[20px]">{qty}</b>
+                    <button className="btn-outline !px-3" onClick={() => dec(p.id)}>
+                      −
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="btn-pill mt-1.5"
+                    disabled={isOutOfStock}
+                    onClick={() =>
+                      add({
+                        product_id: p.id,
+                        name: p.name,
+                        price: Number(p.price),
+                        note: p.note || "",
+                        image_url: p.image_url || "",
+                      })
+                    }
+                  >
+                    Add to cart
+                  </button>
+                )
               )}
             </div>
           );

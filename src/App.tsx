@@ -22,6 +22,7 @@ import SettingsAdmin from "./pages/admin/SettingsAdmin";
 import StaffAdmin from "./pages/admin/StaffAdmin";
 import FeedbackAdmin from "./pages/admin/FeedbackAdmin";
 import PromosAdmin from "./pages/admin/PromosAdmin";
+import InventoryAdmin from "./pages/admin/InventoryAdmin";
 import ReportsAdmin from "./pages/admin/ReportsAdmin";
 
 export default function App() {
@@ -53,6 +54,7 @@ export default function App() {
                 <Route path="feedback" element={<FeedbackAdmin />} />
                 <Route path="reports" element={<ReportsAdmin />} />
                 <Route path="promos" element={<PromosAdmin />} />
+                <Route path="inventory" element={<InventoryAdmin />} />
               </Route>
               <Route path="pos" element={<StaffPOS />} />
             </Route>

@@ -10,6 +10,7 @@ export default function AdminNav() {
     { to: "/staff/admin/feedback", label: "آراء العملاء" },
     { to: "/staff/admin/reports", label: "التقارير" },
     { to: "/staff/admin/promos", label: "بروموات الفروع" },
+    { to: "/staff/admin/inventory", label: "المخزون" },
   ];
 
   return (
