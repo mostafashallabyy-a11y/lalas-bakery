@@ -90,7 +90,7 @@ begin
     raise exception 'طريقة دفع غير صحيحة' using errcode = 'P0001';
   end if;
 
-  v_name := btrim(coalesce(p_customer_name,''));
+  v_name := nullif(btrim(coalesce(p_customer_name,'')), '');
   if char_length(v_name) > 60 then
     raise exception 'الاسم طويل زيادة عن اللزوم' using errcode = 'P0001';
   end if;
