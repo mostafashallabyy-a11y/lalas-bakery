@@ -83,7 +83,12 @@ export default function OrderPage() {
   return (
     <div className="space-y-2.5">
       <div className="card p-4 text-center">
-        <div className="text-[40px]">🎉</div>
+        <img
+          src="/lalas-logo-pink.png"
+          alt="Lala's Bakery"
+          className="mx-auto mb-2 max-h-[90px] w-auto"
+        />
+        <h2 className="text-[22px] font-bold text-brand-700 my-1">رقم طلبك</h2>
         <h2 className="text-[22px] font-bold text-brand-700 my-1">رقم طلبك</h2>
         <div className="text-[28px] font-extrabold text-brand-800 tracking-wide my-2">{orderNumber}</div>
         <div className="flex items-center justify-center gap-2 flex-wrap">
