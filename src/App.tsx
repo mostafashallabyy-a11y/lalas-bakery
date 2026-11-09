@@ -4,6 +4,7 @@ import { CartProvider } from "./context/CartContext";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import BranchPage from "./pages/Branch";
+import BranchLanding from "./pages/BranchLanding";
 import CartPage from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
@@ -29,6 +30,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
             <Route path="/branch/:id" element={<BranchPage />} />
+            <Route path="/branch/:id/landing" element={<BranchLanding />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/pay/:orderNumber" element={<Payment />} />

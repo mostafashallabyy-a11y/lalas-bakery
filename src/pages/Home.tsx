@@ -50,7 +50,7 @@ export default function Home() {
               className="btn-primary"
               onClick={() => {
                 setBranch(b.id, b.name);
-                navigate(`/branch/${b.id}`);
+                navigate(`/branch/${b.id}/landing`);
               }}
             >
               شوف المنيو

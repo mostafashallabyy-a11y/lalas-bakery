@@ -52,6 +52,9 @@ export type Branch = {
   services: string[];
   is_active: boolean;
   sort_order: number;
+  logo: string;
+  cover_image: string;
+  promo_brief: string;
 };
 
 export type Category = {

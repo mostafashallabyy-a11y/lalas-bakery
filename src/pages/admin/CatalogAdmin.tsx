@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase, type Branch, type Category, type Product } from "../../lib/types";
 import { money } from "../../lib/format";
 import { Spinner, EmptyBox } from "../../components/Common";
+import { compressImage } from "../../lib/image";
 
 // ===== التصنيفات =====
 function CategoriesPanel({ cats, reload, busyFlag, setBusyFlag }: {
@@ -204,12 +205,13 @@ export default function CatalogAdmin() {
     setErr(null);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      if (!["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) throw new Error("صيغة الصورة مش مدعومة — استخدم jpg/png/webp/gif");
-      if (file.size > 5 * 1024 * 1024) throw new Error("الصورة أكبر من 5MB");
-      const path = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error } = await supabase.storage.from("products").upload(path, file, { upsert: false });
+      if (!["jpg", "jpeg", "png", "webp"].includes(ext)) throw new Error("صيغة الصورة مش مدعومة — استخدم jpg/png/webp");
+      if (file.size > 3 * 1024 * 1024) throw new Error("الصورة أكبر من 3 ميجابايت");
+      const compressed = await compressImage(file, { maxWidth: 1000, quality: 0.85 });
+      const path = `products/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, compressed, { contentType: compressed.type, upsert: false });
       if (error) throw error;
-      const { data } = supabase.storage.from("products").getPublicUrl(path);
+      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
       setForm((f) => (f ? { ...f, image_url: data.publicUrl } : f));
     } catch (e: unknown) {
       setErr((e as Error).message);
