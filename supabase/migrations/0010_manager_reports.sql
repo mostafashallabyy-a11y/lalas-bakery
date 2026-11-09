@@ -210,8 +210,8 @@ begin
       select coalesce(jsonb_agg(x), '[]'::jsonb) from (
         select p.full_name, p.email,
                count(distinct o.id) as orders_handled,
-               round(avg(extract(epoch from (e2.created_at - o.created_at))) / 60.0, 1) as avg_prep_minutes,
-               round(percentile_cont(0.5) within group (order by extract(epoch from (e2.created_at - o.created_at))) / 60.0, 1) as median_prep_minutes,
+               round(avg(extract(epoch from (e2.created_at - o.created_at)))::numeric / 60.0, 1) as avg_prep_minutes,
+               round(percentile_cont(0.5) within group (order by extract(epoch from (e2.created_at - o.created_at)))::numeric / 60.0, 1) as median_prep_minutes,
                count(*) filter (where extract(epoch from (e2.created_at - o.created_at)) > v_target * 60) as orders_over_target,
                count(distinct vr.id) as void_requests,
                coalesce(sum(s.difference),0) as cash_shift_difference,
