@@ -87,6 +87,8 @@ export type OrderRow = {
   total: number;
   status: OrderStatus;
   payment_confirmed: boolean;
+  source: "online" | "pos";
+  payment_proof_path: string | null;
   created_at: string;
   updated_at: string;
   branches?: { name: string } | null;

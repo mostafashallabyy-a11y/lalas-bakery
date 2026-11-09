@@ -14,6 +14,7 @@ export default function StaffOrders() {
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [events, setEvents] = useState<Record<string, OrderEventRow[]>>({});
+  const [proofUrls, setProofUrls] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase
@@ -27,6 +28,17 @@ export default function StaffOrders() {
     } else {
       setOrders((data as unknown as OrderRow[]) ?? []);
       setError(null);
+      // generate signed URLs for proof images (private bucket)
+      (data as unknown as OrderRow[]).forEach((o) => {
+        if (o.payment_proof_path) {
+          supabase.storage
+            .from("payment-proofs")
+            .createSignedUrl(o.payment_proof_path, 3600)
+            .then(({ data, error: serr }) => {
+              if (data?.signedUrl && !serr) setProofUrls((prev) => ({ ...prev, [o.id]: data.signedUrl }));
+            });
+        }
+      });
     }
   }, []);
 
@@ -69,7 +81,11 @@ export default function StaffOrders() {
 
   const setPayment = async (o: OrderRow, confirmed: boolean) => {
     setWorking(o.id);
-    const { data, error: e } = await supabase.rpc("staff_set_payment", { p_order_id: o.id, p_confirmed: confirmed });
+    const rpcName = confirmed ? "staff_confirm_payment" : "staff_reject_payment";
+    const { data, error: e } = await supabase.rpc(rpcName, {
+      p_order_id: o.id,
+      p_reason: confirmed ? undefined : "الصورة غير واضحة",
+    });
     setWorking(null);
     if (e || !data?.ok) {
       setError((e as Error)?.message || "حصلت مشكلة في تأكيد الدفع — جرّب تاني");
@@ -134,10 +150,50 @@ export default function StaffOrders() {
               </div>
 
               <div className="flex flex-wrap gap-2 pt-1">
-                {o.payment_confirmed ? (
-                  <button className="btn-soft !py-1.5 !px-3 text-xs" disabled={working === o.id} onClick={() => setPayment(o, false)}>إلغاء تأكيد الدفع</button>
+                {o.payment_proof_path && (
+                  <div className="flex items-center gap-2 min-w-[120px]">
+                    <img
+                      src={proofUrls[o.id] || o.payment_proof_path}
+                      alt="إثبات تحويل"
+                      className="w-16 h-16 object-cover rounded border border-brand-200 cursor-pointer"
+                      onClick={() => window.open(o.payment_proof_path!, "_blank")}
+                    />
+                    <span className="text-xs text-brand-700">صورة التحويل مرفقة</span>
+                  </div>
+                )}
+                {!o.payment_confirmed && o.payment_proof_path ? (
+                  <button
+                    className="btn-primary !py-1.5 !px-3 text-xs"
+                    disabled={working === o.id}
+                    onClick={() => setPayment(o, true)}
+                  >
+                    ✅ تأكيد الدفع
+                  </button>
                 ) : (
-                  <button className="btn-primary !py-1.5 !px-3 text-xs" disabled={working === o.id} onClick={() => setPayment(o, true)}>✅ تأكيد الدفع</button>
+                  o.payment_confirmed ? (
+                    <button
+                      className="btn-soft !py-1.5 !px-3 text-xs"
+                      disabled={working === o.id}
+                      onClick={() => setPayment(o, false)}
+                    >
+                      إلغاء تأكيد الدفع
+                    </button>
+                  ) : (
+                    <button
+                      className="btn-soft !py-1.5 !px-3 text-xs text-brand-400"
+                      disabled
+                    >
+                      منتظر رفع إثبات التحويل
+                    </button>
+                  )
+                )}
+                {!o.payment_confirmed && !o.payment_proof_path && (
+                  <button
+                    className="btn-soft !py-1.5 !px-3 text-xs text-red-500"
+                    onClick={() => setPayment(o, true)}
+                  >
+                    رفض (الصورة غير واضحة)
+                  </button>
                 )}
                 {next && o.status !== "done" && (
                   <button className="btn-primary !py-1.5 !px-3 text-xs" disabled={working === o.id} onClick={() => setStatus(o, next)}>

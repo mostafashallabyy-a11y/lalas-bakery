@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { supabase, type OrderStatus } from "../lib/types";
 import { money } from "../lib/format";
 import { CopyButton, ErrorBox, Spinner } from "../components/Common";
+import { compressImage } from "../lib/image";
 
 type PayInfo = {
   ok: boolean;
@@ -19,6 +20,10 @@ export default function Payment() {
   const [instapay, setInstapay] = useState<string | null>(null);
   const [info, setInfo] = useState<PayInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofUploading, setProofUploading] = useState(false);
+  const [proofUploaded, setProofUploaded] = useState(false);
+  const [proofError, setProofError] = useState<string | null>(null);
 
   // الاسم بنخليه في الجلسة فقط — للنسخ في ملاحظة التحويل
   const customerName = sessionStorage.getItem("lalas_name") || "";
@@ -64,10 +69,63 @@ export default function Payment() {
     };
   }, [orderNumber]);
 
+  const noteText = `${orderNumber}${customerName ? " " + customerName : ""}`;
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      setProofError("الملف يجب أن يكون صورة (jpg, png, webp) فقط");
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setProofError("حجم الصورة أكبر من 3 ميجابايت — اختر صورة أصغر");
+      return;
+    }
+    setProofError(null);
+    setProofFile(file);
+  };
+
+  const uploadProof = async () => {
+    if (!proofFile || !orderNumber) return;
+    setProofUploading(true);
+    setProofError(null);
+    try {
+      // ضغط الصورة من جهة العميل
+      const compressed = await compressImage(proofFile, { maxWidth: 1200, quality: 0.85 });
+      // اسم الملف: payment-proofs/<order_id>/<uuid>.jpg — نستخدم order_number místo id لأن العميل مايعرفش id
+      const ext = compressed.name.split(".").pop() || "jpg";
+      const random = crypto.randomUUID();
+      const path = `payment-proofs/${orderNumber}/${random}.${ext}`;
+
+      const { error: supErr } = await supabase.storage.from("payment-proofs").upload(path, compressed, {
+        contentType: compressed.type,
+        upsert: false,
+      });
+      if (supErr) throw supErr;
+
+      // تخزين المسار في الطلب عبر RPC يتحقق من الرقم + المفتاح
+      // نجلب المفتاح من saved orders أو من اللنك
+      const urlParams = new URLSearchParams(window.location.search);
+      const trackingKey = urlParams.get("k") || "";
+      const { error: rpcErr } = await supabase.rpc("upload_payment_proof", {
+        p_order_number: orderNumber,
+        p_tracking_key: trackingKey,
+        p_path: path,
+      });
+      if (rpcErr) throw new Error(rpcErr.message || "فشل في رفع إثبات الدفع");
+
+      setProofUploaded(true);
+    } catch (e) {
+      setProofError(e instanceof Error ? e.message : "فشل في رفع الصورة — جرّب تاني");
+    } finally {
+      setProofUploading(false);
+    }
+  };
+
   if (!orderNumber) return <ErrorBox msg="رقم الطلب مش موجود في اللنك 🥲" />;
   if (!instapay) return <Spinner label="بنجهزلك صفحة الدفع… 💳" />;
-
-  const noteText = `${orderNumber}${customerName ? " " + customerName : ""}`;
 
   return (
     <div className="space-y-2.5">
@@ -100,6 +158,33 @@ export default function Payment() {
             </li>
             <li>
               اكتب في الملاحظة: <b>{noteText}</b> <CopyButton text={noteText} />
+            </li>
+            <li>
+              <b>ارفق صورة التحويل:</b>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleFile}
+                className="block mt-1"
+              />
+              {proofFile && (
+                <div className="text-xs text-mut mt-1">
+                  {proofFile.name} · {(proofFile.size / 1024 / 1024).toFixed(2)} ميغا
+                </div>
+              )}
+              <button
+                className="btn-primary mt-1.5 shrink-0"
+                disabled={proofUploading || proofUploaded || !proofFile}
+                onClick={uploadProof}
+              >
+                {proofUploading ? "يتم الرفع…" : proofUploaded ? "تم الرفع ✓" : "رفع إثبات التحويل"}
+              </button>
+              {proofError && <ErrorBox msg={proofError} />}
+              {proofUploaded && (
+                <div className="text-xs text-brand-700 mt-1">
+                  تم رفع إثبات التحويل — هنتأكد منه ونبدأ التحضير فوراً
+                </div>
+              )}
             </li>
           </ol>
         )}
