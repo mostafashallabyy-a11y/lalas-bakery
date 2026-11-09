@@ -1,15 +1,27 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { supabase, type OrderStatus, type TrackResult } from "../lib/types";
+import { supabase, type OrderStatus } from "../lib/types";
 import { money, STATUS } from "../lib/format";
 import { CopyButton, ErrorBox, Spinner } from "../components/Common";
 
-type PayInfo = {
+type OrderItem = { name: string; qty: number; unit_price: number; line_total: number };
+type OrderDetails = {
   ok: boolean;
   order_number: string;
-  total: number;
   status: OrderStatus;
   branch_name: string;
+  delivery_type: string;
+  delivery_fee: number;
+  subtotal: number;
+  total: number;
+  items: OrderItem[];
+  message?: string;
+};
+
+const DELIVERY_LABEL: Record<string, string> = {
+  pickup: "استلام من الفرع",
+  table: "توصيل للترابيزة",
+  obour: "دليفري داخل العبور",
 };
 
 export default function OrderPage() {
@@ -18,29 +30,30 @@ export default function OrderPage() {
   const { search } = useLocation();
   const trackingKey = new URLSearchParams(search).get("k") || "";
 
-  const [info, setInfo] = useState<PayInfo | null>(null);
-  const [status, setStatus] = useState<OrderStatus | null>(null);
+  const [details, setDetails] = useState<OrderDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  useEffect(() => {
+  const load = async () => {
     if (!orderNumber) return;
-    (async () => {
-      // Payment info (amount/branch) - public RPC
+    if (!trackingKey) {
+      // fallback: basic info only
       const { data } = await supabase.rpc("get_payment_info", { p_order_number: orderNumber });
-      if ((data as PayInfo | null)?.ok) setInfo(data as PayInfo);
+      const info = data as any;
+      if (info?.ok) setDetails({ ok: true, order_number: info.order_number, status: info.status, branch_name: info.branch_name, delivery_type: "", delivery_fee: 0, subtotal: 0, total: info.total, items: [] });
+      else setError("مش لاقيين تفاصيل الطلب — افتح من رابط المتابعة الكامل.");
+      return;
+    }
+    const { data } = await supabase.rpc("get_order_details", {
+      p_order_number: orderNumber,
+      p_tracking_key: trackingKey,
+    });
+    const d = data as OrderDetails | null;
+    if (d?.ok) { setDetails(d); setError(null); }
+    else setError(d?.message || "مش لاقيين تفاصيل الطلب.");
+  };
 
-      // Status via tracking key if available
-      if (trackingKey) {
-        const { data: t } = await supabase.rpc("track_order_by_key", {
-          p_order_number: orderNumber,
-          p_tracking_key: trackingKey,
-        });
-        const tr = t as TrackResult | null;
-        if (tr?.ok && tr.status) setStatus(tr.status);
-      }
-    })();
-  }, [orderNumber, trackingKey]);
+  useEffect(() => { load(); }, [orderNumber, trackingKey]);
 
   // Realtime status
   useEffect(() => {
@@ -52,17 +65,15 @@ export default function OrderPage() {
         { event: "*", schema: "public", table: "order_status_public", filter: `order_number=eq.${orderNumber}` },
         (payload) => {
           const row = payload.new as { status: OrderStatus } | null;
-          if (row?.status) setStatus(row.status);
+          if (row?.status) setDetails((prev) => (prev ? { ...prev, status: row.status } : prev));
         }
       )
       .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
+    return () => { supabase.removeChannel(ch); };
   }, [orderNumber]);
 
   if (!orderNumber) return <ErrorBox msg="رقم الطلب مش موجود في اللنك 🥲" />;
-  if (!info && !error) return <Spinner label="بنجيب تفاصيل طلبك…" />;
+  if (!details && !error) return <Spinner label="بنجيب تفاصيل طلبك…" />;
 
   const trackingLink = `${window.location.origin}/order/${orderNumber}${trackingKey ? `?k=${trackingKey}` : ""}`;
   const whatsappText = encodeURIComponent(
@@ -94,18 +105,37 @@ export default function OrderPage() {
           </a>
         </div>
         <p className="mt-3 font-bold text-brand-700">احتفظ برقم الطلب</p>
-        {info && (
+        {details && (
           <div className="text-mut text-sm mt-1">
-            {info.branch_name} · الإجمالي {money(info.total)}
+            {details.branch_name} · الإجمالي {money(details.total)}
           </div>
         )}
         {error && <ErrorBox msg={error} />}
       </div>
 
-      {status && (
+      {details && details.items.length > 0 && (
+        <div className="card p-3.5 text-brand-900">
+          <b>تفاصيل الطلب</b>
+          <div className="mt-2 space-y-1 text-sm">
+            {details.items.map((it, i) => (
+              <div key={i} className="flex justify-between gap-2">
+                <span>{it.name} ×{it.qty}</span>
+                <span>{money(it.line_total)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-brand-100 mt-2 pt-2 text-sm space-y-1">
+            <div className="flex justify-between"><span>الإجمالي الفرعي</span><span>{money(details.subtotal)}</span></div>
+            <div className="flex justify-between"><span>{DELIVERY_LABEL[details.delivery_type] || "الاستلام"}</span><span>{details.delivery_fee ? `+${money(details.delivery_fee)}` : "مجانًا"}</span></div>
+            <div className="flex justify-between font-bold"><span>الإجمالي</span><span>{money(details.total)}</span></div>
+          </div>
+        </div>
+      )}
+
+      {details?.status && (
         <div className="card p-3.5">
-          <b className="text-brand-900">حالة الطلب</b>
-          <div className="msg-box mt-2">{STATUS[status].msg}</div>
+          <b className="text-brand-900">حالة الطلب {details.status === "preparing" ? "(جاري التحضير)" : ""}</b>
+          <div className="msg-box mt-2">{STATUS[details.status].msg}</div>
         </div>
       )}
 
@@ -118,3 +148,4 @@ export default function OrderPage() {
     </div>
   );
 }
+
