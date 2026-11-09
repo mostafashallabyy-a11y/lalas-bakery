@@ -122,7 +122,7 @@ declare
   v_out jsonb;
   v_f timestamptz := p_from::timestamptz at time zone 'Africa/Cairo';
   v_t timestamptz := (p_to::timestamptz + interval '1 day') at time zone 'Africa/Cairo';
-  v_prev_f timestamptz := (p_from::timestamptz - (p_to::timestamptz - p_from::timestamptz)) at time zone 'Africa/Cairo';
+  v_prev_f timestamptz := (p_from::date - (p_to - p_from))::timestamptz at time zone 'Africa/Cairo';
   v_prev_t timestamptz := p_from::timestamptz at time zone 'Africa/Cairo';
 begin
   if not is_manager() then
