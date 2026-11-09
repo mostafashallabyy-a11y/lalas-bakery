@@ -33,11 +33,14 @@ export default function Layout() {
 
   return (
     <div className="min-h-dvh">
-      {/* الهيدر: وردي بحدود متقطعة وشعار كاتي في النص زي النموذج */}
-      <header className="bg-brand-100 border-b-2 border-dashed border-brand-200 px-3.5 py-2.5 text-center">
+      {/* الهيدر: وردي بحدود متقطعة وشعار لالاز 베이كرى في النص زي النموذج */}
+      <header className="bg-brand-100 border-b-2 border-dashed border-brand-200 px-3.5 py-3 text-center">
         <Link to="/" className="inline-block">
-          <span className="logo-script block">Lala&rsquo;s</span>
-          <span className="block text-xs text-mut tracking-[1px]">Coffee · Bakery · Homemade 🎀</span>
+          <img
+            src="/assets/logo.png"
+            alt="Lala's Bakery"
+            className="w-auto h-12 md:h-16 mx-auto mb-1"
+          />
         </Link>
         <div className="mt-2 flex justify-center">
           <NavLink to="/track" end className={({ isActive }) => cls(isActive)}>
