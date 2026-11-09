@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Spinner } from "../../components/Common";
 
@@ -18,5 +19,24 @@ export default function StaffLayout() {
       </div>
     );
   }
-  return <Outlet />;
+  return (
+    <div className="min-h-dvh">
+      <nav className="sticky top-0 z-30 bg-brand-50 border-b border-brand-200 flex gap-1.5 overflow-x-auto px-2.5 py-2">
+        <NavLink to="/staff" className={({ isActive }) => `${isActive ? "btn-dark" : "btn-outline"} shrink-0`}>
+          🧾 الطلبات
+        </NavLink>
+        <NavLink to="/staff/pos" className={({ isActive }) => `${isActive ? "btn-dark" : "btn-outline"} shrink-0`}>
+          💰 كاشير الفرع (POS)
+        </NavLink>
+        {profile.role === "manager" && (
+          <NavLink to="/staff/admin" className={({ isActive }) => `${isActive ? "btn-dark" : "btn-outline"} shrink-0`}>
+            👑 لوحة الإدارة
+          </NavLink>
+        )}
+      </nav>
+      <main className="max-w-[720px] w-full mx-auto px-3.5 pt-3.5 pb-20">
+        <Outlet />
+      </main>
+    </div>
+  );
 }

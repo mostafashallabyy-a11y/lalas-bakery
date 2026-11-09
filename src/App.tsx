@@ -13,6 +13,7 @@ import Track from "./pages/Track";
 import FeedbackPage from "./pages/Feedback";
 import StaffLogin from "./pages/StaffLogin";
 import StaffOrders from "./pages/StaffOrders";
+import StaffPOS from "./pages/StaffPOS";
 import StaffLayout from "./pages/staff/StaffLayout";
 import AdminLayout from "./pages/admin/AdminLayout";
 import BranchesAdmin from "./pages/admin/BranchesAdmin";
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="feedback" element={<FeedbackAdmin />} />
                 <Route path="reports" element={<ReportsAdmin />} />
               </Route>
+              <Route path="pos" element={<StaffPOS />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
