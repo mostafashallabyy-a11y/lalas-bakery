@@ -37,7 +37,7 @@ export default function Layout() {
       <header className="bg-brand-100 border-b-2 border-dashed border-brand-200 px-3.5 py-3 text-center">
         <Link to="/" className="inline-block">
           <img
-            src="/lalas-logo-pink.png"
+            src="/lalas-logo-v2.png"
             alt="Lala's Bakery"
             className="w-auto h-auto max-h-[90px] mx-auto mb-1"
           />
