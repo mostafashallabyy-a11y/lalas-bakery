@@ -88,7 +88,34 @@ export type Product = {
   image_url: string;
   is_active: boolean;
   sort_order: number;
+  stock_qty: number;
+  low_stock_threshold: number;
+  track_stock: boolean;
   categories?: { name: string } | null;
+};
+
+export type StockMovement = {
+  id: string;
+  product_id: string;
+  branch_id: string;
+  change_qty: number;
+  reason: string;
+  changed_by: string | null;
+  note: string;
+  created_at: string;
+  profiles?: { full_name: string; email: string } | null;
+};
+
+export type LowStockAlert = {
+  id: string;
+  product_id: string;
+  branch_id: string;
+  stock_qty: number;
+  threshold: number;
+  resolved: boolean;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: string;
 };
 
 export type OrderStatus = "received" | "preparing" | "done";

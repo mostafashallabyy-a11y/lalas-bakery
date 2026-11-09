@@ -76,6 +76,9 @@ type ProductForm = {
   image_url: string;
   is_active: boolean;
   sort_order: number;
+  stock_qty: number;
+  low_stock_threshold: number;
+  track_stock: boolean;
 };
 
 const emptyForm = (branchId: string, categoryId: string): ProductForm => ({
@@ -87,6 +90,9 @@ const emptyForm = (branchId: string, categoryId: string): ProductForm => ({
   image_url: "",
   is_active: true,
   sort_order: 0,
+  stock_qty: 0,
+  low_stock_threshold: 10,
+  track_stock: true,
 });
 
 export default function CatalogAdmin() {
@@ -138,6 +144,13 @@ export default function CatalogAdmin() {
     [products, fBranch, fCat]
   );
 
+  const stockBadge = (p: Product) => {
+    if (!p.track_stock) return <span className="text-xs text-brand-400">بدون تتبع</span>;
+    if (p.stock_qty === 0) return <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded">خلصت 💔</span>;
+    if (p.stock_qty <= p.low_stock_threshold) return <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">باقي {p.stock_qty} 🔥</span>;
+    return <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded">متاح {p.stock_qty}</span>;
+  };
+
   const openForm = (p?: Product) => {
     setForm(
       p
@@ -151,6 +164,9 @@ export default function CatalogAdmin() {
             image_url: p.image_url || "",
             is_active: p.is_active,
             sort_order: p.sort_order,
+            stock_qty: p.stock_qty,
+            low_stock_threshold: p.low_stock_threshold,
+            track_stock: p.track_stock,
           }
         : emptyForm(fBranch || branches?.[0]?.id || "", cats?.[0]?.id || "")
     );
@@ -160,8 +176,12 @@ export default function CatalogAdmin() {
     if (!form) return;
     setErr(null);
     const price = Number(form.price);
+    const stock = Number(form.stock_qty);
+    const threshold = Number(form.low_stock_threshold);
     if (form.name.trim().length < 2) return setErr("اسم المنتج قصير (حرفين على الأقل)");
     if (!Number.isFinite(price) || price < 0 || price > 100000) return setErr("سعر غير صالح (صحّحه من 0 لـ 100,000) — جرب رقم تاني");
+    if (!Number.isFinite(stock) || stock < 0 || stock > 100000) return setErr("كمية المخزون غير صالحة");
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 10000) return setErr("عتبة المخزون غير صحيحة");
     const row = {
       branch_id: form.branch_id,
       category_id: form.category_id,
@@ -171,6 +191,9 @@ export default function CatalogAdmin() {
       image_url: form.image_url.trim().slice(0, 500),
       is_active: form.is_active,
       sort_order: Number(form.sort_order) || 0,
+      stock_qty: stock,
+      low_stock_threshold: threshold,
+      track_stock: form.track_stock,
     };
     setBusyFlag(true);
     try {
@@ -262,6 +285,7 @@ export default function CatalogAdmin() {
                   {p.categories?.name} · {money(Number(p.price))}
                   {p.note ? ` · ${p.note}` : ""}
                 </p>
+                <p className="text-xs">{stockBadge(p)}</p>
               </div>
               <div className="flex flex-col gap-1 text-xs">
                 <button className="btn-soft !py-1 !px-2" onClick={() => openForm(p)}>تعديل</button>
@@ -306,6 +330,16 @@ export default function CatalogAdmin() {
                 <input className="input" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })} />
               </div>
             </div>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="label">كمية المخزون</label>
+                <input className="input" type="number" min={0} step={1} value={String(form.stock_qty)} onChange={(e) => setForm({ ...form, stock_qty: Number(e.target.value) || 0 })} />
+              </div>
+              <div className="w-32">
+                <label className="label">عتبة التنبيه</label>
+                <input className="input" type="number" min={0} step={1} value={String(form.low_stock_threshold)} onChange={(e) => setForm({ ...form, low_stock_threshold: Number(e.target.value) || 10 })} />
+              </div>
+            </div>
             <div>
               <label className="label">ملاحظة (اختياري)</label>
               <input className="input" maxLength={200} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
@@ -326,6 +360,10 @@ export default function CatalogAdmin() {
             <label className="flex items-center gap-2 font-bold text-brand-900 text-sm">
               <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="accent-brand-500" />
               متاح للعملاء (ظاهر)
+            </label>
+            <label className="flex items-center gap-2 font-bold text-brand-900 text-sm">
+              <input type="checkbox" checked={form.track_stock} onChange={(e) => setForm({ ...form, track_stock: e.target.checked })} className="accent-brand-500" />
+              تتبع المخزون
             </label>
             <div className="flex gap-2">
               <button className="btn-primary" disabled={busyFlag || uploading} onClick={save}>حفظ</button>
