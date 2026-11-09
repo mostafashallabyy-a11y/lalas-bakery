@@ -68,7 +68,7 @@ create or replace function pos_create_order(
   p_items jsonb,
   p_delivery_type text default 'pickup',
   p_customer_name text default null,
-  p_payment_method text not null check (p_payment_method in ('cash','instapay')),
+  p_payment_method text default 'cash' check (p_payment_method in ('cash','instapay')),
   p_staff_note text default null
 )
 returns jsonb
