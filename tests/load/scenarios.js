@@ -13,7 +13,7 @@ import http from "k6/http";
 
 const SUPABASE_URL = __ENV.SUPABASE_URL || "https://clzdajzsgacivzfenmyq.supabase.co";
 const SUPABASE_ANON_KEY = __ENV.SUPABASE_ANON_KEY || "sb_publishable_g5FxMTfLq0HdLZXkMQM_hw_Mk9KUivV";
-const STOCK_PRODUCT_ID = __ENV.STOCK_PRODUCT_ID || "326d24da-02aa-4e3f-bf75-b68ca6301e30";
+const STOCK_PRODUCT_ID = __ENV.STOCK_PRODUCT_ID || "00000000-0000-0000-0000-000000000010";
 const BRANCH_ID = __ENV.BRANCH_ID || "00000000-0000-0000-0000-000000000001";
 
 // ============================================================
