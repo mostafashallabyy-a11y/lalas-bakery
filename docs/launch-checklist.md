@@ -10,9 +10,9 @@
 - [x] RLS enabled on every table (all migrations enforce `enable`+`force`)
 - [x] SECURITY DEFINER functions have fixed search_path
 - [x] Rate limiting enabled on public RPCs (confirmed live 2026-11-10; order cap 5/30min)
-- [ ] Turnstile configured (site key set in settings table)
+- [x] Turnstile configured — site key → Pages env `VITE_TURNSTILE_SITE_KEY` (added + redeployed 2026-11-10); secret → `settings.turnstile_secret` (insert confirmed 2026-11-10)
 - [x] Demo data removed from production (2026-11-10: `فرع demo التجريبي` deactivated — reversible, history kept; 0 orders; customers now see only فرع الشروق + فرع العبور الرئيسي)
-- [ ] Real InstaPay number set in settings
+- [x] Real InstaPay number set in settings (verified 2026-11-10)
 - [ ] Real product prices and stock levels set
 - [ ] Real branch information (name, description, services)
 - [ ] Manager account created with strong password
@@ -39,7 +39,7 @@
 
 ### Security
 - [ ] RLS enabled on all tables
-- [ ] Turnstile enabled on public forms (checkout, feedback)
+- [x] Turnstile enabled on public forms — widget renders on checkout (bundle verified after redeploy 2026-11-10)
 - [ ] Rate limiting enabled on public RPCs
 - [ ] Service role key NOT in frontend code
 - [ ] Anon key not committed to git
@@ -106,7 +106,7 @@ If critical issues are found after launch:
 | Manager reports work | ✅ (Phase 5 verified on prod) |
 | RLS enabled | ✅ |
 | Rate limiting enabled | ✅ |
-| Turnstile enabled | ☐ |
+| Turnstile enabled | ✅ (2026-11-10) |
 | MFA enabled for manager | ☐ |
 
 **GO** if all checks pass.
