@@ -20,3 +20,6 @@ backups/
 
 # Local secrets (rotated passwords etc.) — never commit
 scripts/local/
+
+# Supabase CLI link metadata (never commit)
+supabase/.temp/
