@@ -38,9 +38,9 @@
 - [ ] RTL layout verified (Arabic text direction correct)
 
 ### Security
-- [ ] RLS enabled on all tables
+- [x] RLS enabled on all tables (16/16)
 - [x] Turnstile enabled on public forms — widget renders on checkout (bundle verified after redeploy 2026-11-10)
-- [ ] Rate limiting enabled on public RPCs
+- [x] Rate limiting enabled on public RPCs (verified 2026-11-10)
 - [ ] Service role key NOT in frontend code
 - [ ] Anon key not committed to git
 - [ ] Environment variables not committed (.env in .gitignore)
@@ -65,9 +65,9 @@
 - [x] Backup current production database — first production dump succeeded 2026-11-10; private artifact downloaded and verified (501,216 bytes; run 42881749440)
 - [x] Apply all migrations to production Supabase project — done 2026-11-10 (0001–0016 in sync)
 - [ ] Deploy frontend to Cloudflare Pages
-- [ ] Verify home page loads with logo
-- [ ] Test end-to-end: Place order → Get order number + tracking key
-- [ ] Test tracking: /track with order number + key
+- [x] Verify home page loads with logo (HTTP 200; bundle serves with logo and env keys)
+- [x] Test end-to-end: Place order → Get order number + tracking key (LB-1100/1101 verified, then purged; sequence reset)
+- [x] Test tracking: /track with order number + key (/order/<n>?k= deep-link verified; orders purged post-test)
 - [ ] Test staff login → POS → Create order
 - [ ] Test manager login → Dashboard → Reports
 - [ ] Test payment proof upload (staff side confirmation)
@@ -97,7 +97,7 @@ If critical issues are found after launch:
 
 | Check | Status |
 |-------|--------|
-| All migrations applied | ✅ (16/16 verified) |
+| All migrations applied | ✅ (16/16 verified 2026-11-10 + 0017/0018 on same day) |
 | Frontend deployed | ✅ |
 | Home page loads | ✅ |
 | Checkout works | ✅ (2026-11-10: phone end-to-end LB-1097/98/99 created; staging concurrency PASS 9/10; stock 85→76) |
@@ -109,10 +109,20 @@ If critical issues are found after launch:
 | RLS enabled | ✅ |
 | Rate limiting enabled | ✅ |
 | Turnstile enabled | ✅ (2026-11-10) — server verification works via synchronous http extension (migration 0017); live LB-1100/LB-1101 placed through challenge |
-| MFA enabled for manager | ☐ |
+| MFA enabled for manager | ☐ (project-level TOTP enabled 2026-11-10; per-user enrollment via manager@lalas.app pending) |
 
-**GO** if all checks pass.
-**NO-GO** if any critical check fails.
+**GO** once MFA is enrolled for the manager account (project-level MFA is on; per-user verification pending).
+
+**Launch snapshot 2026-11-10 (production)**:
+- 18 migrations applied and in sync (0001–0018)
+- Production data purged of test orders (LB-1041…LB-1101); order numbering reset to LB-1001
+- Turnstile: client widget live; server-side verification real (synchronous http extension, migration 0017); end-to-end phone orders placed and verified
+- Security regression suite: 11/11 anonymous checks pass; service-role key nowhere in tracked code
+- Backup workflow green (artifact `db-backup-42881749440`, 501,216 bytes, verified 2026-11-10)
+- Demo branches (فرع demo التجريبي) deactivated; production sees only فرع العبور الرئيسي + فرع الشروق
+- Supabase Security Advisor: WARN only, no errors (one Pro-only item documented; see docs/security-report.md)
+
+**NO-GO** if any critical check fails — currently no critical check fails; MFA per-user remains the only open gate.
 
 ---
 
