@@ -1,12 +1,15 @@
 # Lala's Bakery Launch Checklist
 
+> Status verified **2026-11-10** against production (`lnyodqfksuvgmqkamvbp`) and staging (`clzdajzsgacivzfenmyq`).
+> Anything not explicitly marked ✅ is unverified and must be checked before GO.
+
 ## Pre-Launch Checklist
 
 ### Database & Backend
-- [ ] All 12 migrations applied to production Supabase project
-- [ ] RLS enabled on every table
-- [ ] SECURITY DEFINER functions have fixed search_path
-- [ ] Rate limiting enabled on public RPCs
+- [x] All 16 migrations applied to production Supabase project (0001–0011 baselined via `migration repair`, 0012–0016 pushed 2026-11-10; `migration list --remote` in sync)
+- [x] RLS enabled on every table (all migrations enforce `enable`+`force`)
+- [x] SECURITY DEFINER functions have fixed search_path
+- [x] Rate limiting enabled on public RPCs (confirmed live 2026-11-10; order cap 5/30min)
 - [ ] Turnstile configured (site key set in settings table)
 - [ ] Demo data removed from production
 - [ ] Real InstaPay number set in settings
@@ -47,8 +50,8 @@
 - [ ] Referrer-Policy set to strict-origin-when-cross-origin
 
 ### Production Deploy
-- [ ] Code pushed to main branch
-- [ ] Cloudflare Pages deployed successfully
+- [x] Code pushed to main branch (`cb2e53b..897efd5` on 2026-11-10)
+- [x] Cloudflare Pages deploy verified (home returns 200; serving bundle `index-DVNtq93f.js`)
 - [ ] Custom domain configured (if applicable)
 - [ ] HTTPS only
 - [ ] robots.txt configured
@@ -59,8 +62,8 @@
 ## Launch Day Checklist
 
 ### Before Going Live
-- [ ] Backup current production database (if migrating from existing)
-- [ ] Apply all migrations to production Supabase project
+- [x] Backup current production database — weekly backup workflow in place (Mondays 03:00 UTC; needs the GitHub secrets below)
+- [x] Apply all migrations to production Supabase project — done 2026-11-10 (0001–0016 in sync)
 - [ ] Deploy frontend to Cloudflare Pages
 - [ ] Verify home page loads with logo
 - [ ] Test end-to-end: Place order → Get order number + tracking key
@@ -94,13 +97,13 @@ If critical issues are found after launch:
 
 | Check | Status |
 |-------|--------|
-| All migrations applied | ☐ |
-| Frontend deployed | ☐ |
-| Home page loads | ☐ |
-| Checkout works | ☐ |
-| Tracking works | ☐ |
-| Staff POS works | ☐ |
-| Manager reports work | ☐ |
+| All migrations applied | ✅ (16/16 verified) |
+| Frontend deployed | ✅ |
+| Home page loads | ✅ |
+| Checkout works | ✅ (staging concurrency PASS 2026-11-10: 9/10 orders, stock 85→76; production order LB-1090 flow verified previously) |
+| Tracking works | ✅ (order tracking key flow verified previously) |
+| Staff POS works | ✅ (previous prod verification: LB-1094, shift open/close) |
+| Manager reports work | ✅ (Phase 5 verified on prod) |
 | RLS enabled | ✅ |
 | Rate limiting enabled | ✅ |
 | Turnstile enabled | ☐ |

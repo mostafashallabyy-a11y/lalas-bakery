@@ -7,18 +7,22 @@ This document covers backup and recovery procedures for Lala's Bakery. It is wri
 ## Backup Strategy
 
 ### What is Backed Up
-- **Database**: Full PostgreSQL dump (schema + data) via `pg_dump`
-- **Storage Buckets**: `payment-proofs`, `product-images`, `branch-images` files
-- **Frequency**: Daily (automated via GitHub Actions)
-- **Retention**: 7 days (local), 4 weeks, 12 months (R2)
+- **Database**: Full PostgreSQL dump (schema + data) via `pg_dump` (custom format, `--no-owner --no-privileges`)
+- **Frequency**: Weekly — Mondays 03:00 UTC — via `.github/workflows/backup.yml` (validated workflow_dispatch also works)
+- **Retention**: 30 days (GitHub Actions artifacts, private)
+- **Storage buckets**: NOT backed up by the current workflow (payment-proofs, product-images, branch-images). Back these up separately/manually until automation exists.
 
 ### Where Backups Are Stored
-1. **Cloudflare Pages**: Build artifacts (not data)
-2. **Cloudflare R2**: Encrypted database dumps (weekly)
-3. **GitHub Actions Artifacts**: Last 90 days (automated)
+1. **GitHub Actions Artifacts**: `db-backup-<run_id>` — private artifacts, kept 30 days
+2. **Not yet configured**: Cloudflare R2 / off-site encrypted copies (see Gaps)
+3. **Encryption**: Artifacts are encrypted at rest by GitHub (private). A separate AES-256 layer (`BACKUP_ENCRYPTION_KEY`) is NOT wired into the current workflow
 
-### Encryption
-All backups are encrypted with AES-256 using a key stored in GitHub Secrets (`BACKUP_ENCRYPTION_KEY`).
+### Gaps to close for a real launch posture
+- [ ] Set the three GitHub secrets the workflow needs: `SUPABASE_DB_PASSWORD`, `SUPABASE_DB_HOST` (pooler host — e.g. `aws-1-eu-central-1.pooler.supabase.com`), `SUPABASE_DB_USER` (`postgres.<project-ref>`)
+- [ ] Workflow password must match the *current* prod DB password — rotate together
+- [ ] Restore drill: restore one artifact into a throwaway/staging project and verify `orders`/`stock_movements` counts match the source
+- [ ] Add R2 (or another off-site) copy if you want retention beyond 30 days
+- [ ] Bucket backups for the image buckets (out of scope of pg_dump)
 
 ---
 
@@ -39,10 +43,11 @@ All backups are encrypted with AES-256 using a key stored in GitHub Secrets (`BA
 2. **Restore from latest backup**:
    ```bash
    # Download latest backup from GitHub Actions artifacts
-   # Decrypt: gpg --decrypt backups/lalas-bakery-YYYYMMDD-HHMMSS.dump.gpg > backup.dump
-   
-   # Restore to staging first for verification
-   pg_restore --no-owner --dbname=postgres backups/lalas-bakery-YYYYMMDD-HHMMSS.dump
+   # (optional manual layer, only if the dump were encrypted:
+   #  gpg --decrypt backups/lalas-bakery-YYYYMMDD-HHMM.dump.gpg > backup.dump)
+
+   # Restore to STAGING first for verification — never straight into production
+   pg_restore --no-owner --no-privileges --dbname=postgres backups/lalas-YYYYMMDD-HHMM.dump
    ```
 
 3. **Verify data integrity**:
@@ -77,16 +82,12 @@ All backups are encrypted with AES-256 using a key stored in GitHub Secrets (`BA
 **Recovery Steps**:
 
 1. **Create new Supabase project** at https://supabase.com/dashboard
-2. **Apply all migrations** in order:
-   ```sql
-   -- Run each migration file in supabase/migrations/ in order
-   ```
-3. **Restore data from latest backup**:
+2. **Restore the dump** (custom format already includes schema + data — do NOT apply migrations first or tables would conflict):
    ```bash
-   pg_restore --no-owner --dbname=postgres backups/lalas-bakery-YYYYMMDD-HHMMSS.dump
+   pg_restore --no-owner --no-privileges --dbname=postgres backups/lalas-YYYYMMDD-HHMM.dump
    ```
-4. **Update Cloudflare Pages** to point to new project URL.
-5. **Update environment variables** (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`).
+   Alternatively, for data-only restore: create a project, apply migrations 0001–0016, then restore with `--data-only`.
+3. **Update Cloudflare Pages** to point to the new project URL (`VITE_SUPABASE_URL`) and anon key (`VITE_SUPABASE_PUBLISHABLE_KEY`); redeploy.
 
 ### Scenario 4: GitHub Account Locked
 
