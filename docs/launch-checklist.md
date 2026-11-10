@@ -62,7 +62,7 @@
 ## Launch Day Checklist
 
 ### Before Going Live
-- [x] Backup current production database — weekly backup workflow in place (Mondays 03:00 UTC; needs the GitHub secrets below)
+- [x] Backup current production database — first production dump succeeded 2026-11-10; private artifact downloaded and verified (501,216 bytes; run 42881749440)
 - [x] Apply all migrations to production Supabase project — done 2026-11-10 (0001–0016 in sync)
 - [ ] Deploy frontend to Cloudflare Pages
 - [ ] Verify home page loads with logo
@@ -104,11 +104,11 @@ If critical issues are found after launch:
 | Tracking works | ✅ (order tracking key flow verified previously) |
 | Staff POS works | ✅ (previous prod verification: LB-1094, shift open/close) |
 | Manager reports work | ✅ (Phase 5 verified on prod) |
-| Backup defined | ✅ (weekly GH Actions artifact, <2 MB DB — measured 2026-11-10); **first successful run pending secrets sync** |
+| Backup defined | ✅ (first production dump and private `db-backup-42881749440` artifact verified 2026-11-10; 501,216 bytes; weekly workflow remains scheduled) |
 | Database verified live | ✅ (2026-11-10: 16/16 public tables RLS+FORCE, no table without RLS, exactly one 5-arg `submit_order_v2` (no PGRST203), stock columns + `stock_movements.order_id` present, migrations 0001–0016 applied) |
 | RLS enabled | ✅ |
 | Rate limiting enabled | ✅ |
-| Turnstile enabled | ✅ (2026-11-10) |
+| Turnstile enabled | ✅ (2026-11-10) — widget key synced to Pages env + Supabase secret; live bundle `index-BYpnLauy.js` verified contain current key |
 | MFA enabled for manager | ☐ |
 
 **GO** if all checks pass.
