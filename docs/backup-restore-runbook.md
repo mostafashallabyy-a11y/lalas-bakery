@@ -18,9 +18,11 @@ This document covers backup and recovery procedures for Lala's Bakery. It is wri
 3. **Encryption**: Artifacts are encrypted at rest by GitHub (private). A separate AES-256 layer (`BACKUP_ENCRYPTION_KEY`) is NOT wired into the current workflow
 
 ### Gaps to close for a real launch posture
+- [x] Production data volume assessed 2026-11-10: ~22 orders, ~30 items, whole DB < 2 MB — weekly GitHub Actions backup is more than sufficient for now
+- [x] Production link + CLI verified working (migration list in sync, read-only queries safe)
 - [ ] Set the three GitHub secrets the workflow needs: `SUPABASE_DB_PASSWORD`, `SUPABASE_DB_HOST` (pooler host — e.g. `aws-1-eu-central-1.pooler.supabase.com`), `SUPABASE_DB_USER` (`postgres.<project-ref>`)
 - [ ] Workflow password must match the *current* prod DB password — rotate together
-- [ ] Restore drill: restore one artifact into a throwaway/staging project and verify `orders`/`stock_movements` counts match the source
+- [ ] Restore drill — blocked on your machine: `supabase db dump` and local restores need **Docker Desktop or Podman** (neither installed), and restoring into a third free Supabase project is impossible without pausing an existing one. To finish the drill: install Docker Desktop → `supabase db dump --linked -f scripts/local/prod.sql` → replay on scratch project → verify counts → delete scratch. Or keep weekly GH Actions artifact + one manual `pg_dump` verification monthly on any machine with psql
 - [ ] Add R2 (or another off-site) copy if you want retention beyond 30 days
 - [ ] Bucket backups for the image buckets (out of scope of pg_dump)
 
