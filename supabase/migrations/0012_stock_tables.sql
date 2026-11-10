@@ -21,6 +21,7 @@ create table if not exists stock_movements (
   note         text default '' check (char_length(note) <= 300),
   created_at   timestamptz not null default now()
 );
+alter table stock_movements add column if not exists order_id uuid references orders(id) on delete set null;
 create index if not exists stock_movements_product_idx on stock_movements(product_id, created_at desc);
 create index if not exists stock_movements_branch_idx on stock_movements(branch_id, created_at desc);
 create index if not exists stock_movements_order_idx on stock_movements(order_id);
