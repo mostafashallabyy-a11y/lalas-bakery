@@ -135,14 +135,20 @@ default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudfl
 
 ---
 
-## Dependency Audit
+## Dependency Audit (2026-11-10, `npm audit` against registry — 4 findings, none exploitable in this app)
 
-**npm audit** should be run before production:
+- `esbuild`/`vite` (moderate+high dev path): dev-server-only CVE (GHSA-67mh-4wv8-2f99) — affects `vite dev`, never the static production bundle. Bump when convenient, not a launch blocker.
+- `react-router` / `react-router-dom` 6.x (2 moderate): open-redirect via backslash `Link` and SSR-hydration constructor injection — this app has **no SSR**, `BrowserRouter` client-only, and no user-controlled redirect targets. Not exploitable as deployed.
+- `npm audit fix --force` would break both packages (v7 major upgrade / vite@8) — deliberately not applied under launch pressure; schedule post-launch.
+- `npm audit --omit=dev` (production deps) → same 2 router findings only.
+
+**Accepted for launch with written rationale.** Re-run after the react-router-dom@7 upgrade.
+
 ```bash
 npm audit
 ```
 
-**Dependabot**: Enable in `.github/dependabot.yml`:
+**Dependabot**: enable in `.github/dependabot.yml`:
 
 ```yaml
 version: 2
@@ -185,7 +191,17 @@ updates:
 
 ---
 
-## Live Verification — 2026-11-10 (staging project)
+## Supabase Security Advisor — 2026-11-10 (`supabase db advisors --remote`, production)
+
+**Level: WARN only — no errors, no critical findings.**
+
+1. `authenticated_security_definer_function_executable` (≈35 WARNs): all RPCs callable by any `authenticated` user. This is **by design** — every sensitive RPC enforces its own role check internally (`is_staff()` / `is_manager()` / `is_admin`-equivalent, verified in migrations and by the live security checks above). Optional hardening you can apply yourself or authorize:
+   `revoke execute on function promote_first_manager(citext), submit_order(uuid,jsonb,text,text,text), reject_payment(...), verify_turnstile(text,text), rate_ok(text,integer,interval), rls_auto_enable(), on_order_created(), sync_order_status_public(), orders_set_tracking_key() from authenticated;`
+   (`submit_order` is the deprecated pre-v2 RPC; revoking it removes a dead duplicate surface.)
+2. `auth_leaked_password_protection`: **disabled** → enable in Dashboard → Authentication → Providers (one toggle; also where public sign-ups are disabled).
+3. PERFORMANCE warnings (informational): `auth_rls_initplan` on `profiles`/`shifts`/`void_requests` policies (wrap `auth.uid()` in a subquery), and `multiple_permissive_policies` on SELECT paths (duplicate policies) — safe to leave for v2 optimization.
+
+## Live Verification — 2026-11-10 (staging project + production project `lnyodqfksuvgmqkamvbp`)
 
 Automated regression checks live in `tests/security/run-security-checks.mjs` (node + fetch; supersedes the
 draft k6 scripts, whose assertions did not match PostgREST's real behavior — RLS returns `200 []` or 401,

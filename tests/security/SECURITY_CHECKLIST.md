@@ -92,10 +92,10 @@
 
 ## Remaining Security Tasks
 
-- [ ] Run Supabase Security Advisor
+- [x] Run Supabase Security Advisor (2026-11-10 — only WARNs; see report)
 - [ ] Run Supabase Performance Advisor
-- [ ] Run gitleaks to scan for secrets
-- [ ] Run npm audit
+- [ ] Run gitleaks to scan for secrets (repo scan done manually 2026-11-10 — clean; CI runs weekly gitleaks)
+- [x] Run npm audit (2026-11-10 — 4 moderate findings, accepted w/ rationale; see report)
 - [ ] Enable Dependabot
 - [ ] Configure Turnstile on public forms
 - [ ] Configure Cloudflare WAF rules
