@@ -104,6 +104,8 @@ If critical issues are found after launch:
 | Tracking works | ✅ (order tracking key flow verified previously) |
 | Staff POS works | ✅ (previous prod verification: LB-1094, shift open/close) |
 | Manager reports work | ✅ (Phase 5 verified on prod) |
+| Backup defined | ✅ (weekly GH Actions artifact, <2 MB DB — measured 2026-11-10); **first successful run pending secrets sync** |
+| Database verified live | ✅ (2026-11-10: 16/16 public tables RLS+FORCE, no table without RLS, exactly one 5-arg `submit_order_v2` (no PGRST203), stock columns + `stock_movements.order_id` present, migrations 0001–0016 applied) |
 | RLS enabled | ✅ |
 | Rate limiting enabled | ✅ |
 | Turnstile enabled | ✅ (2026-11-10) |

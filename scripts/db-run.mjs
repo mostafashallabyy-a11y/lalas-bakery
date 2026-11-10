@@ -19,8 +19,22 @@ try {
   await client.connect();
   const sql = fs.readFileSync(file, "utf8");
   console.log(`▶ running ${file} (${sql.length} chars)...`);
-  await client.query(sql);
-  console.log(`✅ done: ${file}`);
+  const result = await client.query(sql);
+  const sets = Array.isArray(result) ? result : [result];
+  let printed = 0;
+  for (const r of sets) {
+    if (!r || !Array.isArray(r.rows)) continue;
+    for (const row of r.rows) {
+      console.log(JSON.stringify(row));
+      printed++;
+      if (printed >= 140) {
+        console.log("… (output truncated)");
+        break;
+      }
+    }
+    if (printed >= 140) break;
+  }
+  console.log(`✅ done: ${file} — ${printed} row(s) printed`);
 } catch (e) {
   console.error(`❌ ${file}: ${e.message}`);
   console.error(e.detail || "");
