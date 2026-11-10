@@ -193,18 +193,18 @@ updates:
 
 ## Known gap — Turnstile server-side verification (2026-11-10)
 
-**Status**: BYPASSED
+**Status**: WORKING (synchronous verification via `pg_net`-free path)
 
-**Description**: `verify_turnstile()` requires `pg_net` outbound from the Postgres instance to `challenges.cloudflare.com`. On this project, `net._http_response` is empty — no verification request ever completed — so *every* order attempt failed before reaching the rate limiter (`rate_log` showed 0 `order` entries during the failures). Client widget renders fine ("تم بنجاح!") — tokens are issued — but the server-side check always rejected.
+**Description**: `pg_net` is asynchronous — it only dispatches requests *after* commit — so calling Cloudflare siteverify from inside `submit_order_v2` could never observe the response pre-commit. Every attempt hit the "no token/Invalid" path → generic client error.
 
-**Resolution applied**: `turnstile_secret` set to empty → verification is skipped server-side (the same behavior the site had at launch-testing stage, and the only open path until pg_net is fixed). Client widget remains on checkout as a speed bump/dishonest-bot filter, but it is **not** real protection right now.
+**Resolution applied**: Migration `0017_fix_turnstile_verification.sql` replaces `verify_turnstile` with a synchronous `extensions.http_post()` implementation (pgsql-http extension placed in `extensions` schema), and the leaked endpoints were re-keyed. Live-verified on production (LB-1100, LB-1101 on 2026-11-10 — both completed end-to-end with "تم بنجاح!").
 
-**Proper fix options** (pick one):
-1. Diagnose pg_net on the project: enable/re-install `pg_net`, confirm the background worker, then prove Cloudflare returns `{"success": true}` for a test token (recovery query in `scripts/verify-db.sql` companion), then set a fresh `turnstile_secret`.
-2. Or upgrade to Supabase Pro and use the built-in CAPTCHA protection.
-3. Or verify the token **inside** `submit_order_v2` via `http_ext`/separate worker instead of `pg_net`.
+**Residual hold-overs**:
+- `pg_net`-based call sites (if any remain, e.g., legacy verify users) are still present but now dead code — not wired into the order path.
+- The Turnstile secret was shared in a chat transcript → rotated and re-synced 2026-11-10 (new row `turnstile_secret`, length 35, no whitespace).
+- Client widget renders at checkout as the bot filter; the server-side round trip is now real.
 
-**Do not** mark Turnstile as fully effective in the security checklist until server verification passes with a live test.
+**Known noise**: every order logs `created` twice (`on_order_created()` trigger + explicit insert in `submit_order_v2`/`pos_create_order`). Tracked as low-priority; not data loss. Fix when convenient (drop the trigger in a new migration).
 
 ---
 

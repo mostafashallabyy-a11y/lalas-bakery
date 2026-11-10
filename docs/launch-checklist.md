@@ -108,7 +108,7 @@ If critical issues are found after launch:
 | Database verified live | ✅ (2026-11-10: 16/16 public tables RLS+FORCE, no table without RLS, exactly one 5-arg `submit_order_v2` (no PGRST203), stock columns + `stock_movements.order_id` present, migrations 0001–0016 applied) |
 | RLS enabled | ✅ |
 | Rate limiting enabled | ✅ |
-| Turnstile enabled | ✅ (2026-11-10) — client widget live and rendering; **server verification bypassed** after pg_net never completed a round-trip on this project (see `docs/security-report.md`); widget syncs + redeploy verified live bundle `index-BYpnLauy.js` |
+| Turnstile enabled | ✅ (2026-11-10) — server verification works via synchronous http extension (migration 0017); live LB-1100/LB-1101 placed through challenge |
 | MFA enabled for manager | ☐ |
 
 **GO** if all checks pass.
