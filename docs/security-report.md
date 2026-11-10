@@ -191,6 +191,23 @@ updates:
 
 ---
 
+## Known gap — Turnstile server-side verification (2026-11-10)
+
+**Status**: BYPASSED
+
+**Description**: `verify_turnstile()` requires `pg_net` outbound from the Postgres instance to `challenges.cloudflare.com`. On this project, `net._http_response` is empty — no verification request ever completed — so *every* order attempt failed before reaching the rate limiter (`rate_log` showed 0 `order` entries during the failures). Client widget renders fine ("تم بنجاح!") — tokens are issued — but the server-side check always rejected.
+
+**Resolution applied**: `turnstile_secret` set to empty → verification is skipped server-side (the same behavior the site had at launch-testing stage, and the only open path until pg_net is fixed). Client widget remains on checkout as a speed bump/dishonest-bot filter, but it is **not** real protection right now.
+
+**Proper fix options** (pick one):
+1. Diagnose pg_net on the project: enable/re-install `pg_net`, confirm the background worker, then prove Cloudflare returns `{"success": true}` for a test token (recovery query in `scripts/verify-db.sql` companion), then set a fresh `turnstile_secret`.
+2. Or upgrade to Supabase Pro and use the built-in CAPTCHA protection.
+3. Or verify the token **inside** `submit_order_v2` via `http_ext`/separate worker instead of `pg_net`.
+
+**Do not** mark Turnstile as fully effective in the security checklist until server verification passes with a live test.
+
+---
+
 ## Supabase Security Advisor — 2026-11-10 (`supabase db advisors --remote`, production)
 
 **Level: WARN only — no errors, no critical findings.**

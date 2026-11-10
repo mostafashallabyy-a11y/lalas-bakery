@@ -16,7 +16,7 @@
 - [ ] Real product prices and stock levels set
 - [ ] Real branch information (name, description, services)
 - [ ] Manager account created with strong password
-- [ ] Manager MFA enabled
+- [ ] Manager MFA enabled — project-level TOTP enabled 2026-11-10; **per-user enrollment pending** (user action)
 - [ ] Staff accounts created with MFA
 - [ ] Public sign-ups disabled in Auth settings
 
@@ -100,7 +100,7 @@ If critical issues are found after launch:
 | All migrations applied | ✅ (16/16 verified) |
 | Frontend deployed | ✅ |
 | Home page loads | ✅ |
-| Checkout works | ✅ (staging concurrency PASS 2026-11-10: 9/10 orders, stock 85→76; production order LB-1090 flow verified previously) |
+| Checkout works | ✅ (2026-11-10: phone end-to-end LB-1097/98/99 created; staging concurrency PASS 9/10; stock 85→76) |
 | Tracking works | ✅ (order tracking key flow verified previously) |
 | Staff POS works | ✅ (previous prod verification: LB-1094, shift open/close) |
 | Manager reports work | ✅ (Phase 5 verified on prod) |
@@ -108,7 +108,7 @@ If critical issues are found after launch:
 | Database verified live | ✅ (2026-11-10: 16/16 public tables RLS+FORCE, no table without RLS, exactly one 5-arg `submit_order_v2` (no PGRST203), stock columns + `stock_movements.order_id` present, migrations 0001–0016 applied) |
 | RLS enabled | ✅ |
 | Rate limiting enabled | ✅ |
-| Turnstile enabled | ✅ (2026-11-10) — widget key synced to Pages env + Supabase secret; live bundle `index-BYpnLauy.js` verified contain current key |
+| Turnstile enabled | ✅ (2026-11-10) — client widget live and rendering; **server verification bypassed** after pg_net never completed a round-trip on this project (see `docs/security-report.md`); widget syncs + redeploy verified live bundle `index-BYpnLauy.js` |
 | MFA enabled for manager | ☐ |
 
 **GO** if all checks pass.
