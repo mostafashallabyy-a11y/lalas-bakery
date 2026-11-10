@@ -100,7 +100,7 @@
 - [ ] Configure Turnstile on public forms
 - [ ] Configure Cloudflare WAF rules
 - [ ] Disable public sign-ups in Auth settings
-- [ ] Enable MFA for manager accounts
+- [x] Enable MFA for manager accounts — project-level TOTP enabled 2026-11-10 (10 factors); per-user QR enrollment pending (user action)
 - [ ] Set short session lifetime for staff
 
 ## Live Verification — 2026-11-10
