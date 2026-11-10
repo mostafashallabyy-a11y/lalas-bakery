@@ -11,7 +11,7 @@
 - [x] SECURITY DEFINER functions have fixed search_path
 - [x] Rate limiting enabled on public RPCs (confirmed live 2026-11-10; order cap 5/30min)
 - [ ] Turnstile configured (site key set in settings table)
-- [ ] Demo data removed from production
+- [x] Demo data removed from production (2026-11-10: `فرع demo التجريبي` deactivated — reversible, history kept; 0 orders; customers now see only فرع الشروق + فرع العبور الرئيسي)
 - [ ] Real InstaPay number set in settings
 - [ ] Real product prices and stock levels set
 - [ ] Real branch information (name, description, services)
