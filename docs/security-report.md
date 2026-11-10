@@ -45,7 +45,7 @@ No critical vulnerabilities found.
 **Description**: All SECURITY DEFINER functions include explicit role checks and fixed `search_path = public`.
 
 **Functions with role checks**:
-- `submit_order_v2` - is_staff()
+- `submit_order_v2` - public (anon checkout by design; stock/rate limits enforce)
 - `staff_set_status` - is_staff()
 - `staff_set_payment` - is_staff()
 - `promote_first_manager` - none (guarded by no active manager)
@@ -185,9 +185,43 @@ updates:
 
 ---
 
+## Live Verification — 2026-11-10 (staging project)
+
+Automated regression checks live in `tests/security/run-security-checks.mjs` (node + fetch; supersedes the
+draft k6 scripts, whose assertions did not match PostgREST's real behavior — RLS returns `200 []` or 401,
+not 403/401 consistently, and function errors return HTTP 400 with `{ code, message }`).
+
+Run against **staging** only:
+
+```powershell
+node tests/security/run-security-checks.mjs
+# optional, unlocks the authenticated checks (staging has NO app accounts yet):
+$env:STAFF_EMAIL='staff@lalas.app'; $env:STAFF_PASSWORD='…'; $env:MGR_EMAIL='manager@lalas.app'; $env:MGR_PASSWORD='…'
+node tests/security/run-security-checks.mjs
+```
+
+Results (anon surface, 11/11 PASS, 0 FAILs; authenticated checks SKIP — staging still has no app users):
+
+- anon can read active branches (2 branches; exactly the public ones)
+- anon cannot read `orders` / `order_items` (HTTP 401)
+- anon can read products
+- anon cannot insert `orders` directly (401)
+- `submit_order_v2` rejects empty items (400 P0001) and nonexistent product (400 P0001)
+- `track_order_by_key` rejects wrong key (ok:false)
+- `staff_confirm_payment` / `void_request` / `pos_create_order` reject anon (401 42501) — role guards fire
+- valid-order probe was **rate-limited** (P0001), confirming the rate limiter is active
+
+Open gaps:
+- authenticated staff/manager assertions SKIP (staging has no app users; create them in staging ONLY,
+  then rerun with the env vars above)
+- Turnstile still not configured (SEC-004), public sign-ups still enabled (SEC-005), MFA not enforced
+- CSP `_headers` already present; `object-src 'none'` is set; HSTS preload not submitted
+
+---
+
 ## Remediation Priority
 
-1. **Critical**: Apply migration 0012 to Supabase (stock tracking)
+1. **Done 2026-11-10**: Migrations 0012–0016 applied to production (stock tracking, overload fix)
 2. **High**: Configure Turnstile site key
 3. **High**: Disable public sign-ups
 4. **Medium**: Enable MFA for manager account

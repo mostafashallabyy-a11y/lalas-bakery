@@ -1,3 +1,6 @@
+// @deprecated DRAFT — assertions below do not match PostgREST behavior
+// (RLS returns 200 with zero rows or 401; function errors come back as HTTP 400 + code).
+// Use tests/security/run-security-checks.mjs instead (verified 11/11 anon PASS on 2026-11-10).
 import http from "k6/http";
 import { check } from "k6";
 

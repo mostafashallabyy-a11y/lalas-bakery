@@ -102,3 +102,12 @@
 - [ ] Disable public sign-ups in Auth settings
 - [ ] Enable MFA for manager accounts
 - [ ] Set short session lifetime for staff
+
+## Live Verification — 2026-11-10
+
+Anonymous surface checks run against staging with `tests/security/run-security-checks.mjs`: **11 PASS / 0 FAIL**
+(orders/order_items unreadable by anon with HTTP 401; role-guarded RPCs reject anon with 401/42501;
+input validation on `submit_order_v2` rejects empty/invalid payloads with 400/P0001; rate limiter confirmed active).
+Authenticated staff/manager checks **SKIP** until staging has app users (it doesn't today — prod accounts live in
+production Auth only). Note for the record: this DB uses *grant-level* anon denial (401), not just RLS row filtering;
+both are acceptable — what matters is that no data leaks and no anonymous writes succeed.
