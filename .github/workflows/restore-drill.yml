@@ -1,11 +1,15 @@
-# Restore drill: download a weekly-backup artifact and restore it into a
-# scratch postgres:15 container, then verify row counts.
+# Restore drill: download a weekly-backup artifact, restore it into a scratch
+# postgres:15 container, then verify row counts.
 # MANUAL TRIGGER ONLY. Prints COUNTS ONLY (no personal data). Writes nothing
 # back to production or to the repo; the scratch container is destroyed at the end.
 #
-# This exercises the same path as Scenario 3 in docs/backup-restore-runbook.md:
-# restore ONLY the `public` schema (Supabase manages auth/storage internals,
-# which a vanilla Postgres cannot host).
+# NOTE on schemas: the app tables all FK-reference `auth.users`
+# (profiles.id, orders.created_by, order_events.changed_by, shifts.staff_id, ...).
+# Scenario 3 (restore into a fresh Supabase project) restores ONLY `public`
+# because Supabase already provides the auth schema there â€” see
+# docs/backup-restore-runbook.md. This drill uses vanilla Postgres, so it must
+# restore auth + public instead. Stub Supabase roles/publications are created
+# first to silence the expected role/publication errors.
 name: Backup restore drill
 
 on:
@@ -62,19 +66,37 @@ jobs:
           done
           docker exec lalas-restore-drill pg_isready -U postgres
 
-      - name: Restore backup (public schema only)
+      - name: Pre-create stub Supabase roles + publication
+        run: |
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "
+            do \$\$
+            declare r text;
+            begin
+              foreach r in array array['anon','authenticated','service_role','supabase_admin','supabase_auth_admin','supabase_storage_admin','supabase_realtime_admin','supabase_functions_admin','authenticator','dashboard_user','pgbouncer','supabase_read_only_user','supabase_etl_admin','supabase_replication_admin','postgres_replicas']
+              loop
+                if not exists (select from pg_roles where rolname = r) then
+                  execute format('create role %I nologin', r);
+                end if;
+              end loop;
+            end
+            \$\$;"
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "CREATE PUBLICATION supabase_realtime;" || true
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;" || true
+
+      - name: Restore backup (auth + public schemas)
         id: restore
         run: |
           dump=$(ls restore-drill/*.dump | head -n1)
           echo "Restoring $dump"
           set +e
-          pg_restore --no-owner --no-privileges --schema=public \
+          pg_restore --no-owner --no-privileges \
+            --schema=auth --schema=public \
             --dbname="postgresql://postgres:postgres@localhost:5432/postgres" "$dump"
           rc=$?
           set -e
           echo "pg_restore exit code: $rc"
           echo "pg_restore_exit=$rc" >> "$GITHUB_OUTPUT"
-          # Exit code 1 means "some non-fatal SQL warnings/errors".
+          # Exit code 1 means "some non-fatal SQL errors" (Supabase internals).
           # Do NOT fail here â€” verification below is the pass/fail gate.
           exit 0
 
@@ -100,6 +122,10 @@ jobs:
             select count(*) as orphaned_order_items
             from public.order_items oi
             where not exists (select 1 from public.orders o where o.id = oi.order_id);"
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "
+            select count(*) as orphaned_order_events
+            from public.order_events ev
+            where not exists (select 1 from public.orders o where o.id = ev.order_id);"
 
       - name: Result
         run: |
