@@ -280,7 +280,7 @@ begin
   if v_method = 'cash' then
     v_max_cash := coalesce(v_branch.cash_max_amount, 500);
     if v_total > v_max_cash then
-      raise exception format('حد أقصى لطلبات الكاش %s ج — لو طلبك أكبر اختار الدفع بانستا باي', v_max_cash) using errcode = 'P0001';
+      raise exception 'حد أقصى لطلبات الكاش % ج — لو طلبك أكبر اختار الدفع بانستا باي', v_max_cash using errcode = 'P0001';
     end if;
   end if;
 
