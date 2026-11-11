@@ -16,10 +16,7 @@
 │   ├── components/             مشترك (توست، نسخ، Turnstile، Banner أوفلاين)
 │   └── pages/                  الصفحات: الرئيسية، المنيو، العربة، الخلاص، الدفع، التتبع، آراء، شاشة الموظف، لوحة المدير
 ├── supabase/
-│   ├── migrations/0001_init.sql    الجداول + التريجرات + Realtime + Storage
-│   ├── migrations/0002_security.sql RLS + الدوال RPC + التقارير
-│   ├── migrations/0020_social_links.sql جدول روابط التواصل (مدير فقط)
-│   ├── migrations/0021_order_privacy.sql خصوصية الطلبات (فرع الموظف + مفتاح تتبع إلزامي)
+│   ├── migrations/0001–0022      22 migration: الجداول + الأمان + الكاش POS + المخزون + الخصوصية
 │   └── seed.sql                 بيانات أولية: فرعين + منيو كامل
 ├── .github/workflows/
 │   ├── ping.yml                تنبيه كل 3 أيام (يمنع إيقاف المشروع المجاني)
@@ -46,11 +43,9 @@
 ### 2) تشغيل الجداول (Migrations)
 1. من الشريط الجانبي **SQL Editor** → **New query**.
 2. الصق محتوى `supabase/migrations/0001_init.sql` كله → **Run**.
-3. بعده `0002_security.sql` ثم `0003_grants.sql` ثم `0004_report_and_settings_fix.sql` → **Run** بالترتيب.
-4. بعدها الصق `0020_social_links.sql` (جدول روابط التواصل، مدير فقط) → **Run**.
-5. بعدها الصق `0021_order_privacy.sql` (خصوصية الطلبات، فرع الموظف + مفتاح تتبع إلزامي) → **Run**.
-6. بعدها الصق `supabase/seed.sql` (بيجيب فرعين ومنيو كامل بصور عينات) → **Run**.
-7. تأكد: من **Table Editor** لازم تشوف `branches, categories, products, orders, order_items, order_events, order_status_public, feedback, profiles, settings, rate_log` بالإضافة لجدول `social_links`.
+3. بعده شغّل كل الملفات بالترتيب من `0002_security.sql` حتى `0022_drop_leaky_rpcs.sql` (الفهرس الكامل: `supabase/migrations/`) → **Run** لكل ملف بالترتيب.
+4. بعدها الصق `supabase/seed.sql` (بيجيب فرعين ومنيو كامل بصور عينات) → **Run**.
+5. تأكد: من **Table Editor** لازم تشوف `branches, categories, products, orders, order_items, order_events, order_status_public, feedback, profiles, settings, rate_log` بالإضافة لجدول `social_links`.
 
 ### 3) إقياد أسماء Auth بالأمان (مهم جدًا)
 1. من **Authentication → Settings** اقفل الـ **Allow new users to sign up** (تسجيل عام). يستحيل حد يفتح حساب لحاله.
