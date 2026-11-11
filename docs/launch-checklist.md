@@ -64,7 +64,7 @@
 ### Before Going Live
 - [x] Backup current production database — first production dump succeeded 2026-11-10; private artifact downloaded and verified (501,216 bytes; run 42881749440)
 - [x] Apply all migrations to production Supabase project — done 2026-11-10 (0001–0016 in sync)
-- [ ] Deploy frontend to Cloudflare Pages
+- [x] Deploy frontend to Cloudflare Pages (verified live 2026-11-11: main = 682e013 merge, new bundle `index-PrEHYA1o.js` serves 200 with social_links + track_order_by_key present; migrations 0021/0022 applied)
 - [x] Verify home page loads with logo (HTTP 200; bundle serves with logo and env keys)
 - [x] Test end-to-end: Place order → Get order number + tracking key (LB-1100/1101 verified, then purged; sequence reset)
 - [x] Test tracking: /track with order number + key (/order/<n>?k= deep-link verified; orders purged post-test)
