@@ -83,3 +83,14 @@ export function categoryEmoji(name: string): string {
   if (/مخبوز|والكيك|لاذر|bake/i.test(n)) return "🥐";
   return "🍽";
 }
+
+export const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  pending: "قيد الانتظار",
+  paid: "مدفوع",
+  rejected: "مرفوض",
+  refunded: "مسترد",
+};
+
+export function isValidEgyptianPhone(phone: string): boolean {
+  return /^01[0125][0-9]{8}$/.test((phone || "").replace(/\s+/g, ""));
+}

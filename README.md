@@ -157,3 +157,13 @@ npm run dev               # على http://localhost:5173
 - الزبون لا يشترك في جدول الطلبات عبر Realtime (استطلاع قصير عبر RPC لكل طلب على حدة).
 - الموظف لا يستطيع تصدير أو تنزيل قائمة طلبات.
 
+
+---
+
+## Cash / InstaPay payments (migration  026_cash_payments.sql)
+- **Checkout:** step "طريقة الدفع" with **💵 كاش** (pay on delivery/pickup, no proof upload, warm message with exact total incl. delivery fee; cash allowed for "توصيل داخل نطاق العبور" and paid to delivery person) and **📲 InstaPay** (existing flow: number + copy + note + proof upload).
+- **Cash validation:** valid Egyptian mobile required for cash orders (client + server). Server-side anti-abuse: payment_method validation, per-branch enable/disable and max cash amount (default 500 EGP), rate limits per IP/device and per phone, auto-cancel + stock release if not accepted by staff within configurable timeout (default 30 min, settings.cash_accept_timeout_minutes).
+- **Order states:** orders.payment_method (cash/instapay), orders.payment_status (pending/paid/ejected/efunded), cash receipt recorded (cash_received_at, cash_received_by). InstaPay must be confirmed before preparing (DB-enforced). Cash moves to preparing on staff acceptance; becomes paid only after "تم استلام الكاش". Revenue counts paid orders only.
+- **Staff/manager:** badges & filters (method/status), actions (قبول الطلب، تم استلام الكاش، رفض/إلغاء مع سبب; InstaPay تأكيد/رفض الصورة). Shift close/drawer splits POS cash, online cash-on-delivery, InstaPay (not in drawer). Reports include revenue by payment method, unpaid/pending cash orders, cancelled cash orders.
+- **Settings:** per-branch cash_enabled / cash_max_amount (Branches admin), global cash_accept_timeout_minutes (Settings admin).
+- **Security tests:** 	ests/security/cash-payment-checks.mjs (no service_role) covers cash without phone rejected, cash over max amount rejected, cross-branch staff cannot mark cash received, cash cannot be marked paid twice.

@@ -55,6 +55,8 @@ export type Branch = {
   logo: string;
   cover_image: string;
   promo_brief: string;
+  cash_enabled?: boolean;
+  cash_max_amount?: number;
 };
 
 export type BranchPromo = {
@@ -119,18 +121,25 @@ export type LowStockAlert = {
 };
 
 export type OrderStatus = "received" | "preparing" | "done";
+export type PaymentMethod = "cash" | "instapay";
+export type PaymentStatus = "pending" | "paid" | "rejected" | "refunded";
 
 export type OrderRow = {
   id: string;
   order_number: string;
   branch_id: string;
   customer_name: string;
+  customer_phone?: string | null;
   delivery_type: string;
   delivery_fee: number;
   subtotal: number;
   total: number;
   status: OrderStatus;
   payment_confirmed: boolean;
+  payment_method?: PaymentMethod;
+  payment_status?: PaymentStatus;
+  cash_received_at?: string | null;
+  cash_received_by?: string | null;
   source: "online" | "pos";
   payment_proof_path: string | null;
   created_at: string;
@@ -193,6 +202,8 @@ export type TrackResult = {
   order_number?: string;
   status?: OrderStatus;
   updated_at?: string;
+  payment_method?: PaymentMethod;
+  payment_status?: PaymentStatus;
   message?: string;
 };
 

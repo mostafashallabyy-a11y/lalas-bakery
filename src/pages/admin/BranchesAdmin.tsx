@@ -9,17 +9,17 @@ export default function BranchesAdmin() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // نموذج إضافة/تعديل
   const [editing, setEditing] = useState<Branch | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [promoBrief, setPromoBrief] = useState("");
-  const [services, setServices] = useState<string[]>([]);
   const [servicesText, setServicesText] = useState("");
   const [logo, setLogo] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
+  const [cashEnabled, setCashEnabled] = useState(true);
+  const [cashMaxAmount, setCashMaxAmount] = useState(500);
   const [uploading, setUploading] = useState(false);
 
   const load = useCallback(async () => {
@@ -40,23 +40,17 @@ export default function BranchesAdmin() {
       setName(b.name);
       setDescription(b.description);
       setPromoBrief(b.promo_brief || "");
-      setServices(b.services || []);
       setServicesText((b.services || []).join("،"));
       setLogo(b.logo || "");
       setCoverImage(b.cover_image || "");
       setSortOrder(b.sort_order);
       setIsActive(b.is_active);
+      setCashEnabled(b.cash_enabled !== false);
+      setCashMaxAmount(Number(b.cash_max_amount ?? 500));
     } else {
-      setEditing({ id: "", name: "", description: "", services: [], is_active: true, sort_order: 0, logo: "", cover_image: "", promo_brief: "" });
-      setName("");
-      setDescription("");
-      setPromoBrief("");
-      setServices([]);
-      setServicesText("");
-      setLogo("");
-      setCoverImage("");
-      setSortOrder(0);
-      setIsActive(true);
+      setEditing({ id: "", name: "", description: "", services: [], is_active: true, sort_order: 0, logo: "", cover_image: "", promo_brief: "" } as any);
+      setName(""); setDescription(""); setPromoBrief(""); setServicesText(""); setLogo(""); setCoverImage("");
+      setSortOrder(0); setIsActive(true); setCashEnabled(true); setCashMaxAmount(500);
     }
   };
 
@@ -84,15 +78,17 @@ export default function BranchesAdmin() {
 
   const save = async () => {
     setErr(null);
-    const row = {
+    const row: any = {
       name: name.trim(),
       description: description.trim().slice(0, 300),
       promo_brief: promoBrief.trim().slice(0, 200),
-      services: services.map((s) => s.trim()).filter(Boolean).slice(0, 8),
+      services: servicesText.split(/[،,]/).map((s) => s.trim()).filter(Boolean).slice(0, 8),
       sort_order: Number(sortOrder) || 0,
       is_active: isActive,
       logo: logo.trim(),
       cover_image: coverImage.trim(),
+      cash_enabled: !!cashEnabled,
+      cash_max_amount: Math.max(0, Number(cashMaxAmount) || 0),
     };
     if (row.name.length < 2) return setErr("اسم الفرع قصير زيادة (حرفين على الأقل)");
     setBusy(true);
@@ -175,7 +171,7 @@ export default function BranchesAdmin() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-end gap-4">
             <div>
               <label className="label">ترتيب الظهور</label>
               <input className="input w-24" type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
@@ -184,6 +180,18 @@ export default function BranchesAdmin() {
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="accent-brand-500" />
               زيارة العميل للفرع مسموحة (ظاهر)
             </label>
+          </div>
+          <div className="border-t border-brand-100 pt-3 space-y-2">
+            <p className="font-bold text-brand-800 text-sm">إعدادات الدفع الكاش (أونلاين/عند الاستلام)</p>
+            <label className="flex items-center gap-2 font-bold text-brand-900 text-sm">
+              <input type="checkbox" checked={cashEnabled} onChange={(e) => setCashEnabled(e.target.checked)} className="accent-brand-500" />
+              تفعيل الدفع كاش في هذا الفرع
+            </label>
+            <div>
+              <label className="label">الحد الأقصى لطلب الكاش (ج.م)</label>
+              <input className="input w-40" type="number" min={0} step="1" value={cashMaxAmount} onChange={(e) => setCashMaxAmount(Number(e.target.value))} />
+              <p className="text-xs text-brand-700 mt-1">الطلبات الأعلى من هذا المبلغ لن تقبل كاش (الافتراضي 500).</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <button className="btn-primary" disabled={busy || uploading} onClick={save}>حفظ</button>
@@ -209,6 +217,7 @@ export default function BranchesAdmin() {
                 <p className="text-xs text-brand-800">{b.description}</p>
                 {b.promo_brief && <p className="text-xs text-brand-700 mt-1">"{b.promo_brief}"</p>}
                 <p className="text-xs text-brand-700 mt-1">{(b.services || []).join(" · ")}</p>
+                <p className="text-xs text-brand-700 mt-1">كاش: {b.cash_enabled === false ? "مغلق" : `مفعل (حد أقصى ${b.cash_max_amount ?? 500} ج)`}</p>
               </div>
             </div>
             <button className="btn-soft !py-1.5 !px-3 text-xs shrink-0" onClick={() => startEdit(b)}>تعديل</button>

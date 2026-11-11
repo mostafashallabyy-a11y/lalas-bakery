@@ -128,13 +128,25 @@ export default function ReportsAdmin() {
           </table>
           <div className="chart-placeholder">رسم بياني: المبيعات حسب اليوم</div>
           <table>
-            <thead><tr><th>طريقة الدفع</th><th>الطلبات</th><th>المبيعات</th></tr></thead>
+            <thead><tr><th>طريقة الدفع</th><th>الطلبات</th><th>مدفوعة</th><th>الإيراد (مدفوع فقط)</th><th>كاش معلّق</th><th>كاش ملغي</th></tr></thead>
             <tbody>
               {revenue?.per_payment_method?.map((r: any) => (
-                <tr key={r.method}><td>{r.method}</td><td>{num(r.orders_count)}</td><td>{money(Number(r.revenue))}</td></tr>
-              )) || <tr><td colSpan={3}>لا توجد بيانات</td></tr>}
+                <tr key={r.method}>
+                  <td>{r.method === 'cash' ? '💵 كاش' : r.method === 'instapay' ? '📲 InstaPay' : r.method}</td>
+                  <td>{num(r.orders_count)}</td>
+                  <td>{num(r.paid_count ?? 0)}</td>
+                  <td>{money(Number(r.revenue ?? 0))}</td>
+                  <td>{num(r.unpaid_pending_count ?? 0)}</td>
+                  <td>{num(r.cancelled_count ?? 0)}</td>
+                </tr>
+              )) || <tr><td colSpan={6}>لا توجد بيانات</td></tr>}
             </tbody>
           </table>
+          {revenue?.cash_summary && (
+            <div className="insight-box">
+              <strong>ملخص الكاش:</strong> طلبات كاش معلّقة/غير مدفوعة: {num(revenue.cash_summary.unpaid_pending_cash_orders ?? 0)} — طلبات كاش ملغاة: {num(revenue.cash_summary.cancelled_cash_orders ?? 0)}
+            </div>
+          )}
           <div className="chart-placeholder">رسم بياني: الطلبات حسب الساعة (خريطة حرارية)</div>
           <table>
             <thead><tr><th>الساعة</th><th>الطلبات</th></tr></thead>

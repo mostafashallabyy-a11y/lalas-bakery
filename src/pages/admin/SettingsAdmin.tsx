@@ -6,6 +6,7 @@ const FIELDS: { key: string; label: string; hint?: string }[] = [
   { key: "instapay_number", label: "رقم انستا باي", hint: "هيظهر للعملاء في صفحة الدفع — لازم يكون صح" },
   { key: "delivery_fee_table", label: "رسوم التقديم للترابيزة (ج.م)", hint: "الافتراضي 5" },
   { key: "delivery_fee_obour", label: "رسوم دليفري داخل العبور (ج.م)", hint: "الافتراضي 50" },
+  { key: "cash_accept_timeout_minutes", label: "مهلة قبول طلب الكاش (دقائق)", hint: "الافتراضي 30 — لو الطلب ما اتقبلش خلال المدة يتم إلغاؤه تلقائيًا وإرجاع المخزون" },
   { key: "turnstile_secret", label: "Turnstile Secret Key", hint: "سر — مش بيتبعت للعملاء أبدًا. من Cloudflare > Turnstile (Secret)" },
 ];
 
@@ -36,17 +37,16 @@ export default function SettingsAdmin() {
     setErr(null);
     setOk(null);
     for (const f of FIELDS) {
-      const v = values[f.key] ?? "";
-      const { error } = await supabase.from("settings").update({ value: v.trim() }).eq("key", f.key);
+      const v = (values[f.key] ?? "").trim();
+      const { data: existing } = await supabase.from("settings").select("key").eq("key", f.key).maybeSingle();
+      const { error } = existing
+        ? await supabase.from("settings").update({ value: v }).eq("key", f.key)
+        : await supabase.from("settings").insert({ key: f.key, value: v });
       if (error) {
         setErr(error.message);
         setBusy(false);
         return;
       }
-    }
-    // لو مفيش turnstile_secret أصلًا — نعمل insert
-    if (values.turnstile_secret && !values.turnstile_secret.length) {
-      /* لا شيء */
     }
     setBusy(false);
     setOk("اتحفظ ✅ التغييرات بتشتغل فورًا للعملاء");
