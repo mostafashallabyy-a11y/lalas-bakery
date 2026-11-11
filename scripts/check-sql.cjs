@@ -1,60 +1,158 @@
-// Migration SQL sanity auditor:
-//   FAIL (exit 1)  — unbalanced dollar quotes ($$ or $tag$…$tag$)
-//   FAIL (exit 1)  — file does not end with a semicolon / blank line
-//   WARN (exit 0)  — file exceeds 150 lines (legacy applied migrations keep their size)
-//   OK             — everything else
+#!/usr/bin/env node
+/*
+ * Migration SQL auditor for supabase/migrations.
+ *
+ * FAIL (exit 1):
+ *   - duplicate migration version prefix (e.g. two 0020_*.sql files)
+ *   - dollar-quote mismatch or unterminated block ($fn$ ... $fn$)
+ *   - file does not end with a semicolon
+ *   - file name is not NNNN_snake_case.sql
+ *
+ * WARN (exit 0):
+ *   - file longer than 150 lines (split it into one logical change)
+ *   - bare $$ used instead of a named tag (use $fn$ so truncation is visible)
+ *
+ * Usage: npm run check:sql
+ */
 const fs = require("fs");
 const path = require("path");
 
-const migrationsDir = path.join(__dirname, "..", "supabase", "migrations");
-const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
+const MIGRATIONS_DIR = path.join(__dirname, "..", "supabase", "migrations");
+const MAX_LINES = 150;
 
-let hardFailures = 0;
-let warnings = 0;
+function stripLineComments(sql) {
+  // Good enough for migrations: we only need to ignore -- comments so a
+  // commented-out tag does not count. (-- inside a string literal is rare.)
+  return sql
+    .split(/\r?\n/)
+    .map((line) => line.replace(/--.*$/, ""))
+    .join("\n");
+}
 
-console.log("=== Migration SQL audit ===\n");
-
-for (const file of files) {
-  const content = fs.readFileSync(path.join(migrationsDir, file), "utf-8");
-  const lines = content.split("\n");
-  const lineCount = lines.length;
+function auditFile(file, sql) {
   const problems = [];
+  const warnings = [];
+  const lines = sql.split(/\r?\n/);
+  const stripped = stripLineComments(sql);
 
-  // count dollar-quote tags, grouped by tag name ("" = bare $$).
-  // strip line comments first so a comment mentioning a tag doesn't count.
-  const stripped = content.split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+  // --- dollar-quote matching, in order, as a stack ---
   const tagRe = /\$([A-Za-z_][A-Za-z_0-9]*)?\$/g;
-  const counts = new Map();
-  let m;
-  while ((m = tagRe.exec(stripped)) !== null) {
-    const tag = m[1] || "";
-    counts.set(tag, (counts.get(tag) || 0) + 1);
-  }
-  for (const [tag, count] of counts) {
-    if (count % 2 !== 0) {
-      problems.push(`unbalanced dollar-quote tag $${tag}$…$${tag}$ (found ${count})`);
+  const stack = [];
+  const usedTags = new Set();
+  let match;
+  let mismatch = null;
+
+  while ((match = tagRe.exec(stripped)) !== null) {
+    const tag = "$" + (match[1] || "") + "$";
+    usedTags.add(tag);
+    if (stack.length === 0) {
+      stack.push(tag);
+    } else if (stack[stack.length - 1] === tag) {
+      stack.pop();
+    } else {
+      mismatch =
+        "closing " + tag + " does not match opening " +
+        stack[stack.length - 1] + " (offset " + match.index + ")";
+      break;
     }
   }
 
-  const lastSignificant = [...lines].reverse().map((l) => l.trim()).find((l) => l.length > 0 && !l.startsWith("--"));
+  if (mismatch) {
+    problems.push(mismatch);
+  } else if (stack.length > 0) {
+    problems.push("unterminated dollar-quote block: " + stack.join(", "));
+  }
+
+  if (usedTags.has("$$")) {
+    warnings.push("uses bare $$ - prefer a named tag such as $fn$");
+  }
+
+  // --- must end with a semicolon ---
+  const lastSignificant = [...lines]
+    .reverse()
+    .map((line) => line.trim())
+    .find((line) => line.length > 0 && !line.startsWith("--"));
+
   if (lastSignificant && !lastSignificant.endsWith(";")) {
-    problems.push(`file does not end with ';' (last statement: "${lastSignificant.slice(0, 60)}")`);
+    problems.push(
+      "does not end with ';' (last statement: " +
+        lastSignificant.slice(0, 60) + ")"
+    );
   }
 
-  if (problems.length > 0) {
-    hardFailures++;
-    console.log(`FAIL  ${file}  (${lineCount} lines)`);
-    for (const p of problems) console.log(`        - ${p}`);
-    continue;
+  // --- size ---
+  if (lines.length > MAX_LINES) {
+    warnings.push(
+      lines.length + " lines (> " + MAX_LINES + ") - split into smaller migrations"
+    );
   }
 
-  if (lineCount > 150) {
-    warnings++;
-    console.log(`WARN  ${file}  (${lineCount} lines, >150 — legacy file, do not edit applied migrations)`);
-  } else {
-    console.log(`OK    ${file}  (${lineCount} lines)`);
+  return { problems, warnings, lineCount: lines.length };
+}
+
+function main() {
+  if (!fs.existsSync(MIGRATIONS_DIR)) {
+    console.error("migrations directory not found: " + MIGRATIONS_DIR);
+    process.exit(1);
+  }
+
+  const files = fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.toLowerCase().endsWith(".sql"))
+    .sort();
+
+  let hardFailures = 0;
+  let warningCount = 0;
+  const versions = new Map();
+
+  console.log("=== Migration SQL audit ===");
+  console.log("");
+
+  for (const file of files) {
+    const nameMatch = /^(\d{4})_[a-z0-9_]+\.sql$/.exec(file);
+    const localProblems = [];
+
+    if (!nameMatch) {
+      localProblems.push("name must be NNNN_snake_case.sql");
+    } else {
+      const version = nameMatch[1];
+      if (versions.has(version)) {
+        localProblems.push(
+          "duplicate version " + version + " (also used by " + versions.get(version) + ")"
+        );
+      } else {
+        versions.set(version, file);
+      }
+    }
+
+    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf8");
+    const result = auditFile(file, sql);
+    const problems = localProblems.concat(result.problems);
+    const warnings = result.warnings;
+
+    if (problems.length > 0) {
+      hardFailures++;
+      console.log("FAIL  " + file + "  (" + result.lineCount + " lines)");
+      for (const p of problems) console.log("        - " + p);
+      continue;
+    }
+
+    if (warnings.length > 0) {
+      warningCount++;
+      console.log("WARN  " + file + "  (" + result.lineCount + " lines)");
+      for (const w of warnings) console.log("        - " + w);
+    } else {
+      console.log("OK    " + file + "  (" + result.lineCount + " lines)");
+    }
+  }
+
+  console.log("");
+  console.log(hardFailures + " failing file(s), " + warningCount + " warning(s)");
+
+  if (hardFailures > 0) {
+    console.log("Fix the FAIL entries before running: supabase db push");
+    process.exit(1);
   }
 }
 
-console.log(`\n${hardFailures} failing file(s), ${warnings} warning(s)`);
-process.exit(hardFailures > 0 ? 1 : 0);
+main();

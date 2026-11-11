@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "check:sql": "node scripts/check-sql.cjs",
+    "verify:db": "node scripts/verify-db.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

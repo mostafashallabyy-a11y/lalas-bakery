@@ -9,6 +9,7 @@ import { storageGet } from "../lib/storage";
 
 type PayInfo = {
   ok: boolean;
+  order_id?: string;
   order_number: string;
   total: number;
   status: OrderStatus;
@@ -96,24 +97,32 @@ export default function Payment() {
 
   const uploadProof = async () => {
     if (!proofFile || !orderNumber) return;
+    if (!info?.order_id) {
+      setProofError("مش لاقيين بيانات الطلب — حدّث الصفحة وجرب تاني");
+      return;
+    }
     setProofUploading(true);
     setProofError(null);
     try {
       const compressed = await compressImage(proofFile, { maxWidth: 1200, quality: 0.85 });
-      const ext = compressed.name.split(".").pop() || "jpg";
+      const rawExt = (compressed.name.split(".").pop() || "jpg").toLowerCase();
+      const ext = (rawExt === "jpeg" || rawExt === "jpg" || rawExt === "png" || rawExt === "webp") ? rawExt : "jpg";
       const random = randomId();
-      const path = `payment-proofs/${orderNumber}/${random}.${ext}`;
-      const { error: supErr } = await supabase.storage.from("payment-proofs").upload(path, compressed, {
-        contentType: compressed.type,
+      const objectName = `${info.order_id}/${random}.${ext}`;
+      const rpcPath = `payment-proofs/${objectName}`;
+      const { error: supErr } = await supabase.storage.from("payment-proofs").upload(objectName, compressed, {
+        contentType: compressed.type || `image/${ext === "jpg" ? "jpeg" : ext}`,
         upsert: false,
       });
       if (supErr) throw supErr;
-      const { error: rpcErr } = await supabase.rpc("upload_payment_proof", {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("upload_payment_proof", {
         p_order_number: orderNumber,
         p_tracking_key: trackingKey,
-        p_path: path,
+        p_path: rpcPath,
       });
       if (rpcErr) throw new Error(rpcErr.message || "فشل في رفع إثبات الدفع");
+      const r = rpcData as { ok?: boolean; message?: string } | null;
+      if (!r?.ok) throw new Error(r?.message || "فشل في رفع إثبات الدفع");
       setProofUploaded(true);
     } catch (e) {
       setProofError(e instanceof Error ? e.message : "فشل في رفع الصورة — جرّب تاني");

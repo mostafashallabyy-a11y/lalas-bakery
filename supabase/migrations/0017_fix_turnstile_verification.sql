@@ -11,7 +11,7 @@ returns boolean
 language plpgsql
 security definer
 set search_path = public, extensions
-as $$
+as $fn$
 declare
   v_secret text;
   v_url text := 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
@@ -54,6 +54,6 @@ begin
   end if;
 
   return true;
-end $$;
+end $fn$;
 
 commit;
