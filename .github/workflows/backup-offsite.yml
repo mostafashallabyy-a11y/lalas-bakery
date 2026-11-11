@@ -1,0 +1,101 @@
+# Off-site backup to Cloudflare R2: database dump + ALL storage buckets.
+# Weekly (Monday 04:00 UTC, after the GitHub-artifact backup) + manual trigger.
+#
+# â”€â”€ DISABLED BY DEFAULT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Job only runs when the repo VARIABLE is set:  BACKUP_OFFSITE_ENABLED = true
+# (repo â†’ Settings â†’ Secrets and variables â†’ Actions â†’ Variables).
+# Until then the job is skipped cleanly (no failed runs).
+#
+# Required SECRETS (repo â†’ Settings â†’ Secrets and variables â†’ Actions â†’ Secrets):
+#   SUPABASE_DB_PASSWORD / SUPABASE_DB_HOST / SUPABASE_DB_USER   (already set)
+#   SUPABASE_PROJECT_REF          Project ref of the Supabase project (e.g. lnyodqfksuvgmqkamvbp)
+#   SUPABASE_S3_ACCESS_KEY_ID     Dashboard â†’ Project Settings â†’ Storage â†’ S3 Access Keys â†’ New access key
+#   SUPABASE_S3_SECRET_ACCESS_KEY (shown once â€” copy it when created)
+#   R2_ACCOUNT_ID                 Cloudflare dashboard â†’ R2 â†’ Account ID (right sidebar)
+#   R2_ACCESS_KEY_ID              Cloudflare dashboard â†’ R2 â†’ Manage R2 API Tokens â†’ Create token
+#                                 (permission: Object Read & Write, scoped to the bucket below)
+#   R2_SECRET_ACCESS_KEY
+# Optional VARIABLE:
+#   R2_BUCKET   defaults to "lalas-bakery-backups" (create this bucket in R2 first)
+#
+# Notes:
+# - R2 keeps ~$0.015/GB/mo. Enable bucket VERSIONING in R2 if you want history,
+#   not just a mirror of the latest state.
+# - payment-proofs contains customer payment proofs (sensitive). The R2 bucket
+#   is private by default â€” keep it that way; do not enable public access.
+name: Off-site backup (R2)
+
+on:
+  schedule:
+    - cron: "0 4 * * 1" # Monday 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offsite:
+    runs-on: ubuntu-latest
+    if: vars.BACKUP_OFFSITE_ENABLED == 'true'
+    steps:
+      - name: Install rclone + postgres client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rclone postgresql-client
+
+      - name: Dump database
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+        run: |
+          if [ -z "$SUPABASE_DB_PASSWORD" ] || [ -z "$SUPABASE_DB_HOST" ] || [ -z "$SUPABASE_DB_USER" ]; then
+            echo "::error::SUPABASE_DB_PASSWORD, SUPABASE_DB_HOST and SUPABASE_DB_USER secrets must all be set"
+            exit 1
+          fi
+          mkdir -p backups
+          export PGPASSWORD="$SUPABASE_DB_PASSWORD"
+          export PGCONNECT_TIMEOUT=15
+          pg_dump \
+            -h "$SUPABASE_DB_HOST" \
+            -U "$SUPABASE_DB_USER" \
+            -p 5432 \
+            -d postgres \
+            --no-owner --no-privileges \
+            -F c -f "backups/lalas-$(date -u +%Y%m%d-%H%M).dump"
+          test -s backups/*.dump || { echo "::error::dump file empty"; exit 1; }
+
+      - name: Sync DB dump + storage buckets to R2
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_S3_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
+          SUPABASE_S3_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ vars.R2_BUCKET || 'lalas-bakery-backups' }}
+          # rclone remotes via environment
+          RCLONE_CONFIG_SB_TYPE: s3
+          RCLONE_CONFIG_SB_PROVIDER: Other
+          RCLONE_CONFIG_SB_ENDPOINT: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/storage/v1/s3
+          RCLONE_CONFIG_SB_REGION: us-east-1
+          RCLONE_CONFIG_SB_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_SB_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
+          RCLONE_CONFIG_SB_FORCE_PATH_STYLE: "true"
+          RCLONE_CONFIG_R2_TYPE: s3
+          RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+          RCLONE_CONFIG_R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          RCLONE_CONFIG_R2_REGION: auto
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          set -e
+          for v in SUPABASE_PROJECT_REF SUPABASE_S3_ACCESS_KEY_ID SUPABASE_S3_SECRET_ACCESS_KEY R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v is missing"; exit 1; fi
+          done
+          rclone copy backups "r2:$R2_BUCKET/db" --transfers 4
+          for b in payment-proofs product-images branch-images products; do
+            echo "Syncing bucket: $b"
+            rclone sync "sb:$b" "r2:$R2_BUCKET/storage/$b" --transfers 8 --checkers 8 --log-level NOTICE
+          done
+          echo "Off-site backup complete -> r2:$R2_BUCKET"
