@@ -6,7 +6,7 @@
 ## Pre-Launch Checklist
 
 ### Database & Backend
-- [x] All 16 migrations applied to production Supabase project (0001–0011 baselined via `migration repair`, 0012–0016 pushed 2026-11-10; `migration list --remote` in sync)
+- [x] Migrations applied and in sync on production (0001–0018 applied; 0019/0020 leaked-password functions installed and migration history repaired through 0020)
 - [x] RLS enabled on every table (all migrations enforce `enable`+`force`)
 - [x] SECURITY DEFINER functions have fixed search_path
 - [x] Rate limiting enabled on public RPCs (confirmed live 2026-11-10; order cap 5/30min)
@@ -16,7 +16,7 @@
 - [ ] Real product prices and stock levels set
 - [ ] Real branch information (name, description, services)
 - [ ] Manager account created with strong password
-- [ ] Manager MFA enabled — project-level TOTP enabled 2026-11-10; **per-user enrollment pending** (user action)
+- [x] Manager MFA enabled — project-level TOTP enabled 2026-11-10; per-user TOTP factor enrolled & verified for `manager@lalas.app` (2026-11-11)
 - [ ] Staff accounts created with MFA
 - [ ] Public sign-ups disabled in Auth settings
 
@@ -97,7 +97,7 @@ If critical issues are found after launch:
 
 | Check | Status |
 |-------|--------|
-| All migrations applied | ✅ (16/16 verified 2026-11-10 + 0017/0018 on same day) |
+| All migrations applied | ✅ (0001–0018 applied; 0019/0020 installed & repaired through 0020) |
 | Frontend deployed | ✅ |
 | Home page loads | ✅ |
 | Checkout works | ✅ (2026-11-10: phone end-to-end LB-1097/98/99 created; staging concurrency PASS 9/10; stock 85→76) |
@@ -109,12 +109,13 @@ If critical issues are found after launch:
 | RLS enabled | ✅ |
 | Rate limiting enabled | ✅ |
 | Turnstile enabled | ✅ (2026-11-10) — server verification works via synchronous http extension (migration 0017); live LB-1100/LB-1101 placed through challenge |
-| MFA enabled for manager | ☐ (project-level TOTP enabled 2026-11-10; per-user enrollment via manager@lalas.app pending) |
+| MFA enabled for manager | ✅ (project-level TOTP enabled 2026-11-10; per-user TOTP enrolled & verified for `manager@lalas.app` 2026-11-11) |
 
-**GO** once MFA is enrolled for the manager account (project-level MFA is on; per-user verification pending).
+**GO** — all critical gates satisfied (manager MFA enrolled & verified 2026-11-11).
 
-**Launch snapshot 2026-11-10 (production)**:
-- 18 migrations applied and in sync (0001–0018)
+**Launch snapshot 2026-11-10/11 (production)**:
+- Migrations 0001–0018 applied and in sync (0019/0020 leaked-password functions installed and migration history repaired through 0020)
+- **Auth hardening:** Before User Created hook ENABLED → `public.before_user_created_leaked_password_check` (free HIBP check at signup); manager `manager@lalas.app` TOTP MFA enrolled & verified (2026-11-11)
 - Production data purged of test orders (LB-1041…LB-1101); order numbering reset to LB-1001
 - Turnstile: client widget live; server-side verification real (synchronous http extension, migration 0017); end-to-end phone orders placed and verified
 - Security regression suite: 11/11 anonymous checks pass; service-role key nowhere in tracked code
@@ -122,7 +123,7 @@ If critical issues are found after launch:
 - Demo branches (فرع demo التجريبي) deactivated; production sees only فرع العبور الرئيسي + فرع الشروق
 - Supabase Security Advisor: WARN only, no errors (one Pro-only item documented; see docs/security-report.md)
 
-**NO-GO** if any critical check fails — currently no critical check fails; MFA per-user remains the only open gate.
+**NO-GO** if any critical check fails — none currently fail. Optional hardening remains (backup restore drill on a Docker host, secret rotation hygiene, Pro-only leaked-password toggle when/if available).
 
 ---
 
