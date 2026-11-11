@@ -6,6 +6,7 @@ import { money, DELIVERY_OPTIONS, type DeliveryKey, isValidEgyptianPhone } from 
 import { ErrorBox, EmptyBox } from "../components/Common";
 import { Turnstile } from "../components/Turnstile";
 import { storageGet, storageSet, storageGetJSON, storageSetJSON } from "../lib/storage";
+import { trackEvent } from "../lib/analytics";
 
 type PaymentMethod = "cash" | "instapay";
 
@@ -37,6 +38,11 @@ export default function Checkout() {
       if (!enabled) setPaymentMethod("instapay");
     })();
   }, [branchId]);
+
+  useEffect(() => {
+    if (items.length) trackEvent("begin_checkout", { currency: "EGP", value: subtotal, item_count: items.length });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!branchId || items.length === 0) {
     return <EmptyBox msg="السلة فاضية 🛒 اختار حاجة حلوة من المنيو." />;

@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { supabase, withTimeout, type OrderStatus } from "../lib/types";
 import { money, STATUS, PAYMENT_STATUS_LABEL } from "../lib/format";
 import { CopyButton, ErrorBox, Spinner } from "../components/Common";
+import { trackEvent } from "../lib/analytics";
 
 type OrderItem = { name: string; qty: number; unit_price: number; line_total: number };
 type OrderDetails = {
@@ -52,6 +53,17 @@ export default function OrderPage() {
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderNumber, trackingKey]);
+
+  useEffect(() => {
+    if (details?.ok && details.order_number && details.total != null) {
+      const key = details.order_number;
+      const set = (window as any).__lala_tracked_purchases || ((window as any).__lala_tracked_purchases = new Set<string>());
+      if (!set.has(key)) {
+        set.add(key);
+        trackEvent("purchase", { currency: "EGP", value: details.total, transaction_id: details.order_number });
+      }
+    }
+  }, [details?.ok, details?.order_number, details?.total]);
 
   useEffect(() => {
     if (!orderNumber || !trackingKey) return;

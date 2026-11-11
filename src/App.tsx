@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import Layout from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
+import Seo from "./components/Seo";
 import Home from "./pages/Home";
 import BranchPage from "./pages/Branch";
 import BranchLanding from "./pages/BranchLanding";
@@ -33,6 +34,7 @@ export default function App() {
     <ErrorBoundary>
     <AuthProvider>
       <CartProvider>
+        <Seo />
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />

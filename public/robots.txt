@@ -4,3 +4,7 @@ Allow: /
 Disallow: /staff
 Disallow: /cart
 Disallow: /checkout
+Disallow: /pay/
+Disallow: /order/
+
+Sitemap: https://www.lalasbakery.app/sitemap.xml
