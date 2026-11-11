@@ -4,6 +4,7 @@ import { supabase, withTimeout, type Branch } from "../lib/types";
 import { useCart } from "../context/CartContext";
 import { Spinner, EmptyBox } from "../components/Common";
 import PromoBanner from "../components/PromoBanner";
+import { SocialLinksRow } from "../components/SocialLinks";
 
 export default function Home() {
   const [branches, setBranches] = useState<Branch[] | null>(null);
@@ -32,6 +33,11 @@ export default function Home() {
       <h2 className="text-[22px] font-bold text-brand-700 mt-1.5 mb-0">أهلًا بيك في Lala&rsquo;s 💗</h2>
       <div className="text-mut text-sm">اختار فرعك وابدأ طلبك</div>
 
+      {/* روابط التواصل للعلامة التجارية الرئيسية تحت البطل */}
+      <div className="mb-3">
+        <SocialLinksRow scope="brand" size="md" />
+      </div>
+
       <PromoBanner />
 
       {branches.length === 0 && <EmptyBox msg="لسه مفيش فروع متاحة — قرب قريب 🥲" />}
@@ -58,6 +64,10 @@ export default function Home() {
               شوف المنيو
             </button>
           </p>
+          {/* روابط التواصل الخاصة بهذا الفرع */}
+          <div className="mt-2">
+            <SocialLinksRow scope={b.id} size="sm" />
+          </div>
         </div>
       ))}
     </div>

@@ -83,6 +83,32 @@
 
 ---
 
+## Remaining Launch-Day Checks — Draft Runbook (2026-11-11)
+
+Status of the still-open items, with suggested verification steps (NOT yet executed):
+
+### Before Going Live — data & accounts (need production access)
+- [ ] Real product prices and stock levels set — verify via Admin → Catalog/Inventory against live branch; expect no leftover demo/seed products.
+- [ ] Real branch information (name, description, services) — verify via Admin → Branches; production should show only فرع العبور الرئيسي + فرع الشروق.
+- [ ] Manager account created with strong password — manager@lalas.app exists; MFA enrolled & verified (done). Staff accounts created with MFA — still open (Admin → Staff).
+
+### Before Going Live — runtime flows (draft E2E)
+- [ ] Staff login → POS → Create order — procedure: staff login → open shift → POS create order → payment proof upload → staff confirms payment → stock decrement.
+- [ ] Manager login → Dashboard → Reports — procedure: manager login → dashboard → reports → print (stylesheet) → CSV export.
+- [ ] Test payment proof upload (staff side confirmation).
+- [ ] Test low stock alert (create order with low stock product; expect alert).
+- [ ] Full customer checkout E2E — cart → checkout → payment (InstaPay) → order LB-#### + tracking key; then purge test orders.
+
+### After Launch — monitoring (draft)
+- [ ] Monitor Supabase dashboard for errors (next ~30 min).
+- [ ] Monitor Cloudflare Pages for deployment errors (next deploy: bundle changes pending).
+- [ ] Monitor error rates (should be < 1%).
+- [ ] Monitor response times (p95 < 800ms).
+- [ ] Verify backup runs successfully (next scheduled backup).
+- [ ] Verify email notifications work (if configured).
+
+---
+
 ## Rollback Plan
 
 If critical issues are found after launch:

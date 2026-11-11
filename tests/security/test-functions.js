@@ -31,8 +31,11 @@ export const options = {
   },
 };
 
-const SUPABASE_URL = __ENV.SUPABASE_URL || "https://clzdajzsgacivzfenmyq.supabase.co";
-const SUPABASE_ANON_KEY = __ENV.SUPABASE_ANON_KEY || "sb_publishable_g5FxMTfLq0HdLZXkMQM_hw_Mk9KUivV";
+const SUPABASE_URL = __ENV.SUPABASE_URL;
+const SUPABASE_ANON_KEY = __ENV.SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error("SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required");
+}
 
 function rpcAnon(functionName, payload) {
   return http.post(`${SUPABASE_URL}/rest/v1/rpc/${functionName}`, JSON.stringify(payload), {

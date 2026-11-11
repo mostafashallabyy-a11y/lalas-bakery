@@ -8,9 +8,28 @@
   `select relname, relrowsecurity from pg_class where relname in ('orders','products','settings','feedback','profiles','rate_log');`
   وكل السطور لازم `t`.
 - [ ] الخدمة العامة anon:
-  - [ ] مش شايفة `orders`/`feedback`/`profiles` (RLS).
-  - [ ] إنشاء الطلبات والآراء **عن طريق RPCs بس** (`submit_order`, `submit_feedback`, `track_order`, `get_payment_info`).
+  - [ ] مش شايفة `orders`/`order_items`/`order_events`/`order_status_public`/`feedback`/`profiles` (RLS + لا توجد صلاحية جدول مباشرة لـ anon).
+  - [ ] إنشاء الطلبات والآراء **عن طريق RPCs بس** (`submit_order`, `submit_feedback`, `track_order_by_key`, `get_order_details`, `get_payment_info`).
+  - [ ] `track_order` (رقم فقط) محذوفة — الرقم الودّاء لوحده مش بيشتغل، لازم معاه مفتاح التتبع.
+  - [ ] `order_status_public` مقفولة أمام الاختيار المباشر — تُقرأ فقط عبر `track_order_by_key`، ومِنشورة من Realtime.
 - [ ] `promote_first_manager` مقفولة (بعد تفعيل أول مدير، جرب تنفيذها تاني وأكد إنها بترفض).
+- [ ] **روابط التواصل (social_links)**:
+  - [ ] جدول `social_links` موجود وRLS شغّالة عليه.
+  - [ ] العموم يشوفون الروابط النشطة فقط (اختيار).
+  - [ ] فقط المدير يقدر يضيف/يُعدّل/يُحذف/يُرتّب (RLS + إعدادات المدير).
+  - [ ] كل الروابط تبدأ بـ `https://` (تأكيد من العميل ومن constraint في قاعدة البيانات).
+  - [ ] الواتساب يُخزّن كـ `https://wa.me/<الرقم>` ولا يُRender أبداً رابط `javascript:` أو `data:`.
+- [ ] **خصوصية الطلبات (Part B)**:
+  - [ ] جدول `profiles` فيه عمود `branch_id` (المدير = null يشوف كل الفروع، الموظف = فرعه فقط).
+  - [ ] RLS على `orders`: الموظف يشوف فقط طلبات فرعه، المدير يشوف الكل، الاختيار مش شايف أي طلب.
+  - [ ] RLS على `order_items`/`order_events`: موظف يشوف فقط عناصر/أحداث طلبات فرعه.
+  - [ ] تتبع الزبون فقط عبر RPC يحتاج (رقم الطلب + مفتاح التتبع) معًا، ويخرج حالة فقط (بدون اسم/هاتف/عناصر غير مستخدميه/إثبات الدفع).
+  - [ ] مفتاح خاطئ يعطي نفس الرسالة العامة "مفيش طلب" مثل الطلب المفقود (لا استقراء).
+  - [ ] هناك تحديد معدل (rate limit) وقفل مؤقت بعد محاولات خاطئة متكررة على التتبع.
+  - [ ] "طلباتي" تقرأ من localStorage هذا الجهاز فقط (رقم + مفتاح)، ولا تستدعي قائمة طلبات من الخادم.
+  - [ ] الزبون لا يشترك في جدول الطلبات عبر Realtime (استطلاع قصير عبر RPC لكل طلب على حدة).
+  - [ ] الموظف لا يستطيع تصدير/تنزيل kumpulan طلبات (لا توجد دالة تصدير متاحة للموظف).
+  - [ ] الاختيار لا يقدر يشترك في Realtime على جداول الطلبات/حالات الطلبات.
 - [ ] تسجيل المستخدمين من الصفر مقتول: **Authentication → Settings → Disable sign-ups**.
 - [ ] Rate limits شغالة (حاول تبعت 6 طلبات متتالية — المحاولة السادسة ترفض برسالة ودودة).
 - [ ] Turnstile Secret اتسجل في `settings` → التحقق بقى إجباري من السيرفر (بيتستخدم pg_net).
@@ -19,7 +38,7 @@
 - [ ] مفيش **service_role** في أي ملف (ابحث: `grep -r "service_role"` → لازم صفر نتائج).
 - [ ] `.env` مش في git (`git status` → مش ظاهر).
 - [ ] مفتاح واحد بس ظاهر في الكود: الـ **publishable/anon** (عام بالتصميم).
-- [ ] Secrets على GitHub: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_DB_HOST`, `SUPABASE_DB_PASSWORD` — كلها Private repo secrets مش في الملفات.
+- [ ] Secrets على GitHub: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (للـ ping) و`SUPABASE_DB_PASSWORD` (للـ backup حاليًا) — كلها Private repo secrets مش في الملفات. لو حدّثت الـ backup workflow ليأخذ المضيف/المستخدم من الأسرار، أضف `SUPABASE_DB_HOST` و`SUPABASE_DB_USER` أيضًا.
 
 ### الموقع (Cloudflare Pages)
 - [ ] المتغيرات البيئية الثلاثة اتضافت والنشر آخر وير شايفهم.

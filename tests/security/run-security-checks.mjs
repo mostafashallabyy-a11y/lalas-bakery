@@ -14,8 +14,12 @@
 // Exit code 0 = no FAILs (SKIP allowed), 1 = at least one FAIL.
 // ============================================================
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://clzdajzsgacivzfenmyq.supabase.co";
-const ANON = process.env.SUPABASE_ANON_KEY || "sb_publishable_g5FxMTfLq0HdLZXkMQM_hw_Mk9KUivV";
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const ANON = process.env.SUPABASE_ANON_KEY || "";
+if (!SUPABASE_URL || !ANON) {
+  console.error("SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required");
+  process.exit(1);
+}
 const STAFF_EMAIL = process.env.STAFF_EMAIL || "";
 const STAFF_PASSWORD = process.env.STAFF_PASSWORD || "";
 const MGR_EMAIL = process.env.MGR_EMAIL || "";
