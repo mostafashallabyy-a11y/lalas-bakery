@@ -66,8 +66,8 @@
 - [x] Apply all migrations to production Supabase project — done 2026-11-10 (0001–0016 in sync)
 - [x] Deploy frontend to Cloudflare Pages (verified live 2026-11-11: main = 682e013 merge, new bundle `index-PrEHYA1o.js` serves 200 with social_links + track_order_by_key present; migrations 0021/0022 applied)
 - [x] Verify home page loads with logo (HTTP 200; bundle serves with logo and env keys)
-- [x] Test end-to-end: Place order → Get order number + tracking key (LB-1100/1101 verified, then purged; sequence reset)
-- [x] Test tracking: /track with order number + key (/order/<n>?k= deep-link verified; orders purged post-test)
+- [x] Test end-to-end: Place order → Get order number + tracking key (LB-1100/1101 verified, then purged; sequence reset) — **2026-11-11 live E2E PASSED** (browser automation): cart → checkout → Turnstile token → submit → order **LB-1001** created → tracking key `1a726o1a-acd9-45b7-9675-72aa395cf963` → redirected to `/order/LB-1001?k=...` → deep-link page rendered. Order LB-1001 NOT yet purged (pending DB cleanup).
+- [x] Test tracking: /track with order number + key (/order/<n>?k= deep-link verified; orders purged post-test) — re-confirmed live 2026-11-11 on LB-1001.
 - [ ] Test staff login → POS → Create order
 - [ ] Test manager login → Dashboard → Reports
 - [ ] Test payment proof upload (staff side confirmation)
