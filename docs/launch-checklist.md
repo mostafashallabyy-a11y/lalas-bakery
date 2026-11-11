@@ -21,8 +21,8 @@
 - [x] Public sign-ups disabled in Auth settings (confirmed 2026-11-11)
 
 ### Frontend
-- [ ] Logo uploaded to public/lalas-logo-pink.png
-- [ ] Favicon set to /lalas-logo-pink.png
+- [x] Logo uploaded to public/lalas-logo-pink.png (2026-11-11: file present in `public/` and served by the deploy; live HTTP 200 image/png)
+- [x] Favicon set to /lalas-logo-pink.png (2026-11-11: switched from `/lalas-logo-v2.png` in `index.html`; pending post-redeploy live verification)
 - [ ] All pages load without errors
 - [ ] Cart functionality works
 - [ ] Checkout flow works end-to-end
@@ -41,20 +41,20 @@
 - [x] RLS enabled on all tables (16/16)
 - [x] Turnstile enabled on public forms — widget renders on checkout (bundle verified after redeploy 2026-11-10)
 - [x] Rate limiting enabled on public RPCs (verified 2026-11-10)
-- [ ] Service role key NOT in frontend code
-- [ ] Anon key not committed to git
-- [ ] Environment variables not committed (.env in .gitignore)
-- [ ] CSP headers configured in public/_headers
-- [ ] HSTS enabled
-- [ ] X-Frame-Options set to DENY
-- [ ] Referrer-Policy set to strict-origin-when-cross-origin
+- [x] Service role key NOT in frontend code (2026-11-11: verified — no key in `src/` or tracked files; only prose references)
+- [x] Anon key not committed to git (2026-11-11: fixed + committed as `d3ce2f0`; prod key was hardcoded in 4 scripts at `45d8407`, removed to `process.env.SUPABASE_ANON_KEY`)
+- [x] Environment variables not committed (.env in .gitignore; `.env` not tracked, `.env.example` holds placeholders only) (2026-11-11)
+- [x] CSP headers configured in public/_headers (verified live on https://lalas-bakery.pages.dev 2026-11-11)
+- [x] HSTS enabled (verified live: `max-age=31536000; includeSubDomains`) (2026-11-11)
+- [x] X-Frame-Options set to DENY (verified live) (2026-11-11)
+- [x] Referrer-Policy set to strict-origin-when-cross-origin (verified live) (2026-11-11)
 
 ### Production Deploy
 - [x] Code pushed to main branch (`cb2e53b..897efd5` on 2026-11-10)
 - [x] Cloudflare Pages deploy verified (home returns 200; serving bundle `index-DVNtq93f.js`)
 - [ ] Custom domain configured (if applicable)
-- [ ] HTTPS only
-- [ ] robots.txt configured
+- [x] HTTPS only (verified live: `http://lalas-bakery.pages.dev` → 301 → `https://`) (2026-11-11)
+- [x] robots.txt configured (2026-11-11: added `public/robots.txt`; pending post-redeploy live verification)
 - [ ] Favicon displays correctly
 
 ---
