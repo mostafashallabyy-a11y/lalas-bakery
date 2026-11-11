@@ -22,7 +22,7 @@
 
 ### Frontend
 - [x] Logo uploaded to public/lalas-logo-pink.png (2026-11-11: file present in `public/` and served by the deploy; live HTTP 200 image/png)
-- [x] Favicon set to /lalas-logo-pink.png (2026-11-11: switched from `/lalas-logo-v2.png` in `index.html`; pending post-redeploy live verification)
+- [x] Favicon set to /lalas-logo-pink.png (verified live 2026-11-11: served HTML references /lalas-logo-pink.png; image returns 200 image/png)
 - [ ] All pages load without errors
 - [ ] Cart functionality works
 - [ ] Checkout flow works end-to-end
@@ -54,8 +54,8 @@
 - [x] Cloudflare Pages deploy verified (home returns 200; serving bundle `index-DVNtq93f.js`)
 - [ ] Custom domain configured (if applicable)
 - [x] HTTPS only (verified live: `http://lalas-bakery.pages.dev` → 301 → `https://`) (2026-11-11)
-- [x] robots.txt configured (2026-11-11: added `public/robots.txt`; pending post-redeploy live verification)
-- [ ] Favicon displays correctly
+- [x] robots.txt configured (verified live 2026-11-11: `/robots.txt` returns 200 text/plain with crawl rules)
+- [x] Favicon displays correctly (verified live 2026-11-11: `/lalas-logo-pink.png` → 200 image/png; referenced from served HTML)
 
 ---
 
