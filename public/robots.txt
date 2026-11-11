@@ -1,0 +1,6 @@
+# Lala's Bakery — crawl rules
+User-agent: *
+Allow: /
+Disallow: /staff
+Disallow: /cart
+Disallow: /checkout

@@ -1,8 +1,13 @@
 // اختبار أمان حقيقي ضد المشروع المباشر (via anon key + pg)
 import { Client } from "pg";
 
-const URL = "https://lnyodqfksuvgmqkamvbp.supabase.co/rest/v1";
-const KEY = "sb_publishable_0YvB7bk2iSPOqHdciYi1YQ_V5MJV63P";
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const KEY = process.env.SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !KEY) {
+  console.error("SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required");
+  process.exit(1);
+}
+const URL = `${SUPABASE_URL.replace(/\/$/, "")}/rest/v1`;
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 
 async function rest(path, init = {}) {
