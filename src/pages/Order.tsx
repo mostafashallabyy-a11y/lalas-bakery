@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { supabase, type OrderStatus } from "../lib/types";
+import { supabase, withTimeout, type OrderStatus } from "../lib/types";
 import { money, STATUS } from "../lib/format";
 import { CopyButton, ErrorBox, Spinner } from "../components/Common";
 
@@ -28,6 +28,7 @@ export default function OrderPage() {
   const { orderNumber: rawNum } = useParams<{ orderNumber: string }>();
   const orderNumber = (rawNum || "").trim().toUpperCase();
   const { search } = useLocation();
+  // tracking_key is required everywhere — a friendly number never works alone
   const trackingKey = new URLSearchParams(search).get("k") || "";
 
   const [details, setDetails] = useState<OrderDetails | null>(null);
@@ -35,49 +36,72 @@ export default function OrderPage() {
   const [copiedLink, setCopiedLink] = useState(false);
 
   const load = async () => {
-    if (!orderNumber) return;
-    if (!trackingKey) {
-      // fallback: basic info only
-      const { data } = await supabase.rpc("get_payment_info", { p_order_number: orderNumber });
-      const info = data as any;
-      if (info?.ok) setDetails({ ok: true, order_number: info.order_number, status: info.status, branch_name: info.branch_name, delivery_type: "", delivery_fee: 0, subtotal: 0, total: info.total, items: [] });
-      else setError("مش لاقيين تفاصيل الطلب — افتح من رابط المتابعة الكامل.");
+    if (!orderNumber || !trackingKey) {
+      setError("رابط المتابعة ناقص — افتح الطلب من رابط المتابعة الكامل الذي تصلك بعد الدفع.");
       return;
     }
-    const { data } = await supabase.rpc("get_order_details", {
-      p_order_number: orderNumber,
-      p_tracking_key: trackingKey,
-    });
+    setError(null);
+    const { data } = await withTimeout<OrderDetails>(
+      supabase.rpc("get_order_details", {
+        p_order_number: orderNumber,
+        p_tracking_key: trackingKey,
+      }),
+      15000
+    );
     const d = data as OrderDetails | null;
-    if (d?.ok) { setDetails(d); setError(null); }
-    else setError(d?.message || "مش لاقيين تفاصيل الطلب.");
+    if (d?.ok) {
+      setDetails(d);
+    } else {
+      setError(d?.message || "مش لاقيين تفاصيل الطلب — تأكد من رقم الطلب ومفتاح المتابعة.");
+    }
   };
 
-  useEffect(() => { load(); }, [orderNumber, trackingKey]);
-
-  // Realtime status
   useEffect(() => {
-    if (!orderNumber) return;
-    const ch = supabase
-      .channel(`lb-order-${orderNumber}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "order_status_public", filter: `order_number=eq.${orderNumber}` },
-        (payload) => {
-          const row = payload.new as { status: OrderStatus } | null;
-          if (row?.status) setDetails((prev) => (prev ? { ...prev, status: row.status } : prev));
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [orderNumber]);
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderNumber, trackingKey]);
 
-  if (!orderNumber) return <ErrorBox msg="رقم الطلب مش موجود في اللنك 🥲" />;
+  // Short polling via the authorized RPC (per order, authorized by tracking_key).
+  // Never subscribes to the whole orders table.
+  useEffect(() => {
+    if (!orderNumber || !trackingKey) return;
+    let cancelled = false;
+    const timer = setInterval(async () => {
+      if (cancelled) return;
+      const { data } = await withTimeout<OrderDetails>(
+        supabase.rpc("get_order_details", {
+          p_order_number: orderNumber,
+          p_tracking_key: trackingKey,
+        }),
+        10000
+      );
+      const d = data as OrderDetails | null;
+      if (d?.ok && d.status) {
+        setDetails((prev) => (prev ? { ...prev, status: d.status } : d));
+      }
+    }, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [orderNumber, trackingKey]);
+
+  if (!orderNumber) return <ErrorBox msg="رقم الطلب غير صحيح 🥲" />;
+  if (!trackingKey) {
+    return (
+      <div className="card p-6 text-center text-brand-900">
+        <b className="text-brand-800">مفتاح التتبع مطلوب</b>
+        <p className="text-mut text-sm mt-2">
+          لا يمكن فتح طلب برقم فقط — افتح رابط المتابعة الكامل الذي تصلك بعد تأكيد الطلب (يحتوي على ?k=).
+        </p>
+      </div>
+    );
+  }
   if (!details && !error) return <Spinner label="بنجيب تفاصيل طلبك…" />;
 
-  const trackingLink = `${window.location.origin}/order/${orderNumber}${trackingKey ? `?k=${trackingKey}` : ""}`;
+  const trackingLink = `${window.location.origin}/order/${orderNumber}?k=${trackingKey}`;
   const whatsappText = encodeURIComponent(
-    `رقم طلب Lala's Bakery: ${orderNumber}${trackingKey ? `\nرابط المتابعة: ${trackingLink}` : ""}\nاحتفظ برقم الطلب.`
+    `رقم طلب Lala's Bakery: ${orderNumber}\nرابط المتابعة: ${trackingLink}\nاحتفظ برقم الطلب ومفتاح المتابعة.`
   );
 
   return (
@@ -88,7 +112,6 @@ export default function OrderPage() {
           alt="Lala's Bakery"
           className="mx-auto mb-2 max-h-[90px] w-auto"
         />
-        <h2 className="text-[22px] font-bold text-brand-700 my-1">رقم طلبك</h2>
         <h2 className="text-[22px] font-bold text-brand-700 my-1">رقم طلبك</h2>
         <div className="text-[28px] font-extrabold text-brand-800 tracking-wide my-2">{orderNumber}</div>
         <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -105,11 +128,11 @@ export default function OrderPage() {
           >
             {copiedLink ? "تم النسخ ✓" : "نسخ رابط المتابعة"}
           </button>
-          <a className="btn-primary !px-3" href={`https://wa.me/?text=${whatsappText}`} target="_blank" rel="noreferrer">
+          <a className="btn-primary !px-3" href={`https://wa.me/?text=${whatsappText}`} target="_blank" rel="noopener noreferrer">
             مشاركة على واتساب
           </a>
         </div>
-        <p className="mt-3 font-bold text-brand-700">احتفظ برقم الطلب</p>
+        <p className="mt-3 font-bold text-brand-700">احتفظ برقم الطلب ومفتاح المتابعة</p>
         {details && (
           <div className="text-mut text-sm mt-1">
             {details.branch_name} · الإجمالي {money(details.total)}
@@ -145,12 +168,11 @@ export default function OrderPage() {
       )}
 
       <p className="m-0">
-        <Link to={`/pay/${orderNumber}`} className="btn-primary">الذهاب للدفع</Link>
+        <Link to={`/pay/${orderNumber}?k=${trackingKey}`} className="btn-primary">الذهاب للدفع</Link>
       </p>
       <p className="m-0">
-        <Link to={`/track${trackingKey ? `?k=${trackingKey}` : ""}`} className="btn-outline">تابع طلبك</Link>
+        <Link to={`/track?k=${trackingKey}`} className="btn-outline">تابع طلبك</Link>
       </p>
     </div>
   );
 }
-

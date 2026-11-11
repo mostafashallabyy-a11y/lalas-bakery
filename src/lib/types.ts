@@ -195,3 +195,15 @@ export type TrackResult = {
   updated_at?: string;
   message?: string;
 };
+
+export type SocialLink = {
+  id: string;
+  scope: string; // 'brand' or a branch_id
+  platform: 'instagram' | 'facebook' | 'tiktok' | 'whatsapp' | 'youtube' | 'x' | 'snapchat' | 'telegram' | 'google_maps' | 'website';
+  url: string; // always https://
+  label: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};

@@ -16,6 +16,8 @@ type PayInfo = {
 export default function Payment() {
   const { orderNumber: rawNum } = useParams<{ orderNumber: string }>();
   const orderNumber = (rawNum || "").trim().toUpperCase();
+  const { search } = useLocation();
+  const trackingKey = new URLSearchParams(search).get("k") || "";
 
   const [instapay, setInstapay] = useState<string | null>(null);
   const [info, setInfo] = useState<PayInfo | null>(null);
@@ -29,6 +31,10 @@ export default function Payment() {
   const customerName = sessionStorage.getItem("lalas_name") || "";
 
   useEffect(() => {
+    if (!orderNumber || !trackingKey) {
+      setError("رابط الدفع ناقص — افتح صفحة الدفع من رابط المتابعة الكامل (يحتوي على ?k=).");
+      return;
+    }
     (async () => {
       // رقم انستا باي متاح للجميع من settings
       const { data: s } = await supabase
@@ -38,36 +44,37 @@ export default function Payment() {
         .maybeSingle();
       setInstapay(s?.value || "");
 
-      // مبلغ الطلب (RPC عام: يرجّع الرقم والمبلغ والحالة واسم الفرع فقط)
+      // مبلغ الطلب (RPC عام يحتاج رقم الطلب + مفتاح التتبع معًا)
       const { data, error: e } = await supabase.rpc("get_payment_info", {
         p_order_number: orderNumber,
+        p_tracking_key: trackingKey,
       });
       if (e || !(data as PayInfo | null)?.ok) {
-        setError((e as Error)?.message || "مش لاقيين الطلب ده، اتأكد من الرقم 💗");
+        setError((e as Error)?.message || "مش لاقيين الطلب ده، تأكد من الرقم ومفتاح المتابعة 💗");
       } else {
         setInfo(data as unknown as PayInfo);
       }
     })();
-  }, [orderNumber]);
+  }, [orderNumber, trackingKey]);
 
-  // تحديث لحظي للحالة عبر Supabase Realtime
+  // تحديث الحالة عبر الـ RPC المصرح به (الرقم + المفتاح) — استطلاع قصير، لا مشترك في الجدول كله
   useEffect(() => {
-    if (!orderNumber) return;
-    const ch = supabase
-      .channel(`lb-pay-${orderNumber}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "order_status_public", filter: `order_number=eq.${orderNumber}` },
-        (payload) => {
-          const row = payload.new as { status: OrderStatus } | null;
-          if (row?.status) setInfo((prev) => (prev ? { ...prev, status: row.status } : prev));
-        }
-      )
-      .subscribe();
+    if (!orderNumber || !trackingKey) return;
+    let cancelled = false;
+    const timer = setInterval(async () => {
+      if (cancelled) return;
+      const { data } = await supabase.rpc("track_order_by_key", {
+        p_order_number: orderNumber,
+        p_tracking_key: trackingKey,
+      });
+      const r = data as { ok: boolean; status: OrderStatus; updated_at?: string } | null;
+      if (r?.ok && r.status) setInfo((prev) => (prev ? { ...prev, status: r.status, updated_at: r.updated_at } : prev));
+    }, 30000);
     return () => {
-      supabase.removeChannel(ch);
+      cancelled = true;
+      clearInterval(timer);
     };
-  }, [orderNumber]);
+  }, [orderNumber, trackingKey]);
 
   const noteText = `${orderNumber}${customerName ? " " + customerName : ""}`;
 

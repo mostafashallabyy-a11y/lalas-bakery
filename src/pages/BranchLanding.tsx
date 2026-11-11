@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase, type Branch } from "../lib/types";
 import { Spinner, EmptyBox } from "../components/Common";
 import PromoBanner from "../components/PromoBanner";
+import { SocialLinksRow } from "../components/SocialLinks";
 
 export default function BranchLanding() {
   const { id: branchId } = useParams<{ id: string }>();
@@ -51,6 +52,11 @@ export default function BranchLanding() {
           {(branch.services || []).map((s) => (
             <span key={s} className="tag">{s}</span>
           ))}
+        </div>
+
+        {/* روابط التواصل الخاصة بهذا الفرع */}
+        <div className="mt-3">
+          <SocialLinksRow scope={branch.id} size="md" />
         </div>
       </div>
 

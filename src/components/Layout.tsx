@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { OfflineBanner } from "./Common";
 import { money } from "../lib/format";
+import { SocialLinksRow } from "./SocialLinks";
 
 export default function Layout() {
   const { count, subtotal, branchId } = useCart();
@@ -89,6 +90,15 @@ export default function Layout() {
           </div>
         </div>
       )}
+
+      {/* تذييل الصفحة: روابط التواصل للعلامة التجارية */}
+      <footer className="border-t border-brand-200 bg-brand-50 pt-4 pb-10 mt-8">
+        <div className="max-w-[720px] mx-auto px-3.5 text-center">
+          <p className="text-xs text-brand-500 mb-3">Lala's Bakery — تابعونا على وسائل التواصل</p>
+          <SocialLinksRow scope="brand" size="md" />
+          <p className="text-xs text-brand-400 mt-3">افتح الروابط في نافذة جديدة — جميع الروابط آمنة تبدأ بـ https://</p>
+        </div>
+      </footer>
     </div>
   );
 }
