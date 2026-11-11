@@ -18,7 +18,7 @@
 - [ ] Manager account created with strong password
 - [x] Manager MFA enabled — project-level TOTP enabled 2026-11-10; per-user TOTP factor enrolled & verified for `manager@lalas.app` (2026-11-11)
 - [ ] Staff accounts created with MFA
-- [ ] Public sign-ups disabled in Auth settings
+- [x] Public sign-ups disabled in Auth settings (confirmed 2026-11-11)
 
 ### Frontend
 - [ ] Logo uploaded to public/lalas-logo-pink.png
