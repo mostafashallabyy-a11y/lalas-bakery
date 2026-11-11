@@ -19,7 +19,7 @@ export default function StaffOrders() {
   const load = useCallback(async () => {
     const { data, error: e } = await supabase
       .from("orders")
-      .select("*, branches(name), order_items(*), order_events(*, profiles(full_name, email))")
+      .select("*, branches(name), order_items(*), order_events(*)")
       .order("created_at", { ascending: false })
       .limit(100);
     if (e) {

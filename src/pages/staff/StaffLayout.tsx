@@ -1,5 +1,4 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { NavLink } from "react-router-dom";
+import { Navigate, Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Spinner } from "../../components/Common";
@@ -7,7 +6,8 @@ import { supabase } from "../../lib/types";
 
 // حاجز: موظف أو مدير مفعّل فقط
 export default function StaffLayout() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, signOut } = useAuth();
+  const navigate = useNavigate();
   const { state } = useLocation() as { state?: { from?: string } };
   const [lowStockCount, setLowStockCount] = useState(0);
 
@@ -34,7 +34,7 @@ export default function StaffLayout() {
   }
   return (
     <div className="min-h-dvh">
-      <nav className="sticky top-0 z-30 bg-brand-50 border-b border-brand-200 flex gap-1.5 overflow-x-auto px-2.5 py-2">
+      <nav className="sticky top-0 z-30 bg-brand-50 border-b border-brand-200 flex gap-1.5 overflow-x-auto px-2.5 py-2 items-center">
         <NavLink to="/staff" className={({ isActive }) => `${isActive ? "btn-dark" : "btn-outline"} shrink-0`}>
           🧾 الطلبات
         </NavLink>
@@ -53,6 +53,17 @@ export default function StaffLayout() {
             )}
           </>
         )}
+        <button
+          type="button"
+          onClick={async () => {
+            await signOut();
+            navigate("/staff/login", { replace: true });
+          }}
+          className="btn-outline shrink-0 ml-auto"
+          aria-label="Sign out"
+        >
+          🚪 خروج
+        </button>
       </nav>
       <main className="max-w-[720px] w-full mx-auto px-3.5 pt-3.5 pb-20">
         <Outlet />
