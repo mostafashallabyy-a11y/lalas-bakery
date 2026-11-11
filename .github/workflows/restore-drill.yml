@@ -82,6 +82,8 @@ jobs:
             \$\$;"
           psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "CREATE PUBLICATION supabase_realtime;" || true
           psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;" || true
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS citext;" || true
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "CREATE SCHEMA IF NOT EXISTS auth;" || true
 
       - name: Restore backup (auth + public schemas)
         id: restore
