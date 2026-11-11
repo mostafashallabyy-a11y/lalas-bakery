@@ -1,0 +1,111 @@
+# Restore drill: download a weekly-backup artifact and restore it into a
+# scratch postgres:15 container, then verify row counts.
+# MANUAL TRIGGER ONLY. Prints COUNTS ONLY (no personal data). Writes nothing
+# back to production or to the repo; the scratch container is destroyed at the end.
+#
+# This exercises the same path as Scenario 3 in docs/backup-restore-runbook.md:
+# restore ONLY the `public` schema (Supabase manages auth/storage internals,
+# which a vanilla Postgres cannot host).
+name: Backup restore drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Backup workflow run ID whose artifact to drill (e.g. 42881749440)"
+        required: true
+        type: string
+
+permissions:
+  actions: read   # download the backup artifact from the same repo
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgres client + tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client unzip jq
+
+      - name: Find the artifact for this run
+        id: artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          resp=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ inputs.run_id }}/artifacts")
+          echo "$resp" | jq '{total: .total_count, artifacts: [.artifacts[] | {name, id, size_in_bytes, expired}]}'
+          artifact_id=$(echo "$resp" | jq -r '.artifacts[] | select(.name == "db-backup-${{ inputs.run_id }}") | .id')
+          if [ -z "$artifact_id" ] || [ "$artifact_id" = "null" ]; then
+            echo "::error::No artifact named db-backup-${{ inputs.run_id }} found for run ${{ inputs.run_id }} (run a backup first?)"
+            exit 1
+          fi
+          echo "artifact_id=$artifact_id" >> "$GITHUB_OUTPUT"
+
+      - name: Download the artifact (stays on the runner)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -sSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -o artifact.zip "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.artifact.outputs.artifact_id }}/zip"
+          unzip -o artifact.zip -d restore-drill
+          ls -la restore-drill
+
+      - name: Start scratch Postgres 15
+        run: |
+          docker run --name lalas-restore-drill -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:15
+          for i in $(seq 1 30); do
+            if docker exec lalas-restore-drill pg_isready -U postgres >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          docker exec lalas-restore-drill pg_isready -U postgres
+
+      - name: Restore backup (public schema only)
+        id: restore
+        run: |
+          dump=$(ls restore-drill/*.dump | head -n1)
+          echo "Restoring $dump"
+          set +e
+          pg_restore --no-owner --no-privileges --schema=public \
+            --dbname="postgresql://postgres:postgres@localhost:5432/postgres" "$dump"
+          rc=$?
+          set -e
+          echo "pg_restore exit code: $rc"
+          echo "pg_restore_exit=$rc" >> "$GITHUB_OUTPUT"
+          # Exit code 1 means "some non-fatal SQL warnings/errors".
+          # Do NOT fail here â€” verification below is the pass/fail gate.
+          exit 0
+
+      - name: Verify row counts on scratch restore
+        run: |
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "
+            select 'orders' as table_name, count(*)::bigint as row_count from public.orders
+            union all select 'order_items', count(*)::bigint from public.order_items
+            union all select 'stock_movements', count(*)::bigint from public.stock_movements
+            union all select 'order_events', count(*)::bigint from public.order_events
+            union all select 'products', count(*)::bigint from public.products
+            union all select 'categories', count(*)::bigint from public.categories
+            union all select 'branches', count(*)::bigint from public.branches
+            union all select 'profiles', count(*)::bigint from public.profiles
+            union all select 'feedback', count(*)::bigint from public.feedback
+            union all select 'shifts', count(*)::bigint from public.shifts
+            union all select 'branch_promos', count(*)::bigint from public.branch_promos
+            union all select 'low_stock_alerts', count(*)::bigint from public.low_stock_alerts
+            union all select 'social_links', count(*)::bigint from public.social_links
+            union all select 'settings', count(*)::bigint from public.settings
+            order by table_name;"
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c "
+            select count(*) as orphaned_order_items
+            from public.order_items oi
+            where not exists (select 1 from public.orders o where o.id = oi.order_id);"
+
+      - name: Result
+        run: |
+          echo "Restore drill finished. pg_restore exit code: ${{ steps.restore.outputs.pg_restore_exit }}"
+          echo "Pass criteria: verification query above ran without error and counts are consistent with production (see docs/backup-restore-drill-42881749440.md)."
+
+      - name: Destroy scratch container
+        if: always()
+        run: docker rm -f lalas-restore-drill || true
