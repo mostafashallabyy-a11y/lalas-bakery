@@ -2,6 +2,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import Layout from "./components/Layout";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Home from "./pages/Home";
 import BranchPage from "./pages/Branch";
 import BranchLanding from "./pages/BranchLanding";
@@ -29,6 +30,7 @@ import ReportsAdmin from "./pages/admin/ReportsAdmin";
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <CartProvider>
         <Routes>
@@ -38,9 +40,9 @@ export default function App() {
             <Route path="/branch/:id/landing" element={<BranchLanding />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<Checkout />} />
-            <Route path="/pay/:orderNumber" element={<Payment />} />
-            <Route path="/order/:orderNumber" element={<OrderPage />} />
-            <Route path="/track" element={<Track />} />
+            <Route path="/pay/:orderNumber" element={<ErrorBoundary><Payment /></ErrorBoundary>} />
+            <Route path="/order/:orderNumber" element={<ErrorBoundary><OrderPage /></ErrorBoundary>} />
+            <Route path="/track" element={<ErrorBoundary><Track /></ErrorBoundary>} />
             <Route path="/feedback" element={<FeedbackPage />} />
 
             {/* منطقة الموظفين والمدير (تسجيل دخول مطلوب) */}
@@ -68,5 +70,6 @@ export default function App() {
         </Routes>
       </CartProvider>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }

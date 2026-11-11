@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase, type Branch, type SocialLink } from "../../lib/types";
 import { useAuth } from "../../context/AuthContext";
-import { Spinner, EmptyBox, ErrorBox } from "../../components/Common";
+import { EmptyBox, ErrorBox } from "../../components/Common";
 import {
   SocialLinksRow,
   buildWhatsAppUrl,
@@ -30,7 +30,7 @@ export default function SocialLinksAdmin() {
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [scope, setScope] = useState<string>("brand");
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+
 
   // add/edit form state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -206,7 +206,6 @@ export default function SocialLinksAdmin() {
               value={scope}
               onChange={(e) => {
                 setScope(e.target.value);
-                setSelectedBranch(e.target.value === "brand" ? null : e.target.value || null);
               }}
             >
               <option value="brand">العلامة التجارية الرئيسية</option>

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { supabase, type OrderStatus } from "../lib/types";
 import { money } from "../lib/format";
 import { CopyButton, ErrorBox, Spinner } from "../components/Common";
 import { compressImage } from "../lib/image";
+import { randomId } from "../lib/random";
+import { storageGet } from "../lib/storage";
 
 type PayInfo = {
   ok: boolean;
@@ -27,8 +29,8 @@ export default function Payment() {
   const [proofUploaded, setProofUploaded] = useState(false);
   const [proofError, setProofError] = useState<string | null>(null);
 
-  // الاسم بنخليه في الجلسة فقط — للنسخ في ملاحظة التحويل
-  const customerName = sessionStorage.getItem("lalas_name") || "";
+  // الاسم بنخليه في الجلسة فقط — للنسخ في ملاحظة التحويل (يُتجاهل بأمان على iPhone private mode)
+  const customerName = storageGet("session", "lalas_name") || "";
 
   useEffect(() => {
     if (!orderNumber || !trackingKey) {
@@ -103,7 +105,7 @@ export default function Payment() {
       const compressed = await compressImage(proofFile, { maxWidth: 1200, quality: 0.85 });
       // اسم الملف: payment-proofs/<order_id>/<uuid>.jpg — نستخدم order_number místo id لأن العميل مايعرفش id
       const ext = compressed.name.split(".").pop() || "jpg";
-      const random = crypto.randomUUID();
+      const random = randomId();
       const path = `payment-proofs/${orderNumber}/${random}.${ext}`;
 
       const { error: supErr } = await supabase.storage.from("payment-proofs").upload(path, compressed, {

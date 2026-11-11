@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { storageGetJSON, storageSetJSON } from "../lib/storage";
 
 export type CartItem = {
   product_id: string;
@@ -41,25 +42,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(KEY);
-      if (raw) {
-        const d = JSON.parse(raw) as { branchId: string; branchName: string; items: CartItem[] };
-        setBranchId(d.branchId || null);
-        setBranchName(d.branchName || null);
-        setItems(Array.isArray(d.items) ? d.items : []);
-      }
-    } catch {
-      /* service worker غير مهم */
-    }
+    const d = storageGetJSON<{ branchId: string; branchName: string; items: CartItem[] } | null>(
+      "session",
+      KEY,
+      null
+    );
+    if (!d) return;
+    setBranchId(d.branchId || null);
+    setBranchName(d.branchName || null);
+    setItems(Array.isArray(d.items) ? d.items : []);
   }, []);
 
   const persist = (next: { branchId: string | null; branchName: string | null; items: CartItem[] }) => {
-    try {
-      sessionStorage.setItem(KEY, JSON.stringify(next));
-    } catch {
-      /* تجاهل */
-    }
+    storageSetJSON("session", KEY, next); // safe on private mode / quota errors
   };
 
   const setBranch = useCallback((id: string, name: string) => {

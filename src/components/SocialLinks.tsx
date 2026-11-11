@@ -66,7 +66,6 @@ interface SocialLinkButtonProps {
 }
 
 export function SocialLinkButton({ link, size = "md" }: SocialLinkButtonProps) {
-  const url = link.platform === "whatsapp" ? buildWhatsAppUrl(link.url) : link.url;
   const safe =
     link.platform === "whatsapp"
       ? buildWhatsAppUrl(link.url)

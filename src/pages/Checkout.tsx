@@ -5,12 +5,13 @@ import { useCart } from "../context/CartContext";
 import { money, DELIVERY_OPTIONS, type DeliveryKey } from "../lib/format";
 import { ErrorBox, EmptyBox } from "../components/Common";
 import { Turnstile } from "../components/Turnstile";
+import { storageGet, storageSet, storageGetJSON, storageSetJSON } from "../lib/storage";
 
 export default function Checkout() {
   const { state } = useLocation() as { state?: { delivery?: DeliveryKey } };
   const { items, subtotal, branchId, branchName, clear } = useCart();
   const [delivery, setDelivery] = useState<DeliveryKey>(state?.delivery ?? "pickup");
-  const [name, setName] = useState(() => sessionStorage.getItem("lalas_name") || "");
+  const [name, setName] = useState(() => storageGet("session", "lalas_name") || "");
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export default function Checkout() {
       setError("اكتب اسمك (من حرفين لـ 60 حرف) عشان نعرف نرجعلك وسط الطلبات 🌸");
       return;
     }
-    sessionStorage.setItem("lalas_name", clean);
+    storageSet("session", "lalas_name", clean);
     setBusy(true);
     // ⚠️ السعر والرسوم Betحسابوا تاني على السيرفر من أسعار قاعدة البيانات
     const res = await withTimeout<{
@@ -52,27 +53,34 @@ export default function Checkout() {
       return;
     }
 
-    if (res.data?.ok && res.data?.order_number) {
-      // Save order to localStorage "my_orders" so it survives cart clear
-      const myOrdersStr = localStorage.getItem("my_orders");
-      const myOrders = myOrdersStr ? JSON.parse(myOrdersStr) : [];
+    if (!res.data) {
+      setError("حصلت مشكلة في تسجيل الطلب — جرّب تاني بعد لحظات 🥲");
+      setBusy(false);
+      return;
+    }
+
+    const okShape = res.data?.ok && res.data?.order_number && res.data?.tracking_key;
+    if (okShape) {
+      // Save order to localStorage "my_orders" so it survives cart clear (safe reads/writes)
+      const myOrdersStr = storageGetJSON<Array<{ order_number?: string; tracking_key?: string }>>("local", "my_orders", []);
       const orderEntry = {
-        order_number: res.data.order_number,
-        tracking_key: res.data.tracking_key,
+        order_number: res.data!.order_number,
+        tracking_key: res.data!.tracking_key,
         branch_id: branchId,
         branch_name: branchName,
-        total: res.data.total,
+        total: res.data!.total,
         date: new Date().toISOString(),
       };
       // Don't duplicate same order number
-      const already = myOrders.find((o: any) => o.order_number === res.data!.order_number);
+      const already = myOrdersStr.find((o) => o.order_number === res.data!.order_number);
       if (!already) {
-        myOrders.unshift(orderEntry);
-        localStorage.setItem("my_orders", JSON.stringify(myOrders));
+        myOrdersStr.unshift(orderEntry);
+        storageSetJSON("local", "my_orders", myOrdersStr);
       }
 
-      // Save last order for payment page
-      sessionStorage.setItem("lalas_last_order", JSON.stringify(res.data));
+      // Save last order for the payment page + error boundary fallback (both storage areas)
+      storageSetJSON("session", "lalas_last_order", res.data);
+      storageSetJSON("local", "lalas_last_order", res.data);
 
       clear();
       navigate(`/order/${res.data!.order_number}?k=${res.data!.tracking_key}`, {

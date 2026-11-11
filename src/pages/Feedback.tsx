@@ -2,10 +2,11 @@ import { useState } from "react";
 import { supabase } from "../lib/types";
 import { ErrorBox } from "../components/Common";
 import { Turnstile } from "../components/Turnstile";
+import { storageGet } from "../lib/storage";
 
 export default function FeedbackPage() {
   const [message, setMessage] = useState("");
-  const [name, setName] = useState(sessionStorage.getItem("lalas_name") || "");
+  const [name, setName] = useState(() => storageGet("session", "lalas_name") || "");
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

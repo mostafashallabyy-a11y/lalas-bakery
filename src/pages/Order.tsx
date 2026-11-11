@@ -41,14 +41,14 @@ export default function OrderPage() {
       return;
     }
     setError(null);
-    const { data } = await withTimeout<OrderDetails>(
+    const res = await withTimeout<OrderDetails>(
       supabase.rpc("get_order_details", {
         p_order_number: orderNumber,
         p_tracking_key: trackingKey,
       }),
       15000
     );
-    const d = data as OrderDetails | null;
+    const d = res?.data as OrderDetails | null;
     if (d?.ok) {
       setDetails(d);
     } else {
@@ -68,14 +68,14 @@ export default function OrderPage() {
     let cancelled = false;
     const timer = setInterval(async () => {
       if (cancelled) return;
-      const { data } = await withTimeout<OrderDetails>(
+      const res = await withTimeout<OrderDetails>(
         supabase.rpc("get_order_details", {
           p_order_number: orderNumber,
           p_tracking_key: trackingKey,
         }),
         10000
       );
-      const d = data as OrderDetails | null;
+      const d = res?.data as OrderDetails | null;
       if (d?.ok && d.status) {
         setDetails((prev) => (prev ? { ...prev, status: d.status } : d));
       }

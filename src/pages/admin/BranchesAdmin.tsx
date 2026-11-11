@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase, type Branch } from "../../lib/types";
 import { Spinner, EmptyBox } from "../../components/Common";
 import { compressImage } from "../../lib/image";
+import { randomId } from "../../lib/random";
 
 export default function BranchesAdmin() {
   const [branches, setBranches] = useState<Branch[] | null>(null);
@@ -68,7 +69,7 @@ export default function BranchesAdmin() {
       if (!["jpg", "jpeg", "png", "webp"].includes(ext)) throw new Error("صيغة الصورة مش مدعومة — استخدم jpg/png/webp");
       if (file.size > 3 * 1024 * 1024) throw new Error("الصورة أكبر من 3 ميجابايت");
       const compressed = await compressImage(file, { maxWidth: 1000, quality: 0.85 });
-      const path = `${bucket}/${crypto.randomUUID()}.${ext}`;
+      const path = `${bucket}/${randomId()}.${ext}`;
       const { error } = await supabase.storage.from(bucket).upload(path, compressed, { contentType: compressed.type, upsert: false });
       if (error) throw error;
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);

@@ -3,6 +3,7 @@ import { supabase, type Branch, type Category, type Product } from "../../lib/ty
 import { money } from "../../lib/format";
 import { Spinner, EmptyBox } from "../../components/Common";
 import { compressImage } from "../../lib/image";
+import { randomId } from "../../lib/random";
 
 // ===== التصنيفات =====
 function CategoriesPanel({ cats, reload, busyFlag, setBusyFlag }: {
@@ -231,7 +232,7 @@ export default function CatalogAdmin() {
       if (!["jpg", "jpeg", "png", "webp"].includes(ext)) throw new Error("صيغة الصورة مش مدعومة — استخدم jpg/png/webp");
       if (file.size > 3 * 1024 * 1024) throw new Error("الصورة أكبر من 3 ميجابايت");
       const compressed = await compressImage(file, { maxWidth: 1000, quality: 0.85 });
-      const path = `products/${crypto.randomUUID()}.${ext}`;
+      const path = `products/${randomId()}.${ext}`;
       const { error } = await supabase.storage.from("product-images").upload(path, compressed, { contentType: compressed.type, upsert: false });
       if (error) throw error;
       const { data } = supabase.storage.from("product-images").getPublicUrl(path);

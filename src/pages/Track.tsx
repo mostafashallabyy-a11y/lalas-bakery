@@ -55,14 +55,14 @@ export default function Track() {
       await Promise.all(
         saved.map(async (o) => {
           try {
-            const { data } = await withTimeout<TrackResult>(
+            const res = await withTimeout<TrackResult>(
               supabase.rpc("track_order_by_key", {
                 p_order_number: o.order_number,
                 p_tracking_key: o.tracking_key,
               }),
               10000
             );
-            const r = data as TrackResult | null;
+            const r = res?.data as TrackResult | null;
             if (!cancelled && r?.ok && r.status) {
               setSaved((prev) => prev.map((p) => (p.order_number === o.order_number ? { ...p, status: r.status } : p)));
             }
@@ -84,7 +84,7 @@ export default function Track() {
     setBusy(true);
     setError(null);
     setResult(null);
-    const { data } = await withTimeout<TrackResult>(
+    const res = await withTimeout<TrackResult>(
       supabase.rpc("track_order_by_key", {
         p_order_number: num,
         p_tracking_key: key,
@@ -92,12 +92,12 @@ export default function Track() {
       15000
     );
     setBusy(false);
-    const res = data as unknown as TrackResult;
-    if (!res?.ok) {
-      setError(res?.message || "مش لاقيين الطلب ده، تأكد من الرقم ومفتاح المتابعة 💗");
+    const resData = res?.data as unknown as TrackResult;
+    if (!resData?.ok) {
+      setError(resData?.message || "مش لاقيين الطلب ده، تأكد من الرقم ومفتاح المتابعة 💗");
     } else {
       setError(null);
-      setResult(res);
+      setResult(resData);
     }
   };
 

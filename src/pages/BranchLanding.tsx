@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { supabase, type Branch } from "../lib/types";
 import { Spinner, EmptyBox } from "../components/Common";
 import PromoBanner from "../components/PromoBanner";
@@ -62,9 +62,9 @@ export default function BranchLanding() {
 
       <div className="card p-4 text-center mt-4">
         <p className="text-mut text-sm mb-3">اختار التصنيف وابدأ طلبك من هذا الفرع</p>
-        <a href={`/branch/${branch.id}`} className="btn-primary w-full text-base">
+        <Link to={`/branch/${branch.id}`} className="btn-primary w-full text-base inline-block">
           🍰 شوف المنيو
-        </a>
+        </Link>
       </div>
     </div>
   );
