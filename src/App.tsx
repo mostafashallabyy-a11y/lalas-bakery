@@ -1,9 +1,11 @@
+import { lazy, Suspense } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import Layout from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Seo from "./components/Seo";
+import { Spinner } from "./components/Common";
 import Home from "./pages/Home";
 import BranchPage from "./pages/Branch";
 import BranchLanding from "./pages/BranchLanding";
@@ -13,21 +15,23 @@ import Payment from "./pages/Payment";
 import OrderPage from "./pages/Order";
 import Track from "./pages/Track";
 import FeedbackPage from "./pages/Feedback";
-import StaffLogin from "./pages/StaffLogin";
-import StaffOrders from "./pages/StaffOrders";
-import StaffPOS from "./pages/StaffPOS";
-import StaffLayout from "./pages/staff/StaffLayout";
-import AdminLayout from "./pages/admin/AdminLayout";
-import BranchesAdmin from "./pages/admin/BranchesAdmin";
-import CatalogAdmin from "./pages/admin/CatalogAdmin";
-import SettingsAdmin from "./pages/admin/SettingsAdmin";
-import StaffAdmin from "./pages/admin/StaffAdmin";
-import FeedbackAdmin from "./pages/admin/FeedbackAdmin";
-import PromosAdmin from "./pages/admin/PromosAdmin";
-import SocialLinksAdmin from "./pages/admin/SocialLinksAdmin";
-import InventoryAdmin from "./pages/admin/InventoryAdmin";
-import StockReport from "./pages/admin/StockReport";
-import ReportsAdmin from "./pages/admin/ReportsAdmin";
+
+// منطقة الموظفين والإدارة — تُحمّل عند الحاجة فقط (تقليل حجم الحزمة للزبائن)
+const StaffLogin = lazy(() => import("./pages/StaffLogin"));
+const StaffOrders = lazy(() => import("./pages/StaffOrders"));
+const StaffPOS = lazy(() => import("./pages/StaffPOS"));
+const StaffLayout = lazy(() => import("./pages/staff/StaffLayout"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const BranchesAdmin = lazy(() => import("./pages/admin/BranchesAdmin"));
+const CatalogAdmin = lazy(() => import("./pages/admin/CatalogAdmin"));
+const SettingsAdmin = lazy(() => import("./pages/admin/SettingsAdmin"));
+const StaffAdmin = lazy(() => import("./pages/admin/StaffAdmin"));
+const FeedbackAdmin = lazy(() => import("./pages/admin/FeedbackAdmin"));
+const PromosAdmin = lazy(() => import("./pages/admin/PromosAdmin"));
+const SocialLinksAdmin = lazy(() => import("./pages/admin/SocialLinksAdmin"));
+const InventoryAdmin = lazy(() => import("./pages/admin/InventoryAdmin"));
+const StockReport = lazy(() => import("./pages/admin/StockReport"));
+const ReportsAdmin = lazy(() => import("./pages/admin/ReportsAdmin"));
 
 export default function App() {
   return (
@@ -48,10 +52,10 @@ export default function App() {
             <Route path="/feedback" element={<FeedbackPage />} />
 
             {/* منطقة الموظفين والمدير (تسجيل دخول مطلوب) */}
-            <Route path="/staff/login" element={<StaffLogin />} />
-            <Route path="/staff/*" element={<StaffLayout />}>
+            <Route path="/staff/login" element={<Suspense fallback={<Spinner label="بنجهز لوحة التحكم…" />}><StaffLogin /></Suspense>} />
+            <Route path="/staff/*" element={<Suspense fallback={<Spinner label="بنجهز لوحة التحكم…" />}><StaffLayout /></Suspense>}>
               <Route index element={<StaffOrders />} />
-              <Route path="admin" element={<AdminLayout />}>
+              <Route path="admin" element={<Suspense fallback={<Spinner label="بنجهز لوحة التحكم…" />}><AdminLayout /></Suspense>}>
                 <Route index element={<Navigate to="branches" replace />} />
                 <Route path="branches" element={<BranchesAdmin />} />
                 <Route path="catalog" element={<CatalogAdmin />} />

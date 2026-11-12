@@ -1,10 +1,65 @@
 import { useState, type ReactNode } from "react";
 
-export function Spinner({ label = "لحظة… ⏳" }: { label?: string }) {
+/** الشعار بخلفيته الشفافة — webp مع fallback للـ png */
+export function Logo({ className, alt = "Lala's Bakery" }: { className?: string; alt?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-10">
-      <div className="w-9 h-9 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
-      <p className="text-sm text-mut font-bold">{label}</p>
+    <picture>
+      <source srcSet="/lalas-logo.webp" type="image/webp" />
+      <img
+        src="/lalas-logo.png"
+        alt={alt}
+        width={631}
+        height={480}
+        decoding="async"
+        className={className}
+      />
+    </picture>
+  );
+}
+
+export function Spinner({ label = "لحظة…" }: { label?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-10" role="status" aria-label={label}>
+      <div className="h-9 w-9 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600 motion-reduce:animate-none" />
+      <p className="text-sm font-bold text-mut">{label}</p>
+    </div>
+  );
+}
+
+/** عظمة تحميل (skeleton) — للشبكات والكروت */
+export function Skeleton({ className }: { className?: string }) {
+  return <div aria-hidden="true" className={`skeleton ${className ?? ""}`} />;
+}
+
+export function ProductGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 gap-2.5" aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="card p-3">
+          <div className="skeleton mb-2 h-[110px] w-full" />
+          <div className="skeleton mb-1.5 h-4 w-3/4" />
+          <div className="skeleton mb-2 h-4 w-1/3" />
+          <div className="skeleton mx-auto h-9 w-24 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function BranchListSkeleton({ count = 2 }: { count?: number }) {
+  return (
+    <div className="space-y-3" aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="card overflow-hidden">
+          <div className="skeleton h-40 w-full !rounded-none" />
+          <div className="p-4">
+            <div className="skeleton mb-2 h-6 w-1/2" />
+            <div className="skeleton mb-2 h-4 w-full" />
+            <div className="skeleton mb-3 h-4 w-2/3" />
+            <div className="skeleton h-11 w-full rounded-full" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

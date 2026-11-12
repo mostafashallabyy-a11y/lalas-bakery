@@ -123,13 +123,13 @@ async function runFlow(page: Page) {
   await page.getByRole("button", { name: /شوف المنيو/ }).click();
   await expect(page).toHaveURL(/\/landing/, { timeout: 15000 });
   await page.getByRole("link", { name: /شوف المنيو/ }).or(page.getByRole("button", { name: /شوف المنيو/ })).click();
-  await expect(page.getByRole("button", { name: /Add to cart/i }).first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole("button", { name: /أضف .+ للسلة/ }).first()).toBeVisible({ timeout: 15000 });
 
   // add product
-  await page.getByRole("button", { name: /Add to cart/i }).first().click();
+  await page.getByRole("button", { name: /أضف .+ للسلة/ }).first().click();
 
   // cart -> checkout via client-side nav (preserves in-memory cart even with storage blocked)
-  await page.getByRole("link", { name: "🛒 السلة" }).click();
+  await page.getByRole("link", { name: /السلة/ }).first().click();
   await expect(page).toHaveURL(/\/cart/, { timeout: 10000 });
   // CTA on the cart page -> goes to /checkout
   await page.getByRole("button", { name: /تأكيد الطلب والدفع/ }).click();
@@ -137,17 +137,17 @@ async function runFlow(page: Page) {
 
   await expect(page.locator("#cstm-name")).toBeVisible({ timeout: 10000 });
   await page.fill("#cstm-name", "زبون تجربة");
-  await page.getByRole("button", { name: /تأكيد الطلب والدفع/ }).click();
+  await page.getByRole("button", { name: /تأكيد الطلب/ }).click();
 
   // order page
   await expect(page).toHaveURL(/\/order\/LB-1001\?k=/, { timeout: 10000 });
-  await expect(page.getByRole("heading", { name: /رقم طلبك/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /طلبك/ })).toBeVisible();
   await expect(page.getByText("LB-1001").first()).toBeVisible();
 
   // go to payment — THE step that was broken on iPhone
-  await page.getByRole("link", { name: /الذهاب للدفع/ }).click();
+  await page.getByRole("link", { name: /الذهاب/ }).click();
   await expect(page).toHaveURL(/\/pay\/LB-1001\?k=/, { timeout: 10000 });
-  await expect(page.getByRole("heading", { name: /رقم طلبك/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /طلبك/ })).toBeVisible();
   await expect(page.getByText("خطوات الدفع (InstaPay)")).toBeVisible();
   // never a blank render
   const bodyText = await page.evaluate(() => document.body.innerText.trim().length);

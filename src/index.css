@@ -6,68 +6,317 @@
   color-scheme: light;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   font-family: "Cairo", Tahoma, Arial, sans-serif;
   background-color: #fbf3f4;
   color: #4a2a33;
   min-height: 100%;
-  line-height: 1.6;
+  line-height: 1.65;
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #ecc9d2;
+  color: #4a2a33;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+  html,
+  body {
+    background-color: #241a1d;
+    color: #f3e6e9;
+  }
+  ::selection {
+    background: #6b3444;
+    color: #fdeef2;
+  }
+}
+
+/* ============================================================
+   حركات الصفحات والمكوّنات — ناعمة مع احترام prefers-reduced-motion
+   ============================================================ */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* ملاحظة: مفيش transform هنا عشان position:fixed جوا الصفحة يفضل متعلق بالشاشة */
+.page-enter {
+  animation: page-enter 0.28s ease-out both;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.sheet-panel {
+  animation: sheet-up 0.26s cubic-bezier(0.32, 0.72, 0.35, 1) both;
+}
+
+@keyframes overlay-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.sheet-overlay {
+  animation: overlay-fade 0.2s ease-out both;
+}
+
+@keyframes toast-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.toast-in {
+  animation: toast-pop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.skeleton {
+  border-radius: 14px;
+  background: linear-gradient(100deg, #f3e0e5 8%, #fbeef1 30%, #f3e0e5 55%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    background: linear-gradient(100deg, #32262a 8%, #3e2f35 30%, #32262a 55%);
+    background-size: 200% 100%;
+  }
+}
+
+@keyframes promo-slide {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.promo-slide {
+  animation: promo-slide 0.4s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-slide {
+    animation: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+  .page-enter,
+  .sheet-panel,
+  .sheet-overlay,
+  .toast-in,
+  .skeleton,
+  .promo-slide {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* نص بيختفي بعد سطرين + زرار اقرأ المزيد */
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 @layer components {
-  /* البطاقة زي النموذج: خلفية بيضاء وحدود وردية ورُكن 18px */
+  /* البطاقة: خلفية بيضاء، ركن 18-20px، ظل ناعم */
   .card {
-    @apply bg-white rounded-[18px] border border-brand-200;
+    @apply rounded-[18px] border border-brand-200 bg-white;
+    box-shadow: 0 1px 2px rgba(74, 42, 51, 0.06), 0 6px 18px rgba(74, 42, 51, 0.08);
   }
-  /* الأزرار دايرة النموذج 20px */
+  @media (prefers-color-scheme: dark) {
+    .card {
+      background: #332429;
+      border-color: rgba(255, 255, 255, 0.09);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 22px rgba(0, 0, 0, 0.28);
+    }
+  }
+
+  /* الأزرار الأساسية: وردي عميق يحقق تباين AA مع النص الأبيض */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 text-white font-bold px-4 py-2 transition hover:bg-brand-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer;
+    @apply inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-2 font-bold text-white transition hover:bg-brand-700 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40;
   }
   .btn-pill {
-    @apply inline-flex items-center justify-center gap-1 rounded-full bg-brand-500 text-white font-bold px-4 py-1.5 text-sm cursor-pointer transition hover:bg-brand-600 active:scale-[0.98];
+    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-bold text-white transition hover:bg-brand-700 active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40;
   }
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-1 rounded-full border-[1.5px] border-brand-500 bg-transparent text-brand-700 font-bold px-4 py-1.5 text-sm cursor-pointer transition hover:bg-brand-100 active:scale-[0.98];
+    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full border-[1.5px] border-brand-600 bg-transparent px-4 py-1.5 text-sm font-bold text-brand-700 transition hover:bg-brand-100 active:scale-[0.96];
   }
   .btn-dark {
-    @apply inline-flex items-center justify-center gap-1 rounded-full bg-brand-700 text-brand-50 font-bold px-4 py-1.5 text-sm cursor-pointer transition active:scale-[0.98];
+    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full bg-brand-700 px-4 py-1.5 text-sm font-bold text-brand-50 transition hover:bg-brand-800 active:scale-[0.96];
   }
   .btn-soft {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-100 text-brand-700 font-bold px-4 py-2 transition hover:bg-brand-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-100 px-4 py-2 font-bold text-brand-700 transition hover:bg-brand-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40;
   }
+  @media (prefers-color-scheme: dark) {
+    .btn-primary,
+    .btn-pill {
+      background: #e8b4c4;
+      color: #3a222b;
+    }
+    .btn-primary:hover,
+    .btn-pill:hover {
+      background: #f5cdd8;
+    }
+    .btn-outline {
+      border-color: rgba(255, 255, 255, 0.28);
+      color: #f3d3dc;
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .btn-dark {
+      background: #e8b4c4;
+      color: #3a222b;
+    }
+    .btn-dark:hover {
+      background: #f5cdd8;
+    }
+    .btn-soft {
+      background: rgba(232, 180, 196, 0.16);
+      color: #f5cdd8;
+    }
+    .btn-soft:hover {
+      background: rgba(232, 180, 196, 0.24);
+    }
+  }
+
   .input {
-    @apply w-full rounded-xl border-[1.5px] border-brand-200 bg-brand-50 px-3 py-2 text-[15px] text-brand-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
+    @apply w-full rounded-xl border-[1.5px] border-brand-200 bg-brand-50 px-3.5 py-2.5 text-[16px] text-brand-900 outline-none transition placeholder:text-mut focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
   }
+  @media (prefers-color-scheme: dark) {
+    .input {
+      background: #2b2125;
+      border-color: rgba(255, 255, 255, 0.14);
+      color: #f3e6e9;
+    }
+    .input:focus {
+      border-color: #e8b4c4;
+      --tw-ring-color: rgba(232, 180, 196, 0.35);
+    }
+  }
+
   .label {
-    @apply block text-sm font-bold text-brand-900 mb-1;
+    @apply mb-1 block text-sm font-bold text-brand-900;
   }
+  @media (prefers-color-scheme: dark) {
+    .label {
+      color: #f3e6e9;
+    }
+  }
+
   .pill {
-    @apply inline-flex items-center rounded-full bg-brand-100 text-brand-700 px-2.5 py-0.5 text-[13px] font-bold;
+    @apply inline-flex items-center rounded-full bg-brand-100 px-2.5 py-0.5 text-[13px] font-bold text-brand-700;
   }
-  /* الرسائل الوردية (.msg في النموذج) */
+  @media (prefers-color-scheme: dark) {
+    .pill {
+      background: rgba(232, 180, 196, 0.18);
+      color: #f5cdd8;
+    }
+  }
+
+  /* الرسائل الوردية */
   .msg-box {
-    @apply bg-brand-100 rounded-2xl px-3 py-2.5 text-brand-700;
+    @apply rounded-2xl bg-brand-100 px-3.5 py-3 text-brand-800;
   }
+  @media (prefers-color-scheme: dark) {
+    .msg-box {
+      background: rgba(232, 180, 196, 0.14);
+      color: #f5cdd8;
+    }
+  }
+
   /* التاج الصغير */
   .tag {
-    @apply inline-block bg-brand-100 text-brand-700 rounded-[10px] px-2.5 py-0.5 text-[13px] leading-6;
+    @apply inline-block rounded-[10px] bg-brand-100 px-2.5 py-0.5 text-[13px] leading-6 text-brand-700;
   }
+  @media (prefers-color-scheme: dark) {
+    .tag {
+      background: rgba(232, 180, 196, 0.16);
+      color: #f5cdd8;
+    }
+  }
+
   /* شريط الحالات (تتبع الطلب) */
   .st-step {
-    @apply flex-1 text-center px-1 py-2 rounded-xl bg-brand-100 text-[13px] text-mut;
+    @apply flex-1 rounded-xl bg-brand-100 px-1 py-2 text-center text-[13px] text-mut;
   }
   .st-step.on {
-    @apply bg-brand-500 text-white font-bold;
+    @apply bg-brand-600 font-bold text-white;
   }
-  /* المنيو: كارت منتج متمركز */
+  @media (prefers-color-scheme: dark) {
+    .st-step {
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbb3b9;
+    }
+    .st-step.on {
+      background: #e8b4c4;
+      color: #3a222b;
+    }
+  }
+
+  /* كارت منتج */
   .prod-card {
     @apply card p-3 text-center text-brand-900;
   }
-  .prod-emoji {
-    @apply text-[44px] bg-brand-100 rounded-2xl px-2 py-1.5 inline-block;
+  @media (prefers-color-scheme: dark) {
+    .prod-card {
+      color: #f3e6e9;
+    }
   }
-  /* شعار الهيدر الكاتي */
+  .prod-emoji {
+    @apply inline-block rounded-2xl bg-brand-100 px-2 py-1.5 text-[44px];
+  }
+  @media (prefers-color-scheme: dark) {
+    .prod-emoji {
+      background: rgba(232, 180, 196, 0.14);
+    }
+  }
+
   .logo-script {
     font-family: "Brush Script MT", "Segoe Script", cursive;
     @apply text-[34px] text-brand-700 leading-none;

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { supabase, type OrderStatus } from "../lib/types";
 import { money, PAYMENT_STATUS_LABEL } from "../lib/format";
-import { CopyButton, ErrorBox, Spinner } from "../components/Common";
+import { CopyButton, ErrorBox, Spinner, Logo } from "../components/Common";
+import CheckoutStepper from "../components/CheckoutStepper";
 import { compressImage } from "../lib/image";
 import { randomId } from "../lib/random";
 import { storageGet } from "../lib/storage";
@@ -138,10 +139,11 @@ export default function Payment() {
   const payStatus = info?.payment_status || "pending";
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3.5">
+      <CheckoutStepper step={3} />
       <div className="card p-3.5 text-center">
-        <div className="text-[40px]">{method === "cash" ? "💵" : "🎉"}</div>
-        <h2 className="text-[22px] font-bold text-brand-700 my-1">طلبك {orderNumber}</h2>
+        <Logo className="mx-auto mb-1 h-20 w-auto" alt="Lala's Bakery" />
+        <h1 className="text-[20px] font-extrabold text-brand-800 dark:text-[#ffe3ea] my-1">طلبك {orderNumber}</h1>
         <div className="text-mut text-sm">
           {[customerName, info?.branch_name].filter(Boolean).join(" – ") || "\u00a0"}
         </div>

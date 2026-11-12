@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { supabase, withTimeout, type OrderStatus } from "../lib/types";
 import { money, STATUS, PAYMENT_STATUS_LABEL } from "../lib/format";
-import { CopyButton, ErrorBox, Spinner } from "../components/Common";
+import { CopyButton, ErrorBox, Spinner, Logo } from "../components/Common";
+import CheckoutStepper from "../components/CheckoutStepper";
 import { trackEvent } from "../lib/analytics";
 
 type OrderItem = { name: string; qty: number; unit_price: number; line_total: number };
@@ -98,10 +99,11 @@ export default function OrderPage() {
   const payStatus = details?.payment_status || "pending";
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3.5">
+      <CheckoutStepper step={4} />
       <div className="card p-4 text-center">
-        <img src="/lalas-logo-pink.png" alt="Lala's Bakery" className="mx-auto mb-2 max-h-[90px] w-auto" />
-        <h2 className="text-[22px] font-bold text-brand-700 my-1">طلبك</h2>
+        <Logo className="mx-auto mb-2 h-24 w-auto" alt="Lala's Bakery" />
+        <h1 className="text-[20px] font-extrabold text-brand-800 dark:text-[#ffe3ea] my-1">طلبك</h1>
         <div className="text-[28px] font-extrabold text-brand-800 tracking-wide my-2">{orderNumber}</div>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <CopyButton text={orderNumber} />

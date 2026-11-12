@@ -9,6 +9,7 @@ import {
 } from "react";
 import { storageGetJSON, storageSetJSON } from "../lib/storage";
 import { trackEvent } from "../lib/analytics";
+import { toast } from "../lib/toast";
 
 export type CartItem = {
   product_id: string;
@@ -68,6 +69,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const add = useCallback((item: Omit<CartItem, "qty">) => {
     trackEvent("add_to_cart", { currency: "EGP", value: item.price, items: [{ item_id: item.product_id, item_name: item.name, price: item.price, quantity: 1 }] });
+    toast("تمت الإضافة للسلة 🧺");
     setItems((prev) => {
       const found = prev.find((i) => i.product_id === item.product_id);
       const next = found
