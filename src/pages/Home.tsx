@@ -38,17 +38,17 @@ function BranchCard({ branch }: { branch: Branch }) {
 
       <div className="p-4 pt-0">
         {/* اللوجو + الاسم */}
-        <div className="-mt-7 flex items-end gap-3">
+        <div className="relative z-10 -mt-8 flex items-end gap-3">
           {branch.logo ? (
             <img
               src={branch.logo}
               alt={`شعار ${branch.name}`}
               loading="lazy"
               decoding="async"
-              className="h-16 w-16 shrink-0 rounded-2xl border-2 border-surface object-cover shadow-md"
+              className="h-16 w-16 shrink-0 rounded-2xl border-2 border-surface bg-surface object-cover shadow-md ring-2 ring-surface/80"
             />
           ) : (
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border-2 border-surface bg-surface2 shadow-md">
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border-2 border-surface bg-surface2 shadow-md ring-2 ring-surface/80">
               <Store size={26} className="text-primary-strong" aria-hidden="true" />
             </div>
           )}
