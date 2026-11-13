@@ -51,7 +51,7 @@ export function BranchListSkeleton({ count = 2 }: { count?: number }) {
     <div className="space-y-3" aria-hidden="true">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="card overflow-hidden">
-          <div className="skeleton h-40 w-full !rounded-none" />
+          <div className="skeleton aspect-[4/3] w-full !rounded-none sm:aspect-[16/10]" />
           <div className="p-4">
             <div className="skeleton mb-2 h-6 w-1/2" />
             <div className="skeleton mb-2 h-4 w-full" />

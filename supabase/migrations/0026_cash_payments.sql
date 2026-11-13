@@ -46,9 +46,11 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   alter table orders add constraint orders_payment_status_check check (payment_status in ('pending','paid','rejected','refunded'));
 exception when duplicate_object then null; end $$;
+-- Cash orders need a phone for ONLINE orders (callback number).
+-- POS/counter cash orders (source='pos') have no customer phone by design.
 do $$ begin
   alter table orders add constraint orders_cash_phone_check check (
-    payment_method <> 'cash' or length(btrim(coalesce(customer_phone,''))) > 0
+    payment_method <> 'cash' or source = 'pos' or length(btrim(coalesce(customer_phone,''))) > 0
   );
 exception when duplicate_object then null; end $$;
 

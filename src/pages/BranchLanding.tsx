@@ -31,7 +31,7 @@ export default function BranchLanding() {
   if (!branch)
     return (
       <div className="space-y-3" aria-hidden="true">
-        <Skeleton className="h-44 w-full rounded-[22px]" />
+        <Skeleton className="aspect-[4/3] w-full rounded-[22px] sm:aspect-[16/10]" />
         <Skeleton className="mx-auto h-36 w-full rounded-[22px]" />
       </div>
     );
@@ -45,14 +45,14 @@ export default function BranchLanding() {
   return (
     <div className="space-y-3.5">
       {/* صورة الغلاف */}
-      <div className="relative h-44 w-full overflow-hidden rounded-[22px] border border-border bg-gradient-to-br from-surface2 via-surface2 to-page sm:h-52">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[22px] border border-border bg-gradient-to-br from-surface2 via-surface2 to-page sm:aspect-[16/10]">
         {branch.cover_image ? (
           <img
             src={branch.cover_image}
             alt={`غلاف ${branch.name}`}
             loading="eager"
             decoding="async"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-center"
           />
         ) : (
           <div className="grid h-full w-full place-items-center">

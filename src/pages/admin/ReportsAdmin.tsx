@@ -3,6 +3,8 @@ import { supabase } from "../../lib/types";
 import { fmtDate, num, money } from "../../lib/format";
 import { Spinner, EmptyBox } from "../../components/Common";
 import { toCSV, downloadCSV } from "../../lib/csv";
+import { useAuth } from "../../context/AuthContext";
+import { Trash2, ShieldAlert } from "lucide-react";
 
 function uptoDate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -26,6 +28,13 @@ export default function ReportsAdmin() {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<ReportTab>("revenue");
   const [printMode, setPrintMode] = useState(false);
+  const { profile } = useAuth();
+  const isManager = profile?.role === "manager";
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearBusy, setClearBusy] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [includeShifts, setIncludeShifts] = useState(false);
+  const [clearResult, setClearResult] = useState<string | null>(null);
 
   const presets: { label: string; days: number }[] = [
     { label: "اليوم", days: 0 },
@@ -65,6 +74,34 @@ export default function ReportsAdmin() {
       setBusy(false);
     }
   }, [from, to, branchFilter, loadBranches]);
+
+  const clearTestData = async () => {
+    if (confirmText.trim() !== "DELETE") return;
+    setClearBusy(true);
+    setErr(null);
+    setClearResult(null);
+    try {
+      const { data, error: e } = await supabase.rpc("manager_clear_test_data", {
+        p_from: from,
+        p_to: to,
+        p_branch_id: branchFilter === "all" ? null : branchFilter,
+        p_include_shifts: includeShifts,
+        p_confirm: "DELETE",
+      });
+      if (e) throw e;
+      setClearResult(
+        `تم المسح: ${num(data?.deleted_orders ?? 0)} طلب تجريبي · ${num(data?.deleted_shifts ?? 0)} فترة عمل · تم إرجاع مخزون ${num(data?.stock_returned_products ?? 0)} منتج متتبع`
+      );
+      setConfirmText("");
+      setIncludeShifts(false);
+      setClearOpen(false);
+      await load();
+    } catch (e: unknown) {
+      setErr((e as Error).message || "مش قادرين نمسح بيانات الاختبار");
+    } finally {
+      setClearBusy(false);
+    }
+  };
 
   useEffect(() => {
     load();
@@ -448,6 +485,85 @@ export default function ReportsAdmin() {
             </section>
           )}
         </>
+      )}
+
+      {/* ============ منطقة الخطر: مسح تقارير الاختبار — للمدير فقط ============ */}
+      {isManager && !printMode && (
+        <section className="card no-print border border-danger-text/40 p-4 space-y-2" aria-label="منطقة خطر — مسح تقارير الاختبار">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 font-extrabold text-danger-text">
+              <ShieldAlert size={18} aria-hidden="true" />
+              منطقة الخطر — مسح تقارير الاختبار
+            </h2>
+            {!clearOpen && (
+              <button
+                type="button"
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-danger-text/50 px-3 text-xs font-bold text-danger-text outline-none transition hover:bg-danger-bg focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => { setClearOpen(true); setClearResult(null); }}
+              >
+                <Trash2 size={14} aria-hidden="true" />
+                مسح تقارير الاختبار
+              </button>
+            )}
+          </div>
+          <p className="text-xs leading-5 text-muted">
+            يحذف نهائيًا طلبات الاختبار/التجربة المسجلة في الفترة والفرع المحددين فوق في الفلتر (الطلبات + بنودها + أحداثها + طلبات الإلغاء المرتبطة)،
+            ويرجع مخزون المنتجات المتتبعة تلقائيًا. التقارير المحسوبة من الطلبات هتتصفر للفترة دي. الإجراء لا يمكن التراجع عنه.
+          </p>
+
+          {clearResult && (
+            <div className="status-ok rounded-xl border border-ok-text/30 px-3 py-2 text-sm font-bold" role="status" aria-live="polite">
+              ✅ {clearResult}
+            </div>
+          )}
+
+          {clearOpen && (
+            <div className="space-y-2 rounded-xl border border-danger-text/40 bg-danger-bg p-3">
+              <p className="text-sm font-extrabold text-danger-text">
+                هيتم مسح كل الطلبات من {fmtDate(from)} إلى {fmtDate(to)} · {branchFilter === "all" ? "جميع الفروع" : branches.find((b) => b.id === branchFilter)?.name}
+              </p>
+              <label className="flex items-center gap-2 text-xs font-bold text-text">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[rgb(var(--danger))]"
+                  checked={includeShifts}
+                  onChange={(e) => setIncludeShifts(e.target.checked)}
+                />
+                احذف أيضًا فترات العمل (الشيفتات) المغلقة المسجلة في نفس الفترة
+              </label>
+              <label className="label" htmlFor="clear-confirm">اكتب <b>DELETE</b> للتأكيد</label>
+              <input
+                id="clear-confirm"
+                dir="ltr"
+                className="input text-left"
+                autoComplete="off"
+                autoCapitalize="characters"
+                placeholder="DELETE"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-danger px-4 font-extrabold text-white outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={clearBusy || confirmText.trim() !== "DELETE"}
+                  onClick={clearTestData}
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                  {clearBusy ? "بيمسح…" : "احذف نهائيًا"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline min-h-[44px]"
+                  disabled={clearBusy}
+                  onClick={() => { setClearOpen(false); setConfirmText(""); setIncludeShifts(false); }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

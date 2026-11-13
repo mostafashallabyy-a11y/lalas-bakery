@@ -118,7 +118,7 @@ export default function Layout() {
   return (
     <div className="flex min-h-dvh flex-col">
       {/* ============ الهيدر: نفس الشكل في كل الصفحات ============ */}
-      <header className="print-hidden sticky top-0 z-30 h-16 border-b border-border bg-surface">
+      <header className="print-hidden sticky top-0 z-30 h-[72px] border-b border-border bg-surface">
         <div className="mx-auto flex h-full max-w-[720px] items-center justify-between gap-2 px-3">
           <Link
             to="/"
@@ -127,7 +127,7 @@ export default function Layout() {
           >
             <Logo
               alt="Lala's Bakery — كوفي ومخبوزات منزلية"
-              className="h-12 w-auto object-contain"
+              className="h-[56px] w-auto max-w-[200px] object-contain py-0.5 sm:h-[60px] sm:max-w-[220px]"
             />
           </Link>
 

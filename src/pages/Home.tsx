@@ -20,14 +20,14 @@ function BranchCard({ branch }: { branch: Branch }) {
   return (
     <article className="card overflow-hidden text-text">
       {/* صورة الغلاف مع placeholder أنيق لو مش موجودة */}
-      <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-surface2 via-surface2 to-border/25 sm:h-40">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-surface2 via-surface2 to-border/25 sm:aspect-[16/10]">
         {branch.cover_image ? (
           <img
             src={branch.cover_image}
             alt={`غلاف ${branch.name}`}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-center"
           />
         ) : (
           <div className="grid h-full w-full place-items-center">
