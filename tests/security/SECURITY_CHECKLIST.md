@@ -43,30 +43,30 @@
 
 | Function | Security Definer | search_path Fixed | Role Check | Input Validation |
 |----------|------------------|-------------------|------------|------------------|
-| submit_order_v2 | ✅ | public | is_staff() | ✅ |
-| track_order_by_key | ✅ | public | none (anon) | ✅ |
-| get_order_tracking_key | ✅ | public | none (anon) | ✅ |
-| submit_feedback | ✅ | public | none (anon) | ✅ |
-| track_order | ✅ | public | none (anon) | ✅ |
-| get_payment_info | ✅ | public | none (anon) | ✅ |
-| staff_set_status | ✅ | public | is_staff() | ✅ |
-| staff_set_payment | ✅ | public | is_staff() | ✅ |
-| promote_first_manager | ✅ | public | none (guard) | ✅ |
-| manager_report | ✅ | public | is_manager() | ✅ |
-| staff_set_payment | ✅ | public | is_staff() | ✅ |
-| staff_set_payment | ✅ | public | is_staff() | ✅ |
-| staff_confirm_payment | ✅ | public | is_staff() | ✅ |
-| staff_reject_payment | ✅ | public | is_staff() | ✅ |
-| shift_open | ✅ | public | is_staff() | ✅ |
-| shift_close | ✅ | public | is_staff() | ✅ |
-| void_request | ✅ | public | is_staff() | ✅ |
-| void_approve | ✅ | public | is_manager() | ✅ |
-| shift_reopen | ✅ | public | is_manager() | ✅ |
-| staff_get_open_shift | ✅ | public | is_staff() | ✅ |
-| manager_report | ✅ | public | is_manager() | ✅ |
-| manager_report_enhanced | ✅ | public | is_manager() | ✅ |
-| manager_product_movement | ✅ | public | is_manager() | ✅ |
-| manager_staff_performance | ✅ | public | is_manager() | ✅ |
+| submit_order_v2 | ✅ | public | anon/auth (rate+turnstile) | ✅ (floor/obour addr+phone+loc/note) |
+| pos_create_order | ✅ | public | is_staff() | ✅ (POS-safe: no online-only gates) |
+| track_order_by_key | ✅ | public | none (anon) | ✅ (no sensitive fields leaked) |
+| get_order_details | ✅ | public | none (tracking key required) | ✅ (same-customer keyed access) |
+| get_payment_info | ✅ | public | none (tracking key required) | ✅ |
+| confirm_obour_location | ✅ | public | none (order+tracking key) | ✅ |
+| staff_set_status | ✅ | public | is_staff() + branch scope | ✅ (obour needs location_confirmed) |
+| staff_confirm_payment | ✅ | public | is_staff() + branch scope | ✅ |
+| staff_reject_payment | ✅ | public | is_staff() + branch scope | ✅ |
+| staff_mark_cash_received | ✅ | public | is_staff() + branch scope | ✅ |
+| staff_cancel_order | ✅ | public | is_staff() + branch scope | ✅ |
+| staff_mark_location_received | ✅ | public | is_staff() + branch scope | ✅ |
+| expire_stale_cash_orders | ✅ | public | internal/cron-safe logic | ✅ |
+| expire_unconfirmed_obour_orders | ✅ | public | internal/cron-safe logic | ✅ |
+| manager_set_obour_settings | ✅ | public | is_manager() | ✅ + audit (obour_settings_audit) |
+| manager_wipe_test_data_preview | ✅ | public | is_manager() | ✅ |
+| manager_wipe_test_data | ✅ | public | is_manager() + تأكيد "حذف" | ✅ + undeletable audit (data_wipe_audit) |
+| manager_clear_test_data | ✅ | public | is_manager() + تأكيد | ✅ (compat wrapper) |
+| manager_report_enhanced | ✅ | public | is_manager() | ✅ (excludes is_test) |
+| manager_product_movement | ✅ | public | is_manager() | ✅ (excludes is_test) |
+| manager_staff_performance | ✅ | public | is_manager() | ✅ (excludes is_test) |
+| shift_open/close/reopen/get_open | ✅ | public | is_staff()/is_manager() | ✅ |
+| void_request/approve | ✅ | public | is_staff()/is_manager() | ✅ |
+| promote_first_manager | ✅ | public | guarded | ✅ |
 
 ## Storage Buckets
 
@@ -90,6 +90,13 @@
 10. ✅ Rate limiting on submit_feedback (3 per hour)
 11. ✅ Rate limiting on track_order (30 per hour)
 
+## Parts 1–7 Security Notes (this change set)
+- `orders.delivery_floor`/`delivery_spot`: required server-side for `table`; never exposed via `track_order_by_key`; visible to same customer via tracking-keyed `get_order_details` and to staff/manager by existing branch-scoped RLS.
+- Obour (Parts 5–6): availability/fee/hours/WhatsApp/template/closed msg stored per branch; manager-only audited updates (`obour_settings_audit`); server-side enforcement in `submit_order_v2`; obour orders require validated phone+address (and landmark optional), `location_confirmed` enforced before moving to `preparing`; auto-cancel/stock release for unconfirmed obour after timeout; address/phone/location fields exposed only via tracking-keyed customer details and staff/manager access (not `track_order_by_key`).
+- `orders.customer_note`: max 300, trimmed/checked server-side; shown to staff and same-customer order page; never rendered as HTML.
+- Part 4: manager-only preview/wipe RPCs with fixed `search_path`, explicit confirm, transactional deletes, undeletable `data_wipe_audit`; test orders/shifts flagged `is_test` excluded from reports.
+- Added `tests/security/parts4to7-checks.mjs` for: obour rejected without address/phone, notes >300 rejected, anon/staff can’t edit obour settings, anon/staff can’t wipe, and env-gated checks for obour-off, location_confirmed-before-preparing, and cross-branch staff actions.
+
 ## Remaining Security Tasks
 
 - [x] Run Supabase Security Advisor (2026-11-10 — only WARNs; see report)
@@ -103,11 +110,7 @@
 - [x] Enable MFA for manager accounts — project-level TOTP enabled 2026-11-10 (10 factors); per-user QR enrollment pending (user action)
 - [ ] Set short session lifetime for staff
 
-## Live Verification — 2026-11-10
+## Live Verification
 
-Anonymous surface checks run against staging with `tests/security/run-security-checks.mjs`: **11 PASS / 0 FAIL**
-(orders/order_items unreadable by anon with HTTP 401; role-guarded RPCs reject anon with 401/42501;
-input validation on `submit_order_v2` rejects empty/invalid payloads with 400/P0001; rate limiter confirmed active).
-Authenticated staff/manager checks **SKIP** until staging has app users (it doesn't today — prod accounts live in
-production Auth only). Note for the record: this DB uses *grant-level* anon denial (401), not just RLS row filtering;
-both are acceptable — what matters is that no data leaks and no anonymous writes succeed.
+- 2026-11-10: Anonymous surface checks (`tests/security/run-security-checks.mjs`) **11 PASS / 0 FAIL**. Cash checks (`cash-payment-checks.mjs`) env-gated.
+- Parts 4–7: `tests/security/parts4to7-checks.mjs` added; run against staging with required env vars/creds/test data to obtain non-skipped results (some cases are env-gated by design, no service_role).

@@ -9,6 +9,7 @@ export default function StickyBar({
   onClick,
   busy = false,
   busyLabel,
+  disabled = false,
 }: {
   total: number;
   label: string;
@@ -16,6 +17,7 @@ export default function StickyBar({
   onClick: () => void;
   busy?: boolean;
   busyLabel?: string;
+  disabled?: boolean;
 }) {
   return (
     <div
@@ -28,7 +30,7 @@ export default function StickyBar({
           <span className="block text-[11px] font-bold text-mut">الإجمالي</span>
           <b className="text-lg text-brand-800">{money(total)}</b>
         </span>
-        <button type="button" className="btn-primary !min-h-[48px] shrink-0 !px-5" disabled={busy} onClick={onClick}>
+        <button type="button" className="btn-primary !min-h-[48px] shrink-0 !px-5" disabled={busy || disabled} onClick={onClick}>
           {busy ? busyLabel ?? "لحظة…" : label}
           {!busy && icon}
         </button>

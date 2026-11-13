@@ -19,8 +19,8 @@ function BranchCard({ branch }: { branch: Branch }) {
 
   return (
     <article className="card overflow-hidden text-text">
-      {/* صورة الغلاف مع placeholder أنيق لو مش موجودة */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-surface2 via-surface2 to-border/25 sm:aspect-[16/10]">
+      {/* صورة الغلاف */}
+      <div className="relative aspect-[16/10] min-h-[220px] w-full bg-gradient-to-br from-surface2 via-surface2 to-border/25">
         {branch.cover_image ? (
           <img
             src={branch.cover_image}
@@ -34,26 +34,30 @@ function BranchCard({ branch }: { branch: Branch }) {
             <Croissant size={44} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
           </div>
         )}
-      </div>
-
-      <div className="p-4 pt-3">
-        {/* اللوجو + الاسم */}
-        <div className="flex items-center gap-3">
+        {/* تدرج سفلي علشان العنوان يبقى مقروء */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+        {/* شعار الفرع — شارة دائرية متداخلة مع حافة الغلاف السفلية */}
+        <div className="absolute bottom-0 start-4 z-10 translate-y-1/2">
           {branch.logo ? (
-            <img
-              src={branch.logo}
-              alt={`شعار ${branch.name}`}
-              loading="lazy"
-              decoding="async"
-              className="h-16 w-16 shrink-0 rounded-2xl border-2 border-surface bg-surface object-cover shadow-md ring-2 ring-surface/80"
-            />
+            <div className="grid h-[76px] w-[76px] place-items-center overflow-hidden rounded-full border-2 border-white bg-white p-1.5 shadow-[0_6px_18px_rgba(0,0,0,0.18)] ring-1 ring-black/5 sm:h-[84px] sm:w-[84px]">
+              <img
+                src={branch.logo}
+                alt={`شعار ${branch.name}`}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-contain"
+              />
+            </div>
           ) : (
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border-2 border-surface bg-surface2 shadow-md ring-2 ring-surface/80">
-              <Store size={26} className="text-primary-strong" aria-hidden="true" />
+            <div className="grid h-[76px] w-[76px] place-items-center rounded-full border-2 border-white bg-white shadow-[0_6px_18px_rgba(0,0,0,0.18)] ring-1 ring-black/5 sm:h-[84px] sm:w-[84px]">
+              <Store size={30} className="text-primary-strong" aria-hidden="true" />
             </div>
           )}
-          <h3 className="pb-0.5 text-[19px] font-extrabold leading-snug text-text">{branch.name}</h3>
         </div>
+      </div>
+
+      <div className="p-4 pt-12 sm:pt-14">
+        <h3 className="text-[19px] font-extrabold leading-snug text-text">{branch.name}</h3>
 
         {/* سطر البرومو */}
         {branch.promo_brief && (

@@ -57,6 +57,13 @@ export type Branch = {
   promo_brief: string;
   cash_enabled?: boolean;
   cash_max_amount?: number;
+  delivery_floors?: string[] | null;
+  obour_enabled?: boolean;
+  obour_fee?: number;
+  obour_hours?: { enabled?: boolean; from?: string; to?: string } | null;
+  obour_whatsapp?: string | null;
+  obour_whatsapp_template?: string | null;
+  obour_closed_message?: string | null;
 };
 
 export type BranchPromo = {
@@ -132,6 +139,16 @@ export type OrderRow = {
   customer_phone?: string | null;
   delivery_type: string;
   delivery_fee: number;
+  delivery_floor?: string | null;
+  delivery_spot?: string | null;
+  delivery_address?: string | null;
+  delivery_landmark?: string | null;
+  location_confirmed?: boolean;
+  location_confirmed_at?: string | null;
+  location_confirmed_by_staff?: string | null;
+  location_confirmed_via?: string | null;
+  customer_note?: string | null;
+  is_test?: boolean;
   subtotal: number;
   total: number;
   status: OrderStatus;

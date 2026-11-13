@@ -44,43 +44,49 @@ export default function BranchLanding() {
 
   return (
     <div className="space-y-3.5">
-      {/* صورة الغلاف */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[22px] border border-border bg-gradient-to-br from-surface2 via-surface2 to-page sm:aspect-[16/10]">
-        {branch.cover_image ? (
-          <img
-            src={branch.cover_image}
-            alt={`غلاف ${branch.name}`}
-            loading="eager"
-            decoding="async"
-            className="h-full w-full object-cover object-center"
-          />
-        ) : (
-          <div className="grid h-full w-full place-items-center">
-            <Croissant size={52} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
-          </div>
-        )}
+      {/* صورة الغلاف + شعار متداخل */}
+      <div className="relative aspect-[16/10] min-h-[220px] w-full rounded-[22px] border border-border bg-gradient-to-br from-surface2 via-surface2 to-page">
+        <div className="absolute inset-0 overflow-hidden rounded-[22px]">
+          {branch.cover_image ? (
+            <img
+              src={branch.cover_image}
+              alt={`غلاف ${branch.name}`}
+              loading="eager"
+              decoding="async"
+              className="h-full w-full object-cover object-center"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center">
+              <Croissant size={52} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
+            </div>
+          )}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+        </div>
+        {/* شعار الفرع — شارة دائرية متداخلة مع حافة الغلاف السفلية */}
+        <div className="absolute bottom-0 start-4 z-10 translate-y-1/2">
+          {branch.logo ? (
+            <div className="grid h-[76px] w-[76px] place-items-center overflow-hidden rounded-full border-2 border-white bg-white p-1.5 shadow-[0_6px_18px_rgba(0,0,0,0.18)] ring-1 ring-black/5 sm:h-[84px] sm:w-[84px]">
+              <img
+                src={branch.logo}
+                alt={`شعار ${branch.name}`}
+                decoding="async"
+                className="h-full w-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="grid h-[76px] w-[76px] place-items-center rounded-full border-2 border-white bg-white shadow-[0_6px_18px_rgba(0,0,0,0.18)] ring-1 ring-black/5 sm:h-[84px] sm:w-[84px]">
+              <Store size={30} className="text-primary-strong" aria-hidden="true" />
+            </div>
+          )}
+        </div>
       </div>
 
       <PromoBanner branchId={branchId} />
 
       {/* بيانات الفرع */}
       <div className="card overflow-hidden">
-        <div className="p-4 pt-3">
-          <div className="flex items-center gap-3">
-            {branch.logo ? (
-              <img
-                src={branch.logo}
-                alt={`شعار ${branch.name}`}
-                decoding="async"
-                className="h-20 w-20 shrink-0 rounded-2xl border-2 border-surface bg-surface object-cover shadow-md ring-2 ring-surface/80"
-              />
-            ) : (
-              <div className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl border-2 border-surface bg-surface2 shadow-md ring-2 ring-surface/80">
-                <Store size={30} className="text-primary-strong" aria-hidden="true" />
-              </div>
-            )}
-            <h1 className="pb-1 text-[21px] font-extrabold leading-snug text-text">{branch.name}</h1>
-          </div>
+        <div className="p-4 pt-12 sm:pt-14">
+          <h1 className="text-[21px] font-extrabold leading-snug text-text">{branch.name}</h1>
 
           {branch.promo_brief && (
             <p className="mt-2 flex items-start gap-1.5 text-[13px] font-bold leading-6 text-primary-strong">
