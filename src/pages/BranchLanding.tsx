@@ -65,8 +65,8 @@ export default function BranchLanding() {
 
       {/* بيانات الفرع */}
       <div className="card overflow-hidden">
-        <div className="p-4 pt-0">
-          <div className="relative z-10 -mt-10 flex items-end gap-3">
+        <div className="p-4 pt-3">
+          <div className="flex items-center gap-3">
             {branch.logo ? (
               <img
                 src={branch.logo}

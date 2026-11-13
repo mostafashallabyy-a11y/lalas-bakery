@@ -36,9 +36,9 @@ function BranchCard({ branch }: { branch: Branch }) {
         )}
       </div>
 
-      <div className="p-4 pt-0">
+      <div className="p-4 pt-3">
         {/* اللوجو + الاسم */}
-        <div className="relative z-10 -mt-8 flex items-end gap-3">
+        <div className="flex items-center gap-3">
           {branch.logo ? (
             <img
               src={branch.logo}
