@@ -153,6 +153,7 @@ export default function OrderPage() {
 
   const method = details?.payment_method || "instapay";
   const payStatus = details?.payment_status || "pending";
+  const instapayClaimed = !!(details as any)?.instapay_claimed_at;
 
   return (
     <div className="space-y-3.5">
@@ -176,13 +177,23 @@ export default function OrderPage() {
           <b className="text-text">الدفع</b>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="status-info inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-bold">{method === "cash" ? "💵 كاش عند الاستلام" : "📲 InstaPay (تحويل)"}</span>
-            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-bold ${payStatus === "paid" ? "status-ok" : payStatus === "rejected" ? "status-danger" : "status-warn"}`}>{PAYMENT_STATUS_LABEL[payStatus] || payStatus}</span>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-bold ${payStatus === "paid" ? "status-ok" : payStatus === "rejected" ? "status-danger" : "status-warn"}`}>
+              {method === "instapay" && payStatus === "pending" && instapayClaimed ? "تم الدفع — في انتظار التأكيد الآلي" : (PAYMENT_STATUS_LABEL[payStatus] || payStatus)}
+            </span>
           </div>
           <div className="msg-box text-sm">
-            {method === "cash" ? (payStatus === "paid" ? "تم استلام الكاش — شكرًا ليك 💗" : "هتدفع كاش وقت الاستلام 💵") : (payStatus === "paid" ? "تم تأكيد التحويل — شكرًا ليك 💗" : payStatus === "rejected" ? "في مشكلة في إثبات التحويل — تواصل مع الفرع أو ارفع صورة أوضح." : "في انتظار تأكيد التحويل 📲")}
+            {method === "cash"
+              ? (payStatus === "paid" ? "تم استلام الكاش — شكرًا ليك 💗" : "هتدفع كاش وقت الاستلام 💵")
+              : (payStatus === "paid"
+                  ? "تم تأكيد التحويل — شكرًا ليك 💗"
+                  : payStatus === "rejected"
+                    ? "لم يتم تأكيد التحويل — تواصل مع الفرع للمساعدة."
+                    : instapayClaimed
+                      ? "تم استلام تأكيد التحويل برقم الطلب — في انتظار تأكيد الموظف (تأكيد آلي/سريع)."
+                      : "حوّل المبلغ ثم اضغط «تم التحويل» من صفحة الدفع لإرسال رقم الطلب للموظف (بدون رفع صورة).")}
           </div>
           {method === "instapay" && payStatus !== "paid" && (
-            <p className="m-0"><Link to={`/pay/${orderNumber}?k=${trackingKey}`} className="btn-primary">الذهاب لصفحة الدفع / رفع إثبات التحويل</Link></p>
+            <p className="m-0"><Link to={`/pay/${orderNumber}?k=${trackingKey}`} className="btn-primary">{instapayClaimed ? "صفحة الدفع / متابعة التأكيد" : "الذهاب لصفحة الدفع وتأكيد التحويل"}</Link></p>
           )}
           {method === "cash" && <p className="m-0 text-sm">تمام! جهّز المبلغ: <b>{money(details.total)}</b> {details.delivery_type === "obour" ? "(بيتدفع كاش لمندوب التوصيل عند الاستلام)" : "وقت الاستلام"}.</p>}
         </div>

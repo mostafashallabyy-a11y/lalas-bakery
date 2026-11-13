@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { OfflineBanner, Logo } from "./Common";
 import { money } from "../lib/format";
 import { SocialLinksFollow } from "./SocialLinks";
+import { SiteShareButton } from "./SiteShareButton";
 import { Toaster } from "./Toast";
 import { currentTheme, toggleTheme, type ThemePref } from "../lib/theme";
 import {
@@ -347,6 +348,9 @@ export default function Layout() {
       {/* ============ تذييل الصفحة ============ */}
       <footer className="print-hidden border-t border-border bg-surface px-3.5 pb-[calc(84px+env(safe-area-inset-bottom,0px))] pt-6 text-center md:pb-8">
         <div className="mx-auto max-w-[720px] text-center">
+          <div className="mb-3 flex justify-center">
+            <SiteShareButton className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-border bg-surface2 px-4 py-2 text-sm font-extrabold text-text shadow-sm transition hover:bg-surface active:scale-[0.98]" label="نسخ رابط الموقع" />
+          </div>
           <SocialLinksFollow scope="brand" size="md" label="تابعنا" />
           <p className="mt-2 text-xs text-muted">Lala&apos;s Bakery — مخبوزات وقهوة منزلية تُحضّر بكل حب</p>
         </div>

@@ -17,7 +17,6 @@ export default function StaffOrders() {
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [events, setEvents] = useState<Record<string, OrderEventRow[]>>({});
-  const [proofUrls, setProofUrls] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     try { await supabase.rpc("expire_stale_cash_orders", { p_branch_id: null } as any); } catch {}
@@ -35,13 +34,6 @@ export default function StaffOrders() {
       const rows = (data as unknown as OrderRow[]) ?? [];
       setOrders(rows);
       setError(null);
-      rows.forEach((o) => {
-        if (o.payment_proof_path) {
-          supabase.storage.from("payment-proofs").createSignedUrl(o.payment_proof_path, 3600).then(({ data: d, error: serr }) => {
-            if (d?.signedUrl && !serr) setProofUrls((prev) => ({ ...prev, [o.id]: d.signedUrl }));
-          });
-        }
-      });
     }
   }, []);
 
@@ -83,7 +75,7 @@ export default function StaffOrders() {
 
   const confirmInstaPay = (o: OrderRow) => callRpc("staff_confirm_payment", { p_order_id: o.id });
   const rejectInstaPay = async (o: OrderRow) => {
-    const reason = prompt("سبب رفض إثبات الدفع:", "الصورة غير واضحة") || "الصورة غير واضحة";
+    const reason = prompt("سبب عدم تأكيد/رفض التحويل:", "لم يتم التحقق من التحويل") || "لم يتم التحقق من التحويل";
     await callRpc("staff_reject_payment", { p_order_id: o.id, p_reason: reason });
   };
   const acceptCash = (o: OrderRow) => callRpc("staff_set_status", { p_order_id: o.id, p_new_status: "preparing" });
@@ -145,7 +137,9 @@ export default function StaffOrders() {
                   <p className="text-xs text-brand-800">{o.branches?.name} • {fmtFull(o.created_at)}</p>
                   <div className="flex gap-1 flex-wrap mt-1">
                     <span className="pill bg-brand-50 border border-brand-200 text-brand-800">{isCash ? "💵 كاش" : "📲 InstaPay"}</span>
-                    <span className={`pill border ${pStatus === "paid" ? "status-ok border-ok/40 text-ok-text" : pStatus === "pending" ? "status-warn border-warn/40 text-warn-text" : "status-danger border-danger-text/30 text-danger-text"}`}>{PAYMENT_STATUS_LABEL[pStatus] || pStatus}</span>
+                    <span className={`pill border ${pStatus === "paid" ? "status-ok border-ok/40 text-ok-text" : pStatus === "pending" ? "status-warn border-warn/40 text-warn-text" : "status-danger border-danger-text/30 text-danger-text"}`}>
+                      {pStatus === "pending" && !isCash && (o as any).instapay_claimed_at ? "تم الدفع — في انتظار التأكيد الآلي" : (PAYMENT_STATUS_LABEL[pStatus] || pStatus)}
+                    </span>
                     {isObour && (
                       <span className={`pill border ${o.location_confirmed ? "status-ok border-ok/40 text-ok-text" : "status-warn border-warn/40 text-warn-text"}`}>
                         {o.location_confirmed ? "📍 اللوكيشن اتأكد" : "⚠️ مستني اللوكيشن"}
@@ -194,15 +188,18 @@ export default function StaffOrders() {
               )}
 
               <div className="flex flex-wrap gap-2 pt-1">
-                {!isCash && o.payment_proof_path && (
-                  <div className="flex items-center gap-2 min-w-[120px]">
-                    <img src={proofUrls[o.id] || o.payment_proof_path} alt="إثبات تحويل" className="w-16 h-16 object-cover rounded border border-brand-200 cursor-pointer" onClick={() => window.open(proofUrls[o.id] || o.payment_proof_path!, "_blank")} />
-                    <span className="text-xs text-brand-700">صورة التحويل مرفقة</span>
+                {!isCash && !cancelled && pStatus !== "paid" && (
+                  <div className="w-full rounded-xl border border-violet-200 bg-violet-50/60 px-3 py-2 text-sm font-bold text-violet-900">
+                    InstaPay — رقم الأوردر: <b dir="ltr" className="text-base">{o.order_number}</b> {(o as any).instapay_claimed_at ? "• العميل أبلغ بإتمام التحويل (بانتظار التأكيد الآلي)" : "• بانتظار تأكيد العميل بالتحويل"}
                   </div>
                 )}
 
-                {!isCash && !cancelled && pStatus !== "paid" && o.payment_proof_path && <button className="btn-primary !py-1.5 !px-3 text-xs" disabled={working === o.id} onClick={() => confirmInstaPay(o)}>✓ تأكيد الدفع</button>}
-                {!isCash && !cancelled && pStatus !== "paid" && o.payment_proof_path && <button className="btn-soft !py-1.5 !px-3 text-xs text-red-600" disabled={working === o.id} onClick={() => rejectInstaPay(o)}>رفض الصورة</button>}
+                {!isCash && !cancelled && pStatus !== "paid" && (
+                  <>
+                    <button className="btn-primary !py-2 !px-3 text-xs font-extrabold" disabled={working === o.id} onClick={() => confirmInstaPay(o)}>✓ تأكيد الدفع (برقم الطلب)</button>
+                    <button className="btn-soft !py-1.5 !px-3 text-xs text-red-600" disabled={working === o.id} onClick={() => rejectInstaPay(o)}>رفض/لم يُستلم التحويل</button>
+                  </>
+                )}
 
                 {isCash && !cancelled && o.status === "received" && <button className="btn-primary !py-1.5 !px-3 text-xs" disabled={working === o.id} onClick={() => acceptCash(o)}>قبول الطلب</button>}
                 {isCash && !cancelled && pStatus !== "paid" && <button className="btn-primary !py-1.5 !px-3 text-xs" disabled={working === o.id} onClick={() => markCashReceived(o)}>💵 تم استلام الكاش</button>}

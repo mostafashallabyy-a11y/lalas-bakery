@@ -255,7 +255,7 @@ export default function Checkout() {
           <button type="button" role="radio" aria-checked={paymentMethod === "instapay"} onClick={() => setPaymentMethod("instapay")} className={`relative flex min-h-[132px] flex-col items-center justify-center gap-1.5 rounded-2xl border-[1.5px] p-3 text-center transition active:scale-[0.97] ${paymentMethod === "instapay" ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200" : "border-brand-200 bg-surface hover:border-brand-400"}`}>
             <Smartphone size={34} strokeWidth={1.8} className="text-violet-700" aria-hidden="true" />
             <span className="text-[17px] font-extrabold">InstaPay</span>
-            <span className="text-[11px] font-bold leading-4 text-mut">تحويل + رفع صورة التحويل</span>
+            <span className="text-[11px] font-bold leading-4 text-mut">تحويل فوري — تأكيد برقم الطلب (بدون رفع صورة)</span>
             {paymentMethod === "instapay" && <span className="absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-btnbg text-btnfg"><Check size={14} strokeWidth={3} /></span>}
           </button>
         </div>
@@ -275,12 +275,12 @@ export default function Checkout() {
         </div>
       </div>
 
-      {/* Part 7: ملاحظات على الطلب (اختياري) قبل تأكيد الدفع */}
+      {/* ملاحظات على الطلب (للتعديلات/تفاصيل التوصيل مثل الدور والشقة والمبنى) */}
       <div className="card space-y-1.5 p-3.5">
         <label htmlFor="customer-note" className="label">ملاحظات على الطلب <span className="text-mut">(اختياري)</span></label>
-        <textarea id="customer-note" className="input min-h-[88px]" maxLength={300} placeholder="مثال: من غير سكر، التغليف هدية..." value={customerNote} onChange={(e) => setCustomerNote(e.target.value)} />
+        <textarea id="customer-note" className="input min-h-[88px]" maxLength={300} placeholder="مثال: من غير سكر، التغليف هدية… أو للتوصيل: رقم المبنى/الدور/الشقة وأي تفاصيل تسهّل الوصول" value={customerNote} onChange={(e) => setCustomerNote(e.target.value)} />
         <div className="flex justify-between text-[11px] font-bold">
-          <span className="text-mut">تظهر للموظف على كارت الطلب</span>
+          <span className="text-mut">تظهر بوضوح للموظف وفي تفاصيل الطلب</span>
           <span className={cleanNote.length > 280 ? "text-danger-text" : "text-mut"}>{cleanNote.length}/300</span>
         </div>
       </div>

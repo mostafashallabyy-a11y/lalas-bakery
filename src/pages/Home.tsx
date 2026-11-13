@@ -5,6 +5,7 @@ import { useCart } from "../context/CartContext";
 import { EmptyBox, BranchListSkeleton, Logo } from "../components/Common";
 import PromoBanner from "../components/PromoBanner";
 import { SocialLinksFollow, BranchPillLinks } from "../components/SocialLinks";
+import { SiteShareButton } from "../components/SiteShareButton";
 import { ArrowDown, Croissant, Store, Sparkles } from "lucide-react";
 
 function BranchCard({ branch }: { branch: Branch }) {
@@ -184,6 +185,9 @@ export default function Home() {
             label="تابعنا"
             className="mt-4 border-t border-border pt-3"
           />
+          <div className="mt-3 flex justify-center">
+            <SiteShareButton className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-brand-300 bg-surface px-4 py-2 text-sm font-extrabold text-brand-800 shadow-sm transition hover:bg-brand-50 active:scale-[0.98]" label="نسخ رابط الموقع" />
+          </div>
         </div>
       </section>
 

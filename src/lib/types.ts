@@ -159,6 +159,7 @@ export type OrderRow = {
   cash_received_by?: string | null;
   source: "online" | "pos";
   payment_proof_path: string | null;
+  instapay_claimed_at?: string | null;
   created_at: string;
   updated_at: string;
   branches?: { name: string } | null;
