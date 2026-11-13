@@ -114,7 +114,7 @@ export default function BranchesAdmin() {
 
   return (
     <div className="space-y-4 pb-24">
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
+      {err && <div className="status-danger border border-danger-text/30 text-danger-text rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
 
       {editing ? (
         <div className="card p-4 space-y-3">
@@ -213,7 +213,7 @@ export default function BranchesAdmin() {
                 <div className="w-10 h-10 rounded bg-brand-50 flex items-center justify-center text-[10px] text-brand-400">🏪</div>
               )}
               <div>
-                <p className="font-extrabold text-brand-800">{b.name} {!b.is_active && <span className="pill bg-amber-100 text-amber-800 ml-1">مخفي</span>}</p>
+                <p className="font-extrabold text-brand-800">{b.name} {!b.is_active && <span className="pill status-warn text-warn-text ml-1">مخفي</span>}</p>
                 <p className="text-xs text-brand-800">{b.description}</p>
                 {b.promo_brief && <p className="text-xs text-brand-700 mt-1">"{b.promo_brief}"</p>}
                 <p className="text-xs text-brand-700 mt-1">{(b.services || []).join(" · ")}</p>

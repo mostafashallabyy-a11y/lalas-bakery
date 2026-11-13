@@ -20,9 +20,10 @@ export function Toaster() {
         <div
           key={t.id}
           role="status"
-          className="toast-in flex max-w-[92vw] items-center gap-2 rounded-full bg-brand-800 px-4 py-2.5 text-sm font-bold text-brand-50 shadow-lg dark:bg-brand-100 dark:text-brand-900"
+          className="toast-in flex max-w-[92vw] items-center gap-2 rounded-full bg-btnbg px-4 py-2.5 text-sm font-bold text-btnfg"
+          style={{ boxShadow: "var(--shadow-pop)" }}
         >
-          <CircleCheck size={17} aria-hidden="true" className="shrink-0 text-[#ffd9e4] dark:text-brand-700" />
+          <CircleCheck size={17} aria-hidden="true" className="shrink-0 text-btnfg" />
           <span>{t.message}</span>
         </div>
       ))}

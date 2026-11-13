@@ -23,12 +23,12 @@ export default function CartPage() {
   if (!branchId || items.length === 0) {
     return (
       <div className="space-y-4 pt-6 text-center">
-        <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-brand-100 dark:bg-white/5">
-          <ShoppingBasket size={44} strokeWidth={1.6} className="text-brand-500 dark:text-[#ecc9d2]" aria-hidden="true" />
+        <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-surface2">
+          <ShoppingBasket size={44} strokeWidth={1.6} className="text-primary" aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-[21px] font-extrabold text-brand-800 dark:text-[#ffe3ea]">سلتك فاضية</h1>
-          <p className="mt-1 text-sm text-mut">اختار حاجة حلوة من المنيو ونجهزهالك على طول</p>
+          <h1 className="text-[21px] font-extrabold text-text">سلتك فاضية</h1>
+          <p className="mt-1 text-sm text-muted">اختار حاجة حلوة من المنيو ونجهزهالك على طول</p>
         </div>
         <Link to={menuLink} className="btn-primary min-h-[52px] !px-8 text-base">
           <Croissant size={20} aria-hidden="true" />
@@ -46,12 +46,12 @@ export default function CartPage() {
       <CheckoutStepper step={1} />
 
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-[20px] font-extrabold text-brand-800 dark:text-[#ffe3ea]">سلتك — {branchName}</h1>
+        <h1 className="text-[20px] font-extrabold text-text">سلتك — {branchName}</h1>
         <span className="pill">{items.length} صنف</span>
       </div>
 
       {/* عناصر السلة */}
-      <div className="card divide-y divide-brand-100 overflow-hidden dark:divide-white/5">
+      <div className="card divide-y divide-border overflow-hidden">
         {items.map((i) => (
           <div key={i.product_id} className="flex items-center gap-3 p-3">
             {i.image_url ? (
@@ -62,21 +62,21 @@ export default function CartPage() {
                 decoding="async"
                 width={64}
                 height={64}
-                className="h-16 w-16 shrink-0 rounded-2xl bg-brand-50 object-cover dark:bg-white/5"
+                className="h-16 w-16 shrink-0 rounded-2xl bg-surface2 object-cover"
               />
             ) : (
-              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-brand-100 text-[30px] dark:bg-white/5" aria-hidden="true">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-surface2 text-[30px]" aria-hidden="true">
                 {productEmoji(i.name)}
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <b className="block truncate text-[14px] text-brand-900 dark:text-brand-100">{i.name}</b>
-              <span className="text-[13px] font-bold text-brand-600 dark:text-[#ecc9d2]">{money(i.price * i.qty)}</span>
+              <b className="block truncate text-[14px] text-text">{i.name}</b>
+              <span className="text-[13px] font-bold text-primary-strong">{money(i.price * i.qty)}</span>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
-                className="grid h-10 w-10 place-items-center rounded-full border-[1.5px] border-brand-300 text-brand-800 outline-none transition hover:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-90 dark:border-white/20 dark:text-[#f3d3dc] dark:hover:bg-white/10"
+                className="grid h-10 w-10 place-items-center rounded-full border-[1.5px] border-border bg-surface text-text outline-none transition hover:bg-surface2 focus-visible:ring-2 focus-visible:ring-ring active:scale-90"
                 onClick={() => dec(i.product_id)}
                 aria-label={`قلل ${i.name}`}
               >
@@ -87,7 +87,7 @@ export default function CartPage() {
               </b>
               <button
                 type="button"
-                className="grid h-10 w-10 place-items-center rounded-full bg-brand-600 text-white outline-none transition hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-90"
+                className="grid h-10 w-10 place-items-center rounded-full bg-btnbg text-btnfg outline-none transition focus-visible:ring-2 focus-visible:ring-ring active:scale-90"
                 onClick={() => inc(i.product_id)}
                 aria-label={`زود ${i.name}`}
               >
@@ -95,7 +95,7 @@ export default function CartPage() {
               </button>
               <button
                 type="button"
-                className="grid h-10 w-10 place-items-center rounded-full text-rose-700 outline-none transition hover:bg-rose-50 focus-visible:ring-2 focus-visible:ring-rose-400 active:scale-90 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                className="grid h-10 w-10 place-items-center rounded-full text-danger-text outline-none transition hover:bg-danger-bg focus-visible:ring-2 focus-visible:ring-danger active:scale-90"
                 onClick={() => remove(i.product_id)}
                 aria-label={`شيل ${i.name} من السلة`}
               >
@@ -107,7 +107,7 @@ export default function CartPage() {
       </div>
 
       {/* طريقة الاستلام */}
-      <fieldset className="card p-3.5 text-brand-900 dark:text-brand-100">
+      <fieldset className="card p-3.5 text-text">
         <legend className="sr-only">طريقة الاستلام</legend>
         <b className="text-[15px]">طريقة الاستلام</b>
         <div className="mt-2 grid gap-2">
@@ -119,8 +119,8 @@ export default function CartPage() {
                 key={d.key}
                 className={`flex cursor-pointer items-center gap-3 rounded-2xl border-[1.5px] p-3 outline-none transition ${
                   on
-                    ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200 dark:border-[#e8b4c4] dark:bg-white/10 dark:ring-white/10"
-                    : "border-brand-200 bg-white hover:border-brand-400 dark:border-white/12 dark:bg-white/5"
+                    ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200"
+                    : "border-brand-200 bg-surface hover:border-brand-400"
                 }`}
               >
                 <input
@@ -133,7 +133,7 @@ export default function CartPage() {
                 />
                 <span
                   className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${
-                    on ? "bg-brand-600 text-white" : "bg-brand-100 text-brand-700 dark:bg-white/10 dark:text-[#ecc9d2]"
+                    on ? "bg-btnbg text-btnfg" : "bg-surface2 text-primary-strong"
                   }`}
                 >
                   <Icon size={20} aria-hidden="true" />
@@ -145,7 +145,7 @@ export default function CartPage() {
                 <span
                   aria-hidden="true"
                   className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${
-                    on ? "border-brand-600 bg-brand-600 text-white" : "border-brand-200"
+                    on ? "border-brand-600 bg-btnbg text-btnfg" : "border-brand-200"
                   }`}
                 >
                   {on && (

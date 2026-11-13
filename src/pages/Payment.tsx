@@ -143,7 +143,7 @@ export default function Payment() {
       <CheckoutStepper step={3} />
       <div className="card p-3.5 text-center">
         <Logo className="mx-auto mb-1 h-20 w-auto" alt="Lala's Bakery" />
-        <h1 className="text-[20px] font-extrabold text-brand-800 dark:text-[#ffe3ea] my-1">طلبك {orderNumber}</h1>
+        <h1 className="text-[20px] font-extrabold text-brand-800 my-1">طلبك {orderNumber}</h1>
         <div className="text-mut text-sm">
           {[customerName, info?.branch_name].filter(Boolean).join(" – ") || "\u00a0"}
         </div>

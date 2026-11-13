@@ -27,6 +27,20 @@
 
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
 
+    <script>
+      // منع وميض الوضع الغلط: طبّق الاختيار المحفوظ قبل أي رسم
+      (function () {
+        try {
+          var t = localStorage.getItem("lalas_theme");
+          if (t === "light" || t === "dark") {
+            document.documentElement.setAttribute("data-theme", t);
+          }
+        } catch (e) {
+          /* private mode — سيبها على تفضيل النظام */
+        }
+      })();
+    </script>
+
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <script type="application/ld+json">

@@ -44,15 +44,15 @@ function CategoriesPanel({ cats, reload, busyFlag, setBusyFlag }: {
     <div className="card p-4 space-y-2">
       <h2 className="font-extrabold text-brand-800">التصنيفات</h2>
       {busyFlag && <p className="text-xs font-bold text-brand-700">بيتم الإجراء…</p>}
-      {err && <div className="text-sm font-bold text-rose-700">{err}</div>}
+      {err && <div className="text-sm font-bold text-danger-text">{err}</div>}
       {cats.map((c) => (
         <div key={c.id} className="flex items-center justify-between gap-2">
           <span className="font-bold text-brand-900">
-            {c.name} {!c.is_active && <span className="pill bg-amber-100 text-amber-800">مخفي</span>}
+            {c.name} {!c.is_active && <span className="pill status-warn text-warn-text">مخفي</span>}
           </span>
           <span className="flex gap-1">
             <button className="pill bg-brand-100 text-brand-800" onClick={() => rename(c)}>تعديل الاسم</button>
-            <button className="pill bg-white border border-brand-200 text-brand-800" onClick={() => toggle(c)}>
+            <button className="pill bg-surface border border-border text-brand-800" onClick={() => toggle(c)}>
               {c.is_active ? "إخفاء" : "إظهار"}
             </button>
           </span>
@@ -147,9 +147,9 @@ export default function CatalogAdmin() {
 
   const stockBadge = (p: Product) => {
     if (!p.track_stock) return <span className="text-xs text-brand-400">بدون تتبع</span>;
-    if (p.stock_qty === 0) return <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded">خلصت 💔</span>;
-    if (p.stock_qty <= p.low_stock_threshold) return <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">باقي {p.stock_qty} 🔥</span>;
-    return <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded">متاح {p.stock_qty}</span>;
+    if (p.stock_qty === 0) return <span className="text-xs font-bold text-danger-text status-danger px-2 py-0.5 rounded">خلصت 💔</span>;
+    if (p.stock_qty <= p.low_stock_threshold) return <span className="text-xs font-bold text-warn-text status-warn px-2 py-0.5 rounded">باقي {p.stock_qty} 🔥</span>;
+    return <span className="text-xs text-ok-text status-ok px-2 py-0.5 rounded">متاح {p.stock_qty}</span>;
   };
 
   const openForm = (p?: Product) => {
@@ -180,7 +180,7 @@ export default function CatalogAdmin() {
     const stock = Number(form.stock_qty);
     const threshold = Number(form.low_stock_threshold);
     if (form.name.trim().length < 2) return setErr("اسم المنتج قصير (حرفين على الأقل)");
-    if (!Number.isFinite(price) || price < 0 || price > 100000) return setErr("سعر غير صالح (صحّحه من 0 لـ 100,000) — جرب رقم تاني");
+    if (!Number.isFinite(price) || price <= 0 || price > 100000) return setErr("السعر لازم يكون أكبر من صفر (لحد 100,000) — المنتج من غير سعر مينفعش يتباع");
     if (!Number.isFinite(stock) || stock < 0 || stock > 100000) return setErr("كمية المخزون غير صالحة");
     if (!Number.isFinite(threshold) || threshold < 0 || threshold > 10000) return setErr("عتبة المخزون غير صحيحة");
     const row = {
@@ -248,7 +248,7 @@ export default function CatalogAdmin() {
 
   return (
     <div className="space-y-4">
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
+      {err && <div className="status-danger border border-danger-text/30 text-danger-text rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
 
       <CategoriesPanel cats={cats} reload={load} busyFlag={busyFlag} setBusyFlag={setBusyFlag} />
 
@@ -280,7 +280,7 @@ export default function CatalogAdmin() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="font-extrabold text-brand-900 truncate">
-                  {p.name} {!p.is_active && <span className="pill bg-amber-100 text-amber-800">مخفي</span>}
+                  {p.name} {!p.is_active && <span className="pill status-warn text-warn-text">مخفي</span>}
                 </p>
                 <p className="text-xs text-brand-700">
                   {p.categories?.name} · {money(Number(p.price))}
@@ -290,7 +290,7 @@ export default function CatalogAdmin() {
               </div>
               <div className="flex flex-col gap-1 text-xs">
                 <button className="btn-soft !py-1 !px-2" onClick={() => openForm(p)}>تعديل</button>
-                <button className="pill bg-rose-50 text-rose-700" onClick={() => del(p)}>حذف</button>
+                <button className="pill status-danger text-danger-text" onClick={() => del(p)}>حذف</button>
               </div>
             </div>
           ))}
@@ -324,7 +324,7 @@ export default function CatalogAdmin() {
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="label">السعر (ج.م)</label>
-                <input className="input" type="number" min={0} step="0.5" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                <input className="input" type="number" min={0.01} step="0.5" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
               </div>
               <div className="w-24">
                 <label className="label">الترتيب</label>

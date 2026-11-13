@@ -84,8 +84,8 @@ export default function OrderPage() {
   if (!orderNumber) return <ErrorBox msg="رقم الطلب مش موجود 🥲" />;
   if (!trackingKey) {
     return (
-      <div className="card p-6 text-center text-brand-900">
-        <b className="text-brand-800">مفتاح المتابعة مفقود</b>
+      <div className="card p-6 text-center text-text">
+        <b className="text-text">مفتاح المتابعة مفقود</b>
         <p className="text-mut text-sm mt-2">لا يمكن فتح طلب برقم فقط — افتح رابط المتابعة الكامل الذي وصلك بعد تأكيد الطلب (يحتوي على ?k=).</p>
       </div>
     );
@@ -103,8 +103,8 @@ export default function OrderPage() {
       <CheckoutStepper step={4} />
       <div className="card p-4 text-center">
         <Logo className="mx-auto mb-2 h-24 w-auto" alt="Lala's Bakery" />
-        <h1 className="text-[20px] font-extrabold text-brand-800 dark:text-[#ffe3ea] my-1">طلبك</h1>
-        <div className="text-[28px] font-extrabold text-brand-800 tracking-wide my-2">{orderNumber}</div>
+        <h1 className="text-[20px] font-extrabold text-text my-1">طلبك</h1>
+        <div className="text-[28px] font-extrabold text-text tracking-wide my-2">{orderNumber}</div>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <CopyButton text={orderNumber} />
           <button
@@ -115,19 +115,23 @@ export default function OrderPage() {
           </button>
           <a className="btn-primary !px-3" href={`https://wa.me/?text=${whatsappText}`} target="_blank" rel="noopener noreferrer">مشاركة على واتساب</a>
         </div>
-        <p className="mt-3 font-bold text-brand-700">احتفظ برقم الطلب ومفتاح المتابعة</p>
+        <p className="mt-3 font-bold text-text">احتفظ برقم الطلب ومفتاح المتابعة</p>
         {details && <div className="text-mut text-sm mt-1">{details.branch_name} • الإجمالي {money(details.total)}</div>}
         {error && <ErrorBox msg={error} />}
       </div>
 
       {details && (
-        <div className="card p-3.5 text-brand-900 space-y-2">
-          <b>الدفع</b>
-          <div className="text-sm">
-            الطريقة: <b>{method === "cash" ? "💵 كاش عند الاستلام" : "📲 InstaPay (تحويل)"}</b>
-          </div>
-          <div className="text-sm">
-            حالة الدفع: <b>{PAYMENT_STATUS_LABEL[payStatus] || payStatus}</b>
+        <div className="card p-3.5 text-text space-y-2">
+          <b className="text-text">الدفع</b>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="status-info inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-bold">
+              {method === "cash" ? "💵 كاش عند الاستلام" : "📲 InstaPay (تحويل)"}
+            </span>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-bold ${
+              payStatus === "paid" ? "status-ok" : payStatus === "rejected" ? "status-danger" : "status-warn"
+            }`}>
+              {PAYMENT_STATUS_LABEL[payStatus] || payStatus}
+            </span>
           </div>
           <div className="msg-box text-sm">
             {method === "cash"
@@ -150,24 +154,24 @@ export default function OrderPage() {
       )}
 
       {details && details.items.length > 0 && (
-        <div className="card p-3.5 text-brand-900">
+        <div className="card p-3.5 text-text">
           <b>تفاصيل الطلب</b>
           <div className="mt-2 space-y-1 text-sm">
             {details.items.map((it, i) => (
               <div key={i} className="flex justify-between gap-2"><span>{it.name} ×{it.qty}</span><span>{money(it.line_total)}</span></div>
             ))}
           </div>
-          <div className="border-t border-brand-100 mt-2 pt-2 text-sm space-y-1">
+          <div className="border-t border-border mt-2 pt-2 text-sm space-y-1">
             <div className="flex justify-between"><span>المجموع الفرعي</span><span>{money(details.subtotal)}</span></div>
             <div className="flex justify-between"><span>{DELIVERY_LABEL[details.delivery_type] || "الاستلام"}</span><span>{details.delivery_fee ? `+${money(details.delivery_fee)}` : "مجانًا"}</span></div>
-            <div className="flex justify-between font-bold"><span>الإجمالي</span><span>{money(details.total)}</span></div>
+            <div className="flex justify-between font-extrabold text-primary-strong border-t border-border pt-2 mt-1"><span>الإجمالي</span><span className="text-[17px]">{money(details.total)}</span></div>
           </div>
         </div>
       )}
 
       {details?.status && (
         <div className="card p-3.5">
-          <b className="text-brand-900">حالة الطلب {details.status === "preparing" ? "(جاري التحضير)" : ""}</b>
+          <b className="text-text">حالة الطلب {details.status === "preparing" ? "(جاري التحضير)" : ""}</b>
           <div className="msg-box mt-2">{STATUS[details.status].msg}</div>
         </div>
       )}

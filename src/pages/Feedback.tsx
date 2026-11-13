@@ -40,7 +40,7 @@ export default function FeedbackPage() {
     return (
       <div className="card p-3.5 text-center">
         <div className="text-[40px]">💗</div>
-        <h2 className="text-[22px] font-bold text-brand-700 my-1">شكرًا ليك!</h2>
+        <h2 className="text-[21px] font-extrabold text-text my-1">شكرًا ليك!</h2>
         <div className="text-mut text-sm">رأيك وصلنا وهنقراه باهتمام.</div>
       </div>
     );
@@ -48,7 +48,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="space-y-2.5">
-      <h2 className="text-[22px] font-bold text-brand-700 mt-1.5 mb-0">رأيك يهمنا 💌</h2>
+      <h2 className="text-[21px] font-extrabold text-text mt-1.5 mb-0">رأيك يهمنا 💌</h2>
 
       <div className="card p-3.5 space-y-2">
         <div className="msg-box">

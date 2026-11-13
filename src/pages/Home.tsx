@@ -18,9 +18,9 @@ function BranchCard({ branch }: { branch: Branch }) {
   const longText = (branch.description ?? "").length > 90;
 
   return (
-    <article className="card overflow-hidden text-brand-900">
+    <article className="card overflow-hidden text-text">
       {/* صورة الغلاف مع placeholder أنيق لو مش موجودة */}
-      <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-brand-200 via-brand-100 to-[#f6cdd8] sm:h-40">
+      <div className="relative h-36 w-full overflow-hidden bg-gradient-to-br from-surface2 via-surface2 to-border/25 sm:h-40">
         {branch.cover_image ? (
           <img
             src={branch.cover_image}
@@ -31,7 +31,7 @@ function BranchCard({ branch }: { branch: Branch }) {
           />
         ) : (
           <div className="grid h-full w-full place-items-center">
-            <Croissant size={44} strokeWidth={1.5} className="text-brand-500/70" aria-hidden="true" />
+            <Croissant size={44} strokeWidth={1.5} className="text-primary" aria-hidden="true" />
           </div>
         )}
       </div>
@@ -45,19 +45,19 @@ function BranchCard({ branch }: { branch: Branch }) {
               alt={`شعار ${branch.name}`}
               loading="lazy"
               decoding="async"
-              className="h-16 w-16 shrink-0 rounded-2xl border-2 border-white object-cover shadow-md dark:border-[#332429]"
+              className="h-16 w-16 shrink-0 rounded-2xl border-2 border-surface object-cover shadow-md"
             />
           ) : (
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border-2 border-white bg-brand-100 shadow-md dark:border-[#332429]">
-              <Store size={26} className="text-brand-600" aria-hidden="true" />
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border-2 border-surface bg-surface2 shadow-md">
+              <Store size={26} className="text-primary-strong" aria-hidden="true" />
             </div>
           )}
-          <h3 className="pb-0.5 text-[19px] font-extrabold leading-snug text-brand-800">{branch.name}</h3>
+          <h3 className="pb-0.5 text-[19px] font-extrabold leading-snug text-text">{branch.name}</h3>
         </div>
 
         {/* سطر البرومو */}
         {branch.promo_brief && (
-          <p className="mt-2 flex items-start gap-1.5 text-[13px] font-bold leading-6 text-brand-600">
+          <p className="mt-2 flex items-start gap-1.5 text-[13px] font-bold leading-6 text-primary-strong">
             <Sparkles size={14} className="mt-1 shrink-0" aria-hidden="true" />
             <span className="line-clamp-1">{branch.promo_brief}</span>
           </p>
@@ -65,13 +65,13 @@ function BranchCard({ branch }: { branch: Branch }) {
 
         {/* الوصف: سطرين مع اقرأ المزيد */}
         {branch.description && (
-          <div className="mt-1.5 text-[14px] leading-6 text-mut">
+          <div className="mt-1.5 text-[14px] leading-6 text-muted">
             <span className={expanded ? "" : "clamp-2"}>{branch.description}</span>
             {longText && (
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="ms-1 font-bold text-brand-600 underline underline-offset-2 outline-none transition hover:text-brand-700 focus-visible:ring-2 focus-visible:ring-brand-500 rounded"
+                className="ms-1 rounded font-bold text-primary-strong underline underline-offset-2 outline-none transition hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
                 aria-expanded={expanded}
               >
                 {expanded ? "اقرأ أقل" : "اقرأ المزيد"}
@@ -89,7 +89,7 @@ function BranchCard({ branch }: { branch: Branch }) {
               </span>
             ))}
             {extra > 0 && (
-              <span className="tag cursor-default bg-brand-200/60" title={services.slice(3).join("، ")}>
+              <span className="tag cursor-default" title={services.slice(3).join("، ")}>
                 +{extra}
               </span>
             )}
@@ -146,27 +146,28 @@ export default function Home() {
   return (
     <div className="space-y-4">
       {/* ============ الهيرو ============ */}
-      <section className="relative overflow-hidden rounded-[26px] border border-brand-200 bg-gradient-to-bl from-[#ffe9ee] via-brand-100 to-[#f3cdd8] px-4 pb-6 pt-5 text-center shadow-[0_10px_35px_rgba(125,63,80,0.18)] dark:border-white/10 dark:from-[#4a2a33] dark:via-[#332429] dark:to-[#2b2125]">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full bg-white/45 blur-3xl dark:bg-[#e0457b]/10" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-[#e0457b]/15 blur-3xl dark:bg-[#e0457b]/10" />
+      <section className="relative overflow-hidden rounded-[26px] border border-border bg-gradient-to-bl from-surface2 via-surface2 to-page px-4 pb-6 pt-5 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div aria-hidden="true" className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full bg-btnbg/10 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-accent/10 blur-3xl" />
 
         <div className="relative">
           <Logo
             alt="Lala's Bakery"
-            className="mx-auto h-32 w-auto object-contain drop-shadow-[0_6px_14px_rgba(125,63,80,0.30)] sm:h-36"
+            className="mx-auto h-32 w-auto object-contain drop-shadow-[0_6px_14px_rgb(0_0_0/0.25)] sm:h-36"
           />
-          <h1 className="mt-2 text-[25px] font-extrabold leading-snug text-brand-800 dark:text-[#ffe3ea]">
+          <h1 className="mt-2 text-[25px] font-extrabold leading-snug text-text">
             مخبوزات وقهوة منزلية،
             <br />
             تُحضّر بكل حب
           </h1>
-          <p className="mx-auto mt-1 max-w-[34ch] text-[14px] leading-6 text-brand-700/90 dark:text-[#ecc9d2]">
+          <p className="mx-auto mt-1 max-w-[34ch] text-[14px] leading-6 text-muted">
             طازة من الفرن… والقهوة مظبوطة زي ما بتحبيها
           </p>
           <button
             type="button"
             onClick={scrollToBranches}
-            className="btn-primary mt-4 min-h-[52px] px-9 text-lg shadow-[0_10px_25px_rgba(157,90,108,0.45)]"
+            className="btn-primary mt-4 min-h-[52px] px-9 text-lg"
+            style={{ boxShadow: "var(--shadow-pop)" }}
           >
             اطلب الآن
             <ArrowDown size={20} strokeWidth={2.4} aria-hidden="true" />
@@ -177,7 +178,7 @@ export default function Home() {
             scope="brand"
             size="sm"
             label="تابعنا"
-            className="mt-4 border-t border-brand-300/40 pt-3 dark:border-white/10"
+            className="mt-4 border-t border-border pt-3"
           />
         </div>
       </section>
@@ -187,8 +188,8 @@ export default function Home() {
       {/* ============ قائمة الفروع ============ */}
       <div id="branches" className="scroll-mt-20">
         <div className="mb-2 flex items-end justify-between">
-          <h2 className="text-[20px] font-extrabold text-brand-800 dark:text-[#ffe3ea]">فروعنا</h2>
-          <span className="text-xs font-bold text-mut">اختار الفرع وابدأ طلبك</span>
+          <h2 className="text-[20px] font-extrabold text-text">فروعنا</h2>
+          <span className="text-xs font-bold text-muted">اختار الفرع وابدأ طلبك</span>
         </div>
 
         {error && <EmptyBox msg={error} />}

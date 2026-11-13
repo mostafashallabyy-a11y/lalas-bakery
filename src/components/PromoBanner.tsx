@@ -41,7 +41,8 @@ export default function PromoBanner({ branchId }: { branchId?: string }) {
     <section
       aria-roledescription="carousel"
       aria-label="العروض والبرومو"
-      className="relative overflow-hidden rounded-[22px] border border-brand-200 shadow-[0_8px_28px_rgba(125,63,80,0.22)]"
+      className="relative overflow-hidden rounded-[22px] border border-border bg-gradient-to-l from-primary-strong via-primary-strong to-primary-strong text-on-primary"
+      style={{ boxShadow: "var(--shadow-card)" }}
       onMouseEnter={() => (paused.current = true)}
       onMouseLeave={() => (paused.current = false)}
       onTouchStart={(e) => {
@@ -60,26 +61,23 @@ export default function PromoBanner({ branchId }: { branchId?: string }) {
         go(dx < 0 ? 1 : -1);
       }}
     >
-      <div
-        key={promo.id}
-        className="promo-slide relative flex min-h-[150px] items-stretch overflow-hidden bg-gradient-to-l from-[#7d3f50] via-[#9d5a6c] to-[#c2185b] text-white"
-      >
-        {/* زخارف ناعمة */}
-        <div aria-hidden="true" className="pointer-events-none absolute -left-10 -top-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-12 right-16 h-36 w-36 rounded-full bg-[#e0457b]/30 blur-2xl" />
+      <div key={promo.id} className="promo-slide relative flex min-h-[150px] items-stretch overflow-hidden">
+        {/* زخارف ناعمة — ألوان التوكنز فقط */}
+        <div aria-hidden="true" className="pointer-events-none absolute -left-10 -top-10 h-36 w-36 rounded-full bg-accent/20 blur-2xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-12 right-16 h-36 w-36 rounded-full bg-on-primary/10 blur-2xl" />
 
         <div className="relative flex flex-1 flex-col justify-center gap-1 p-4 text-start">
-          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold text-[#ffd9e6] backdrop-blur-sm">
+          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-on-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-on-primary/90 backdrop-blur-sm">
             <Sparkles size={12} aria-hidden="true" /> عرض خاص
           </span>
           <h3 className="text-[20px] font-extrabold leading-snug">{promo.title}</h3>
-          {promo.text && <p className="line-clamp-2 text-[13px] leading-6 text-white/90">{promo.text}</p>}
+          {promo.text && <p className="line-clamp-2 text-[13px] leading-6 text-on-primary/90">{promo.text}</p>}
           {promo.link_url && (
             <a
               href={promo.link_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-flex min-h-[40px] w-fit items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-extrabold text-[#7d3f50] shadow transition hover:bg-[#ffeef3] active:scale-95"
+              className="mt-1 inline-flex min-h-[40px] w-fit items-center gap-1.5 rounded-full bg-surface px-4 text-[13px] font-extrabold text-primary-strong shadow transition hover:opacity-90 active:scale-95"
             >
               {promo.button_label || "اعرف المزيد"}
               <ChevronLeft size={15} aria-hidden="true" />
@@ -106,7 +104,7 @@ export default function PromoBanner({ branchId }: { branchId?: string }) {
             type="button"
             onClick={() => go(-1)}
             aria-label="العرض السابق"
-            className="absolute right-1 top-1/2 grid h-11 w-9 -translate-y-1/2 place-items-center rounded-full text-white/80 transition hover:bg-white/15 hover:text-white active:scale-90"
+            className="absolute right-1 top-1/2 grid h-11 w-9 -translate-y-1/2 place-items-center rounded-full text-on-primary/80 transition hover:bg-on-primary/15 hover:text-on-primary active:scale-90"
           >
             <ChevronRight size={22} aria-hidden="true" />
           </button>
@@ -114,7 +112,7 @@ export default function PromoBanner({ branchId }: { branchId?: string }) {
             type="button"
             onClick={() => go(1)}
             aria-label="العرض التالي"
-            className="absolute left-1 top-1/2 grid h-11 w-9 -translate-y-1/2 place-items-center rounded-full text-white/80 transition hover:bg-white/15 hover:text-white active:scale-90"
+            className="absolute left-1 top-1/2 grid h-11 w-9 -translate-y-1/2 place-items-center rounded-full text-on-primary/80 transition hover:bg-on-primary/15 hover:text-on-primary active:scale-90"
           >
             <ChevronLeft size={22} aria-hidden="true" />
           </button>
@@ -127,7 +125,7 @@ export default function PromoBanner({ branchId }: { branchId?: string }) {
                 aria-selected={i === idx}
                 aria-label={`عرض ${i + 1} من ${count}`}
                 onClick={() => setIdx(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${i === idx ? "w-5 bg-white" : "w-2 bg-white/45 hover:bg-white/70"}`}
+                className={`h-2 rounded-full transition-all duration-300 ${i === idx ? "w-5 bg-on-primary" : "w-2 bg-on-primary/45 hover:bg-on-primary/70"}`}
               />
             ))}
           </div>

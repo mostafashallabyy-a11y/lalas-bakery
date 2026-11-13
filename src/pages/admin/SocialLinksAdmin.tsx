@@ -178,7 +178,7 @@ export default function SocialLinksAdmin() {
   // Only managers may manage links. RLS enforces this on the DB too.
   if (!profile || profile.role !== "manager") {
     return (
-      <div className="card p-8 text-center text-rose-700 font-bold">
+      <div className="card p-8 text-center text-danger-text font-bold">
         هذه الصفحة للمدير فقط.
       </div>
     );
@@ -188,7 +188,7 @@ export default function SocialLinksAdmin() {
     <div className="space-y-4 pb-24">
       {err && <ErrorBox msg={err} />}
       {ok && (
-        <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl px-3 py-2 text-sm font-bold">
+        <div className="status-ok border border-ok/40 text-ok-text rounded-xl px-3 py-2 text-sm font-bold">
           {ok}
         </div>
       )}

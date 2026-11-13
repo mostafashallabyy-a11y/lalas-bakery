@@ -56,8 +56,8 @@ export default function SettingsAdmin() {
 
   return (
     <div className="card p-4 space-y-3">
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
-      {ok && <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl px-3 py-2 text-sm font-bold">{ok}</div>}
+      {err && <div className="status-danger border border-danger-text/30 text-danger-text rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
+      {ok && <div className="status-ok border border-ok/40 text-ok-text rounded-xl px-3 py-2 text-sm font-bold">{ok}</div>}
       {FIELDS.map((f) => (
         <div key={f.key}>
           <label className="label" htmlFor={f.key}>{f.label}</label>

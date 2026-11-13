@@ -2,8 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* ============================================================
+   LALA'S BAKERY — نظام الـ design tokens (مصدر اللون الوحيد)
+   فاتح/داكن حسب prefers-color-scheme + اختيار يدوي [data-theme]
+   كل لون بصيغة "r g b" عشان Tailwind يقدر يضيف شفافية (/50)
+   ============================================================ */
+
+:root,
+:root[data-theme="light"] {
   color-scheme: light;
+  /* الأساسيات */
+  --bg: 251 243 244;          /* #fbf3f4 — خلفية الصفحة */
+  --surface: 255 255 255;     /* #ffffff — سطح الكروت */
+  --surface-2: 249 232 236;   /* #f9e8ec — سطح مساعد (chips/tags) */
+  --border: 173 114 128;      /* #ad7280 — حدود ≥3:1 (تعديل محسوب من #ecc9d2) */
+  --text: 59 34 41;           /* #3b2229 */
+  --text-muted: 122 90 99;    /* #7a5a63 */
+  --primary: 176 104 122;     /* #b0687a — أيقونات/حدود/نصوص كبيرة */
+  --primary-strong: 143 63 88;/* #8f3f58 — الأزرار المملوءة والنصوص البارزة */
+  --accent: 224 69 123;       /* #e0457b — مميزات ولوحات فقط */
+  --on-primary: 255 255 255;  /* #ffffff */
+  /* الأزرار: تعبئة فاتحة = primary-strong (6.9:1) */
+  --btn-bg: 143 63 88;        /* primary-strong */
+  --btn-fg: 255 255 255;      /* on-primary */
+  --btn-hover: 125 63 80;     /* #7d3f50 */
+  /* الحالة */
+  --ok: 76 175 122;           /* #4caf7a */
+  --warn: 240 180 76;         /* #f0b44c */
+  --danger: 239 107 107;      /* #ef6b6b */
+  --info: 111 179 224;        /* #6fb3e0 */
+  --badge-bg: 194 24 91;      /* #c2185b — white text = 5.87:1 */
+  --badge-fg: 255 255 255;
+  --ok-text: 37 107 67;       /* #256b43 — 5.7:1 على ok-bg */
+  --ok-bg: 231 245 236;       /* #e7f5ec */
+  --warn-text: 122 78 0;      /* #7a4e00 — 6.5:1 على warn-bg */
+  --warn-bg: 253 243 223;     /* #fdf3df */
+  --danger-text: 163 44 44;   /* #a32c2c — 6.2:1 على danger-bg */
+  --danger-bg: 253 236 236;   /* #fdecec */
+  --info-text: 31 95 139;     /* #1f5f8b — 6:1 على info-bg */
+  --info-bg: 232 242 251;     /* #e8f2fb */
+  /* ظلال وحلقات */
+  --shadow-card: 0 1px 2px rgb(59 34 41 / 0.06), 0 6px 18px rgb(59 34 41 / 0.1);
+  --shadow-pop: 0 8px 30px rgb(59 34 41 / 0.22);
+  --ring: 143 63 88;          /* حلقة التركيز */
+}
+
+/* الداكن: يتفعل مع prefers-color-scheme بشرط إن المستخدم مغيرش يدوي لـ light */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: 29 18 22;           /* #1d1216 — دافئ، مش أسود */
+    --surface: 42 27 33;      /* #2a1b21 */
+    --surface-2: 53 35 43;    /* #35232b */
+    --border: 148 107 123;    /* #946b7b — ≥3.26:1 على كل الأسطح */
+    --text: 251 239 242;      /* #fbeff2 */
+    --text-muted: 217 184 193;/* #d9b8c1 */
+    --primary: 232 160 180;   /* #e8a0b4 */
+    --primary-strong: 244 188 203; /* #f4bccb */
+    --accent: 255 122 168;    /* #ff7aa8 */
+    --on-primary: 42 16 24;   /* #2a1018 */
+    --btn-bg: 232 160 180;    /* primary */
+    --btn-fg: 42 16 24;       /* on-primary */
+    --btn-hover: 244 188 203; /* primary-strong */
+    --ok: 76 175 122;         /* #4caf7a — 6.1:1 على السطح */
+    --warn: 240 180 76;       /* #f0b44c — 8.9:1 */
+    --danger: 239 107 107;    /* #ef6b6b — 5.5:1 */
+    --info: 111 179 224;      /* #6fb3e0 — 7.3:1 */
+    --badge-bg: 255 122 168;  /* #ff7aa8 */
+    --badge-fg: 42 16 24;     /* #2a1018 — 7.25:1 */
+    --ok-text: 76 175 122;    /* #4caf7a — كنص على surface */
+    --ok-bg: 33 53 40;        /* #213528 */
+    --warn-text: 240 180 76;  /* #f0b44c */
+    --warn-bg: 58 46 24;      /* #3a2e18 */
+    --danger-text: 239 107 107;/* #ef6b6b */
+    --danger-bg: 61 35 38;    /* #3d2326 */
+    --info-text: 111 179 224; /* #6fb3e0 */
+    --info-bg: 33 53 68;      /* #213544 */
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04), 0 10px 28px rgb(0 0 0 / 0.38);
+    --shadow-pop: 0 10px 32px rgb(0 0 0 / 0.5);
+    --ring: 232 160 180;
+  }
+}
+
+/* اختيار يدوي للوضع الداكن — يغلب prefers-color-scheme */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: 29 18 22;
+  --surface: 42 27 33;
+  --surface-2: 53 35 43;
+  --border: 148 107 123;
+  --text: 251 239 242;
+  --text-muted: 217 184 193;
+  --primary: 232 160 180;
+  --primary-strong: 244 188 203;
+  --accent: 255 122 168;
+  --on-primary: 42 16 24;
+  --btn-bg: 232 160 180;
+  --btn-fg: 42 16 24;
+  --btn-hover: 244 188 203;
+  --ok: 76 175 122;
+  --warn: 240 180 76;
+  --danger: 239 107 107;
+  --info: 111 179 224;
+  --badge-bg: 255 122 168;
+  --badge-fg: 42 16 24;
+  --ok-text: 76 175 122;
+  --ok-bg: 33 53 40;
+  --warn-text: 240 180 76;
+  --warn-bg: 58 46 24;
+  --danger-text: 239 107 107;
+  --danger-bg: 61 35 38;
+  --info-text: 111 179 224;
+  --info-bg: 33 53 68;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04), 0 10px 28px rgb(0 0 0 / 0.38);
+  --shadow-pop: 0 10px 32px rgb(0 0 0 / 0.5);
+  --ring: 232 160 180;
 }
 
 html {
@@ -13,37 +126,30 @@ html {
 html,
 body {
   font-family: "Cairo", Tahoma, Arial, sans-serif;
-  background-color: #fbf3f4;
-  color: #4a2a33;
+  background-color: rgb(var(--bg));
+  color: rgb(var(--text));
   min-height: 100%;
   line-height: 1.65;
   font-size: 16px;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
+  transition: background-color 0.25s ease;
 }
 
 ::selection {
-  background: #ecc9d2;
-  color: #4a2a33;
+  background: rgb(var(--primary) / 0.35);
+  color: rgb(var(--text));
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
-  html,
-  body {
-    background-color: #241a1d;
-    color: #f3e6e9;
-  }
-  ::selection {
-    background: #6b3444;
-    color: #fdeef2;
-  }
+/* حلقة تركيز موحدة وواضحة لكل العناصر */
+:focus-visible {
+  outline: 3px solid rgb(var(--ring) / 0.85);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 /* ============================================================
-   حركات الصفحات والمكوّنات — ناعمة مع احترام prefers-reduced-motion
+   حركات — ناعمة مع احترام prefers-reduced-motion
    ============================================================ */
 @keyframes page-enter {
   from {
@@ -53,7 +159,6 @@ body {
     opacity: 1;
   }
 }
-/* ملاحظة: مفيش transform هنا عشان position:fixed جوا الصفحة يفضل متعلق بالشاشة */
 .page-enter {
   animation: page-enter 0.28s ease-out both;
 }
@@ -96,27 +201,6 @@ body {
   animation: toast-pop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-.skeleton {
-  border-radius: 14px;
-  background: linear-gradient(100deg, #f3e0e5 8%, #fbeef1 30%, #f3e0e5 55%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-@media (prefers-color-scheme: dark) {
-  .skeleton {
-    background: linear-gradient(100deg, #32262a 8%, #3e2f35 30%, #32262a 55%);
-    background-size: 200% 100%;
-  }
-}
-
 @keyframes promo-slide {
   from {
     opacity: 0;
@@ -131,10 +215,22 @@ body {
   animation: promo-slide 0.4s ease-out both;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .promo-slide {
-    animation: none !important;
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
   }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.skeleton {
+  border-radius: 14px;
+  background: linear-gradient(100deg, rgb(var(--surface-2)) 8%, rgb(var(--surface)) 30%, rgb(var(--surface-2)) 55%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
@@ -163,162 +259,210 @@ body {
 }
 
 @layer components {
-  /* البطاقة: خلفية بيضاء، ركن 18-20px، ظل ناعم */
+  /* ===== الكارت: سطح + حد 1px + ظل ناعم ===== */
   .card {
-    @apply rounded-[18px] border border-brand-200 bg-white;
-    box-shadow: 0 1px 2px rgba(74, 42, 51, 0.06), 0 6px 18px rgba(74, 42, 51, 0.08);
-  }
-  @media (prefers-color-scheme: dark) {
-    .card {
-      background: #332429;
-      border-color: rgba(255, 255, 255, 0.09);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 22px rgba(0, 0, 0, 0.28);
-    }
+    @apply rounded-[18px] border bg-surface;
+    border-color: rgb(var(--border));
+    box-shadow: var(--shadow-card);
   }
 
-  /* الأزرار الأساسية: وردي عميق يحقق تباين AA مع النص الأبيض */
+  /* ===== الأزرار الأساسية: primary-strong مع on-primary ===== */
   .btn-primary {
-    @apply inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-2 font-bold text-white transition hover:bg-brand-700 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2 font-bold transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+    background: rgb(var(--btn-bg));
+    color: rgb(var(--btn-fg));
+  }
+  .btn-primary:hover {
+    background: rgb(var(--btn-hover));
   }
   .btn-pill {
-    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full bg-brand-600 px-4 py-1.5 text-sm font-bold text-white transition hover:bg-brand-700 active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full px-4 py-1.5 text-sm font-bold transition active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-50;
+    background: rgb(var(--btn-bg));
+    color: rgb(var(--btn-fg));
   }
-  .btn-outline {
-    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full border-[1.5px] border-brand-600 bg-transparent px-4 py-1.5 text-sm font-bold text-brand-700 transition hover:bg-brand-100 active:scale-[0.96];
+  .btn-pill:hover {
+    background: rgb(var(--btn-hover));
   }
+  /* زر التعبئة الغامقة (للحالة المفعّلة في الـ chips) */
   .btn-dark {
-    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full bg-brand-700 px-4 py-1.5 text-sm font-bold text-brand-50 transition hover:bg-brand-800 active:scale-[0.96];
+    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full px-4 py-1.5 text-sm font-bold transition active:scale-[0.96];
+    background: rgb(var(--btn-bg));
+    color: rgb(var(--btn-fg));
   }
-  .btn-soft {
-    @apply inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-100 px-4 py-2 font-bold text-brand-700 transition hover:bg-brand-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40;
-  }
-  @media (prefers-color-scheme: dark) {
-    .btn-primary,
-    .btn-pill {
-      background: #e8b4c4;
-      color: #3a222b;
-    }
-    .btn-primary:hover,
-    .btn-pill:hover {
-      background: #f5cdd8;
-    }
-    .btn-outline {
-      border-color: rgba(255, 255, 255, 0.28);
-      color: #f3d3dc;
-    }
-    .btn-outline:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
-    .btn-dark {
-      background: #e8b4c4;
-      color: #3a222b;
-    }
-    .btn-dark:hover {
-      background: #f5cdd8;
-    }
-    .btn-soft {
-      background: rgba(232, 180, 196, 0.16);
-      color: #f5cdd8;
-    }
-    .btn-soft:hover {
-      background: rgba(232, 180, 196, 0.24);
-    }
+  .btn- {
+    background: rgb(var(--btn-hover));
   }
 
-  .input {
-    @apply w-full rounded-xl border-[1.5px] border-brand-200 bg-brand-50 px-3.5 py-2.5 text-[16px] text-brand-900 outline-none transition placeholder:text-mut focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
+  /* الزر الثانوي: حدود + نص مقروءين */
+  .btn-outline {
+    @apply inline-flex min-h-[40px] cursor-pointer items-center justify-center gap-1 rounded-full border-[1.5px] bg-transparent px-4 py-1.5 text-sm font-bold transition active:scale-[0.96];
+    border-color: rgb(var(--border));
+    color: rgb(var(--primary-strong));
   }
-  @media (prefers-color-scheme: dark) {
-    .input {
-      background: #2b2125;
-      border-color: rgba(255, 255, 255, 0.14);
-      color: #f3e6e9;
-    }
-    .input:focus {
-      border-color: #e8b4c4;
-      --tw-ring-color: rgba(232, 180, 196, 0.35);
-    }
+  .btn-outline:hover {
+    background: rgb(var(--surface-2));
+  }
+
+  .btn-soft {
+    @apply inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2 font-bold transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+    background: rgb(var(--surface-2));
+    color: rgb(var(--primary-strong));
+  }
+  .btn-soft:hover {
+    background: rgb(var(--surface-2) / 0.7);
+    filter: brightness(1.03);
+  }
+
+  /* ===== الحقول: حدود واضحة + placeholder مهمل ===== */
+  .input {
+    @apply w-full rounded-xl border-[1.5px] px-3.5 py-2.5 text-[16px] outline-none transition;
+    border-color: rgb(var(--border));
+    background: rgb(var(--surface));
+    color: rgb(var(--text));
+  }
+  .input::placeholder {
+    color: rgb(var(--text-muted));
+  }
+  .input:focus {
+    border-color: rgb(var(--primary));
+    box-shadow: 0 0 0 3px rgb(var(--ring) / 0.28);
+  }
+  .input-error {
+    border-color: rgb(var(--danger-text)) !important;
   }
 
   .label {
-    @apply mb-1 block text-sm font-bold text-brand-900;
-  }
-  @media (prefers-color-scheme: dark) {
-    .label {
-      color: #f3e6e9;
-    }
+    @apply mb-1 block text-sm font-bold;
+    color: rgb(var(--text));
   }
 
   .pill {
-    @apply inline-flex items-center rounded-full bg-brand-100 px-2.5 py-0.5 text-[13px] font-bold text-brand-700;
-  }
-  @media (prefers-color-scheme: dark) {
-    .pill {
-      background: rgba(232, 180, 196, 0.18);
-      color: #f5cdd8;
-    }
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[13px] font-bold;
+    background: rgb(var(--surface-2));
+    color: rgb(var(--primary-strong));
   }
 
-  /* الرسائل الوردية */
+  /* رسائل معلوماتية — info tint */
   .msg-box {
-    @apply rounded-2xl bg-brand-100 px-3.5 py-3 text-brand-800;
-  }
-  @media (prefers-color-scheme: dark) {
-    .msg-box {
-      background: rgba(232, 180, 196, 0.14);
-      color: #f5cdd8;
-    }
+    @apply rounded-2xl px-3.5 py-3;
+    background: rgb(var(--info-bg));
+    color: rgb(var(--info-text));
   }
 
-  /* التاج الصغير */
+  /* تاج صغير — محايد */
   .tag {
-    @apply inline-block rounded-[10px] bg-brand-100 px-2.5 py-0.5 text-[13px] leading-6 text-brand-700;
-  }
-  @media (prefers-color-scheme: dark) {
-    .tag {
-      background: rgba(232, 180, 196, 0.16);
-      color: #f5cdd8;
-    }
+    @apply inline-block rounded-[10px] px-2.5 py-0.5 text-[13px] leading-6;
+    background: rgb(var(--surface-2));
+    color: rgb(var(--text));
   }
 
-  /* شريط الحالات (تتبع الطلب) */
+  /* شارات الحالة (للاستخدام في لوحات الطلبات والتقارير) */
+  .status-ok {
+    background: rgb(var(--ok-bg));
+    color: rgb(var(--ok-text));
+  }
+  .status-warn {
+    background: rgb(var(--warn-bg));
+    color: rgb(var(--warn-text));
+  }
+  .status-danger {
+    background: rgb(var(--danger-bg));
+    color: rgb(var(--danger-text));
+  }
+  .status-info {
+    background: rgb(var(--info-bg));
+    color: rgb(var(--info-text));
+  }
+
+  /* شريط حالات الطلب */
   .st-step {
-    @apply flex-1 rounded-xl bg-brand-100 px-1 py-2 text-center text-[13px] text-mut;
+    @apply flex-1 rounded-xl px-1 py-2 text-center text-[13px];
+    background: rgb(var(--surface-2));
+    color: rgb(var(--text-muted));
   }
   .st-step.on {
-    @apply bg-brand-600 font-bold text-white;
+    background: rgb(var(--btn-bg));
+    color: rgb(var(--btn-fg));
+    font-weight: 800;
   }
-  @media (prefers-color-scheme: dark) {
-    .st-step {
-      background: rgba(255, 255, 255, 0.06);
-      color: #cbb3b9;
-    }
-    .st-step.on {
-      background: #e8b4c4;
-      color: #3a222b;
-    }
+  .st-step.done {
+    background: rgb(var(--ok-bg));
+    color: rgb(var(--ok-text));
+    font-weight: 700;
   }
 
-  /* كارت منتج */
-  .prod-card {
-    @apply card p-3 text-center text-brand-900;
+  /* الجداول الواسعة — تمرير أفقي على الموبايل */
+  .table-scroll {
+    overflow-x: auto;
+    margin-inline: -2px;
+    padding-inline: 2px;
   }
-  @media (prefers-color-scheme: dark) {
-    .prod-card {
-      color: #f3e6e9;
-    }
+  .table-scroll table {
+    min-width: 560px;
+  }
+
+  /* كارت المنتج */
+  .prod-card {
+    @apply card p-3 text-center;
+    color: rgb(var(--text));
   }
   .prod-emoji {
-    @apply inline-block rounded-2xl bg-brand-100 px-2 py-1.5 text-[44px];
-  }
-  @media (prefers-color-scheme: dark) {
-    .prod-emoji {
-      background: rgba(232, 180, 196, 0.14);
-    }
+    @apply inline-block rounded-2xl px-2 py-1.5 text-[44px];
+    background: rgb(var(--surface-2));
   }
 
   .logo-script {
     font-family: "Brush Script MT", "Segoe Script", cursive;
-    @apply text-[34px] text-brand-700 leading-none;
+    @apply text-[34px] leading-none;
+    color: rgb(var(--primary-strong));
+  }
+}
+
+/* ============================================================
+   الطباعة — دايمًا فاتح، من غير أدوات التطبيق
+   ============================================================ */
+@media print {
+  :root,
+  :root[data-theme="light"],
+  :root:not([data-theme="light"]),
+  :root[data-theme="dark"] {
+    color-scheme: light;
+    --bg: 255 255 255;
+    --surface: 255 255 255;
+    --surface-2: 244 244 244;
+    --border: 180 180 180;
+    --text: 0 0 0;
+    --text-muted: 60 60 60;
+    --primary: 0 0 0;
+    --primary-strong: 0 0 0;
+    --accent: 0 0 0;
+    --on-primary: 255 255 255;
+    --btn-bg: 0 0 0;
+    --btn-fg: 255 255 255;
+    --shadow-card: none;
+    --shadow-pop: none;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .print-hidden,
+  header,
+  nav,
+  footer,
+  .sheet-panel,
+  .sheet-overlay,
+  [role="status"] {
+    display: none !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #bbb !important;
+    break-inside: avoid;
+  }
+  a {
+    text-decoration: underline;
+    color: #000 !important;
   }
 }

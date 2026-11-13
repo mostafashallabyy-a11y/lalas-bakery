@@ -84,19 +84,19 @@ export default function ReportsAdmin() {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
     body { direction: rtl; font-family: 'Cairo', sans-serif; }
-    .report-title { text-align: center; font-size: 24px; font-weight: 800; color: #7d3f50; margin-bottom: 8px; }
-    .report-subtitle { text-align: center; font-size: 14px; color: #6b5b6b; margin-bottom: 16px; }
+    .report-title { text-align: center; font-size: 24px; font-weight: 800; color: rgb(var(--text)); margin-bottom: 8px; }
+    .report-subtitle { text-align: center; font-size: 14px; color: rgb(var(--text-muted)); margin-bottom: 16px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
-    .kpi-card { border: 1px solid #f9dfe5; border-radius: 12px; padding: 10px; text-align: center; background: #fbf3f4; }
-    .kpi-label { font-size: 11px; color: #b0687a; font-weight: bold; }
-    .kpi-value { font-size: 20px; font-weight: 800; color: #7d3f50; margin-top: 2px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
-    th { background: #f9dfe5; color: #7d3f50; font-weight: 800; padding: 6px; text-align: right; border-bottom: 2px solid #b0687a; }
-    td { padding: 5px; border-bottom: 1px solid #f1d4dd; text-align: right; }
+    .kpi-card { border: 1px solid rgb(var(--border)); border-radius: 12px; padding: 10px; text-align: center; background: rgb(var(--surface-2)); }
+    .kpi-label { font-size: 11px; color: rgb(var(--text-muted)); font-weight: bold; }
+    .kpi-value { font-size: 20px; font-weight: 800; color: rgb(var(--text)); margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; color: rgb(var(--text)); }
+    th { background: rgb(var(--surface-2)); color: rgb(var(--text)); font-weight: 800; padding: 6px; text-align: right; border-bottom: 2px solid rgb(var(--border)); }
+    td { padding: 5px; border-bottom: 1px solid rgb(var(--border)); text-align: right; }
     .section { page-break-inside: avoid; margin-bottom: 20px; }
-    .section-title { font-size: 16px; font-weight: 800; color: #7d3f50; margin-bottom: 8px; border-bottom: 2px solid #b0687a; padding-bottom: 4px; }
-    .chart-placeholder { border: 1px dashed #b0687a; border-radius: 8px; padding: 20px; text-align: center; color: #b0687a; font-size: 13px; margin-bottom: 12px; }
-    .insight-box { background: #fbf3f4; border: 1px solid #f9dfe5; border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+    .section-title { font-size: 16px; font-weight: 800; color: rgb(var(--text)); margin-bottom: 8px; border-bottom: 2px solid rgb(var(--border)); padding-bottom: 4px; }
+    .chart-placeholder { border: 1px dashed rgb(var(--border)); border-radius: 8px; padding: 20px; text-align: center; color: rgb(var(--text-muted)); font-size: 13px; margin-bottom: 12px; }
+    .insight-box { background: rgb(var(--surface-2)); border: 1px solid rgb(var(--border)); border-radius: 12px; padding: 12px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
   `;
 
   const printContent = (
@@ -229,12 +229,12 @@ export default function ReportsAdmin() {
           ))}
           <button onClick={() => setFrom(uptoDate(addDays(new Date(), -90)))} className="btn-outline !px-2 !py-1 text-xs">مخصص</button>
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap items-center gap-1.5">
           <label className="label hidden">من</label>
-          <input type="date" className="input w-auto" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <input type="date" className="input w-auto min-w-0 flex-1 sm:flex-none" value={from} onChange={(e) => setFrom(e.target.value)} />
           <label className="label hidden">إلى</label>
-          <input type="date" className="input w-auto" value={to} onChange={(e) => setTo(e.target.value)} />
-          <select className="input w-auto" value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
+          <input type="date" className="input w-auto min-w-0 flex-1 sm:flex-none" value={to} onChange={(e) => setTo(e.target.value)} />
+          <select className="input w-auto min-w-0 flex-1 sm:flex-none" value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
             <option value="all">جميع الفروع</option>
             {branches.map((b) => (
               <option key={b.id} value={b.id}>
@@ -242,7 +242,7 @@ export default function ReportsAdmin() {
               </option>
             ))}
           </select>
-          <button className="btn-primary" onClick={load} disabled={busy}>
+          <button className="btn-primary shrink-0" onClick={load} disabled={busy}>
             {busy ? "…" : "حساب التقرير"}
           </button>
         </div>
@@ -269,7 +269,7 @@ export default function ReportsAdmin() {
         </div>
       </div>
 
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
+      {err && <div className="status-danger border border-danger-text/30 text-danger-text rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
       {!data && !busy && <EmptyBox msg="اختر الفترة والفرع واعمل حساب" />}
       {printMode && printContent}
 
@@ -303,8 +303,8 @@ export default function ReportsAdmin() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="card p-3">
                   <h3 className="font-bold text-brand-900 text-sm mb-2">الطلبات لكل يوم</h3>
-                  {revenue?.per_day?.length === 0 ? <EmptyBox msg="مفيش طلبات" /> : (
-                    <table className="w-full text-sm">
+                  {revenue?.per_day?.length ? (
+                    <div className="table-scroll"><table className="w-full text-sm">
                       <thead><tr className="text-brand-700 border-b"><th className="py-1 text-right">اليوم</th><th className="py-1">الطلبات</th><th className="py-1">المبيعات</th></tr></thead>
                       <tbody>
                         {revenue.per_day.map((r: any) => (
@@ -315,13 +315,13 @@ export default function ReportsAdmin() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
-                  )}
+                    </table></div>
+                  ) : <EmptyBox msg="مفيش طلبات" />}
                 </div>
                 <div className="card p-3">
                   <h3 className="font-bold text-brand-900 text-sm mb-2">الطلبات لكل طريقة دفع</h3>
-                  {revenue?.per_payment_method?.length === 0 ? <EmptyBox msg="لا توجد بيانات" /> : (
-                    <table className="w-full text-sm">
+                  {revenue?.per_payment_method?.length ? (
+                    <div className="table-scroll"><table className="w-full text-sm">
                       <thead><tr className="text-brand-700 border-b"><th className="py-1 text-right">الطريقة</th><th className="py-1">الطلبات</th><th className="py-1">المبيعات</th></tr></thead>
                       <tbody>
                         {revenue.per_payment_method.map((r: any) => (
@@ -332,22 +332,22 @@ export default function ReportsAdmin() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
-                  )}
+                    </table></div>
+                  ) : <EmptyBox msg="لا توجد بيانات" />}
                   <div className="mt-3">
                     <h4 className="font-bold text-brand-900 text-sm">أونلاين مقابل كاشير الفرع</h4>
-                    <table className="w-full text-sm">
+                    <div className="table-scroll"><table className="w-full text-sm">
                       <tbody>
                         <tr className="border-b border-brand-50"><td className="py-1 text-right">أونلاين</td><td className="py-1 text-center">{revenue?.online_vs_pos?.online?.orders_count ?? 0} طلب · {money(Number(revenue?.online_vs_pos?.online?.revenue ?? 0))}</td></tr>
                         <tr className="border-b border-brand-50"><td className="py-1 text-right">كاشير الفرع</td><td className="py-1 text-center">{revenue?.online_vs_pos?.pos?.orders_count ?? 0} طلب · {money(Number(revenue?.online_vs_pos?.pos?.revenue ?? 0))}</td></tr>
                       </tbody>
-                    </table>
+                    </table></div>
                   </div>
                 </div>
               </div>
               <div className="card p-3">
                 <h3 className="font-bold text-brand-900 text-sm mb-2">ذروة الساعات (خريطة حرارية)</h3>
-                <table className="w-full text-sm">
+                <div className="table-scroll"><table className="w-full text-sm">
                   <thead><tr className="text-brand-700 border-b"><th className="py-1 text-right">الساعة</th><th className="py-1">الطلبات</th></tr></thead>
                   <tbody>
                     {revenue?.peak_hours?.map((r: any) => (
@@ -357,7 +357,7 @@ export default function ReportsAdmin() {
                       </tr>
                     )) || <tr><td colSpan={2}>لا توجد بيانات</td></tr>}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             </section>
           )}
@@ -372,7 +372,7 @@ export default function ReportsAdmin() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="card p-3">
                   <h3 className="font-bold text-brand-900 text-sm mb-2">الأكثر مبيعًا</h3>
-                  {products?.products?.length === 0 ? <EmptyBox msg="لا توجد بيانات" /> : (
+                  {products?.products?.length ? (
                     <ol className="text-sm font-bold space-y-1">
                       {products.products.slice(0, 10).map((r: any, i: number) => (
                         <li key={r.product + i} className="flex justify-between border-b border-brand-50 py-1">
@@ -381,12 +381,12 @@ export default function ReportsAdmin() {
                         </li>
                       ))}
                     </ol>
-                  )}
+                  ) : <EmptyBox msg="لا توجد بيانات" />}
                 </div>
                 <div className="card p-3">
                   <h3 className="font-bold text-brand-900 text-sm mb-2">مشاركة الأقسام</h3>
-                  {products?.category_share?.length === 0 ? <EmptyBox msg="لا توجد بيانات" /> : (
-                    <table className="w-full text-sm">
+                  {products?.category_share?.length ? (
+                    <div className="table-scroll"><table className="w-full text-sm">
                       <thead><tr className="text-brand-700 border-b"><th className="py-1 text-right">القسم</th><th className="py-1">الكمية</th><th className="py-1">المبيعات</th></tr></thead>
                       <tbody>
                         {products.category_share.map((r: any) => (
@@ -397,8 +397,8 @@ export default function ReportsAdmin() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
-                  )}
+                    </table></div>
+                  ) : <EmptyBox msg="لا توجد بيانات" />}
                 </div>
               </div>
               <div className="card p-3 mt-3">
@@ -423,8 +423,8 @@ export default function ReportsAdmin() {
                 <button className="btn-soft !py-1 !px-2 text-xs" onClick={() => downloadCSV(`staff-${from}_${to}.csv`, toCSV(staff?.staff?.map((r: any) => ({ الموظف: r.full_name || r.email, "طلبات": r.orders_handled, "متوسط_تحضير": r.avg_prep_minutes, "فوق_الهدف": r.orders_over_target, "إلغاءات": r.void_requests, "نوبات": r.shifts_worked, "فرق_خزنة": r.cash_shift_difference })) || []))}>CSV ⬇</button>
               </div>
               <p className="text-sm text-muted mb-3">الهدف الزمني للتحضير: {staff?.target_prep_minutes ?? 10} دقيقة</p>
-              {staff?.staff?.length === 0 ? <EmptyBox msg="لا توجد بيانات للموظفين" /> : (
-                <table className="w-full text-sm font-bold">
+              {staff?.staff?.length ? (
+                <div className="table-scroll"><table className="w-full text-sm font-bold">
                   <thead><tr className="text-brand-700 border-b border-brand-100">
                     <th className="py-1 text-right">الموظف</th><th className="py-1">طلبات اتُعيلت</th><th className="py-1">متوسط التحضير</th><th className="py-1">الوسيط</th><th className="py-1">فوق الهدف</th><th className="py-1">إلغاءات</th><th className="py-1">نوبات عمل</th><th className="py-1">فرق الخزنة</th>
                   </tr></thead>
@@ -442,9 +442,9 @@ export default function ReportsAdmin() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
-              )}
-              <p className="text-xs text-brand-700 mt-2">متوسط التحضير = من تأكيد الدفع (أو إنشاء طلب الكاشير) لحد «تم الانتهاء» من أحداث الطلب.</p>
+                </table></div>
+              ) : <EmptyBox msg="لا توجد بيانات للموظفين" />}
+              <p className="text-xs text-muted mt-2">متوسط التحضير = من تأكيد الدفع (أو إنشاء طلب الكاشير) لحد «تم الانتهاء» من أحداث الطلب.</p>
             </section>
           )}
         </>

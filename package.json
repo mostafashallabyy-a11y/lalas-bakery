@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/check-contrast.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "check:contrast": "node scripts/check-contrast.mjs",
     "check:sql": "node scripts/check-sql.cjs",
     "verify:db": "node scripts/verify-db.mjs",
     "test:e2e": "playwright test"

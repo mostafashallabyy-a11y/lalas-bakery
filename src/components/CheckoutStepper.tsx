@@ -20,23 +20,23 @@ export default function CheckoutStepper({ step }: { step: 1 | 2 | 3 | 4 }) {
             <span
               className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-[11px] font-extrabold transition-all duration-300 ${
                 done
-                  ? "border-brand-600 bg-brand-600 text-white"
+                  ? "border-brand-600 bg-btnbg text-btnfg"
                   : current
-                  ? "scale-110 border-brand-700 bg-brand-700 text-white shadow-[0_3px_10px_rgba(125,63,80,0.4)]"
-                  : "border-brand-200 bg-white text-mut dark:border-white/15 dark:bg-white/5"
+                  ? "scale-110 border-brand-700 bg-btnbg text-btnfg shadow-[0_3px_10px_rgba(125,63,80,0.4)]"
+                  : "border-brand-200 bg-surface text-mut"
               }`}
             >
               {done ? <Check size={15} strokeWidth={3} aria-hidden="true" /> : <Icon size={15} aria-hidden="true" />}
             </span>
             <span
               className={`text-[11px] font-bold leading-tight ${
-                current ? "text-brand-800 dark:text-[#ffe3ea]" : done ? "text-brand-600 dark:text-[#ecc9d2]" : "text-mut"
+                current ? "text-brand-800" : done ? "text-brand-600" : "text-mut"
               }`}
             >
               {label}
             </span>
             {i < STEPS.length - 1 && (
-              <span aria-hidden="true" className={`mx-0.5 h-[2px] min-w-2 flex-1 rounded-full ${n < step ? "bg-brand-600" : "bg-brand-200 dark:bg-white/15"}`} />
+              <span aria-hidden="true" className={`mx-0.5 h-[2px] min-w-2 flex-1 rounded-full ${n < step ? "bg-brand-600" : "bg-brand-200"}`} />
             )}
           </li>
         );

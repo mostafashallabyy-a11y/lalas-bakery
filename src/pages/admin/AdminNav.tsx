@@ -18,8 +18,8 @@ export default function AdminNav() {
   return (
     <div className="py-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-lg font-extrabold text-brand-700">👑 لوحة المدير</h1>
-        <Link to="/staff" className="pill bg-white border border-brand-200 text-brand-800">
+        <h1 className="text-lg font-extrabold text-text">👑 لوحة المدير</h1>
+        <Link to="/staff" className="pill bg-surface border border-border text-brand-800">
           ← شاشة الطلبات
         </Link>
       </div>
@@ -29,7 +29,7 @@ export default function AdminNav() {
             key={t.to}
             to={t.to}
             className={({ isActive }) =>
-              `pill shrink-0 ${isActive ? "bg-brand-500 text-white" : "bg-white border border-brand-200 text-brand-800"}`
+              `pill shrink-0 ${isActive ? "bg-btnbg text-btnfg" : "bg-surface border border-border text-brand-800"}`
             }
           >
             {t.label}

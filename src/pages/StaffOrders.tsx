@@ -105,23 +105,23 @@ export default function StaffOrders() {
   return (
     <div className="py-4 space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h1 className="text-lg font-extrabold text-brand-700">الطلبات الواردة 🧾</h1>
+        <h1 className="text-lg font-extrabold text-text">الطلبات الواردة 🧾</h1>
         <div className="flex gap-1 flex-wrap">
-          <button className={`pill ${filter === "active" ? "bg-brand-500 text-white" : "bg-white border border-brand-200"}`} onClick={() => setFilter("active")}>شغالة</button>
-          <button className={`pill ${filter === "all" ? "bg-brand-500 text-white" : "bg-white border border-brand-200"}`} onClick={() => setFilter("all")}>كلها</button>
-          <select className="pill bg-white border border-brand-200" value={payFilter} onChange={(e) => setPayFilter(e.target.value as any)}>
+          <button className={`pill ${filter === "active" ? "bg-btnbg text-btnfg" : "bg-surface border border-border"}`} onClick={() => setFilter("active")}>شغالة</button>
+          <button className={`pill ${filter === "all" ? "bg-btnbg text-btnfg" : "bg-surface border border-border"}`} onClick={() => setFilter("all")}>كلها</button>
+          <select className="pill bg-surface border border-border" value={payFilter} onChange={(e) => setPayFilter(e.target.value as any)}>
             <option value="all">كل طرق الدفع</option>
             <option value="cash">💵 كاش</option>
             <option value="instapay">📲 InstaPay</option>
           </select>
-          <select className="pill bg-white border border-brand-200" value={payStatusFilter} onChange={(e) => setPayStatusFilter(e.target.value as any)}>
+          <select className="pill bg-surface border border-border" value={payStatusFilter} onChange={(e) => setPayStatusFilter(e.target.value as any)}>
             <option value="all">كل حالات الدفع</option>
             <option value="pending">قيد الانتظار</option>
             <option value="paid">مدفوع</option>
             <option value="rejected">مرفوض</option>
             <option value="refunded">مسترد</option>
           </select>
-          <button className="pill bg-white border border-brand-200" onClick={load}>↺</button>
+          <button className="pill bg-surface border border-border" onClick={load}>↺</button>
         </div>
       </div>
 
@@ -145,12 +145,12 @@ export default function StaffOrders() {
                   <p className="text-xs text-brand-800">{o.branches?.name} · {fmtFull(o.created_at)}</p>
                   <div className="flex gap-1 flex-wrap mt-1">
                     <span className="pill bg-brand-50 border border-brand-200 text-brand-800">{isCash ? "💵 كاش" : "📲 InstaPay"}</span>
-                    <span className={`pill border ${pStatus === "paid" ? "bg-green-50 border-green-200 text-green-800" : pStatus === "pending" ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-rose-50 border-rose-200 text-rose-800"}`}>
+                    <span className={`pill border ${pStatus === "paid" ? "status-ok border-ok/40 text-ok-text" : pStatus === "pending" ? "status-warn border-warn/40 text-warn-text" : "status-danger border-danger-text/30 text-danger-text"}`}>
                       {PAYMENT_STATUS_LABEL[pStatus] || pStatus}
                     </span>
                   </div>
                 </div>
-                <span className={`pill ${o.status === "done" ? "bg-green-100 text-green-800" : "bg-brand-100 text-brand-800"}`}>{st?.label} {st?.emoji}</span>
+                <span className={`pill ${o.status === "done" ? "status-ok text-ok-text" : "bg-brand-100 text-brand-800"}`}>{st?.label} {st?.emoji}</span>
               </div>
 
               <div className="text-sm font-bold text-brand-900 space-y-1">

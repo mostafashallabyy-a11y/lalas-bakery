@@ -110,9 +110,9 @@ export const PLATFORMS: Record<PlatformKey, PlatformStyle> = {
   },
   website: {
     label: "الموقع",
-    bg: "#b0687a",
-    fg: "#ffffff",
-    ring: "#7d3f50",
+    bg: "rgb(var(--primary))",
+    fg: "rgb(var(--on-primary))",
+    ring: "rgb(var(--primary-strong))",
     Icon: Globe as unknown as IconComponent,
   },
 };

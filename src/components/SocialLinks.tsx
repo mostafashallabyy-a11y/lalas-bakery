@@ -125,7 +125,7 @@ export function SocialIconButton({ link, size = "md", labeled = true }: SocialIc
       rel="noopener noreferrer"
       aria-label={ariaLabel}
       title={ariaLabel}
-      className="group flex min-w-[48px] min-h-[48px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 outline-none transition-transform duration-150 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:scale-90 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className="group flex min-w-[48px] min-h-[48px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 outline-none transition-transform duration-150 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-90 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <span
         aria-hidden="true"
@@ -135,7 +135,7 @@ export function SocialIconButton({ link, size = "md", labeled = true }: SocialIc
         <cfg.Icon aria-hidden="true" />
       </span>
       {labeled && (
-        <span className="text-[11px] font-bold leading-tight text-brand-800 dark:text-brand-100">{label}</span>
+        <span className="text-[11px] font-bold leading-tight text-text">{label}</span>
       )}
     </a>
   );
@@ -182,7 +182,7 @@ export function SocialLinksFollow({ scope = "brand", size = "md", label = "تا�
   if (visible.length === 0) return null;
   return (
     <div className={className}>
-      <p className="mb-2 text-[11px] font-extrabold tracking-wide text-brand-700/85 dark:text-[#ecc9d2]/85">{label}</p>
+      <p className="mb-2 text-[11px] font-extrabold tracking-wide text-muted">{label}</p>
       <SocialLinksRow scope={scope} size={size} ariaLabel="روابط لالا بيكري على وسائل التواصل" />
     </div>
   );
@@ -223,7 +223,7 @@ export function BranchPillLinks({ branchId, className }: { branchId: string; cla
             target="_blank"
             rel="noopener noreferrer"
             aria-label={socialAriaLabel(link.platform as PlatformKey, link.label) + " — في نافذة جديدة"}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-brand-200 bg-white px-3.5 py-2 text-sm font-bold text-brand-800 shadow-sm outline-none transition duration-150 hover:bg-brand-50 hover:shadow focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:scale-95 motion-reduce:transition-none dark:border-white/10 dark:bg-white/5 dark:text-brand-100 dark:hover:bg-white/10"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-2 text-sm font-bold text-text shadow-sm outline-none transition duration-150 hover:bg-surface2 focus-visible:ring-2 focus-visible:ring-ring active:scale-95 motion-reduce:transition-none"
           >
             <span
               aria-hidden="true"

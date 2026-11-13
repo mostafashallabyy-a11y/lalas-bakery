@@ -61,7 +61,7 @@ export default function StaffAdmin() {
         <p className="text-xs">مفيش دالة إنشاء حسابات من الموقع كله، عشان مفتاح الـ service_role ميتوفرش في المتصفح أبدًا 🔒</p>
       </div>
 
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
+      {err && <div className="status-danger border border-danger-text/30 text-danger-text rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
       {staff.length === 0 && <EmptyBox msg="لسه مفيش حسابات موظفين" />}
 
       <div className="grid gap-3">
@@ -83,9 +83,9 @@ export default function StaffAdmin() {
                 {p.is_active ? "إيقاف الحساب" : "تفعيل"}
               </button>
               {p.role === "staff" ? (
-                <button className="pill bg-amber-100 text-amber-900" onClick={() => setRole(p, "manager")}>ترقية لمدير</button>
+                <button className="pill status-warn text-warn-text" onClick={() => setRole(p, "manager")}>ترقية لمدير</button>
               ) : (
-                <button className="pill bg-white border border-brand-200" onClick={() => setRole(p, "staff")}>تخفيض لموظف</button>
+                <button className="pill bg-surface border border-border" onClick={() => setRole(p, "staff")}>تخفيض لموظف</button>
               )}
             </div>
           </div>

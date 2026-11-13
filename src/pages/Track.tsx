@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase, withTimeout, type TrackResult, type OrderStatus } from "../lib/types";
-import { STATUS, fmtFull, money, PAYMENT_STATUS_LABEL } from "../lib/format";
+import { STATUS, fmtFull, money } from "../lib/format";
 import { Spinner } from "../components/Common";
 
 const STEPS: OrderStatus[] = ["received", "preparing", "done"];
@@ -96,73 +96,88 @@ export default function Track() {
 
   const activeIdx = STEPS.indexOf((result?.status ?? "received") as OrderStatus);
 
-  const paymentMsg = (method?: string, status?: string) => {
-    if (method === "cash") {
-      return status === "paid" ? "تم استلام الكاش ✅" : "هتدفع كاش وقت الاستلام 💵";
-    }
-    if (method === "instapay") {
-      if (status === "paid") return "تم تأكيد التحويل ✅";
-      if (status === "rejected") return "تم رفض إثبات التحويل — تواصل مع الفرع";
-      return "في انتظار تأكيد التحويل 📲";
-    }
-    return null;
+  const paymentBadge = (method?: string, status?: string) => {
+    if (!method) return null;
+    const pending = status !== "paid" && status !== "rejected";
+    const rejected = status === "rejected";
+    const cls = rejected ? "status-danger" : pending ? "status-warn" : "status-ok";
+    const text = rejected
+      ? "تم رفض إثبات التحويل — تواصل مع الفرع"
+      : method === "cash"
+        ? status === "paid"
+          ? "تم استلام الكاش ✅"
+          : "هتدفع كاش وقت الاستلام 💵"
+        : status === "paid"
+          ? "تم تأكيد التحويل ✅"
+          : "في انتظار تأكيد التحويل 📲";
+    return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-bold ${cls}`}>{text}</span>;
   };
 
   return (
-    <div className="space-y-2.5">
-      <h2 className="text-[22px] font-bold text-brand-700 mt-1.5 mb-0">طلباتي / تابع طلبك 📍</h2>
+    <div className="space-y-3">
+      <h1 className="mt-1.5 text-[21px] font-extrabold text-text">طلباتي / تابع طلبك</h1>
 
       {saved.length > 0 && (
         <div className="card p-3.5">
-          <b className="text-brand-900">طلباتي المحفوظة (هذا الجهاز فقط)</b>
+          <b className="text-text">طلباتي المحفوظة (هذا الجهاز فقط)</b>
           <div className="mt-2 space-y-2">
             {saved.map((o) => (
-              <div key={o.order_number} className="flex items-center justify-between gap-2 border border-brand-100 rounded-xl p-2.5">
+              <div key={o.order_number} className="flex items-center justify-between gap-2 rounded-xl border border-border p-2.5">
                 <div className="min-w-0">
-                  <div className="font-bold text-brand-800" dir="ltr">{o.order_number}</div>
-                  <div className="text-xs text-mut truncate">{[o.branch_name, o.total != null ? money(o.total) : null].filter(Boolean).join(" · ")}</div>
-                  {o.status && <div className="text-xs mt-0.5">{STATUS[o.status].emoji} {STATUS[o.status].label}</div>}
-                  {o.payment_method && <div className="text-xs mt-0.5">{o.payment_method === "cash" ? "💵 كاش" : "📲 InstaPay"} — {PAYMENT_STATUS_LABEL[o.payment_status || "pending"] || o.payment_status}</div>}
+                  <div className="font-bold text-text" dir="ltr">{o.order_number}</div>
+                  <div className="truncate text-xs text-muted">{[o.branch_name, o.total != null ? money(o.total) : null].filter(Boolean).join(" · ")}</div>
+                  {o.status && <div className="mt-0.5 text-xs font-bold text-text">{STATUS[o.status].emoji} {STATUS[o.status].label}</div>}
+                  {o.payment_method && (
+                    <div className="mt-1">{paymentBadge(o.payment_method, o.payment_status)}</div>
+                  )}
                 </div>
-                <div className="flex gap-1 shrink-0">
+                <div className="flex shrink-0 gap-1.5">
                   <button className="btn-outline !px-2 !py-1 text-xs" onClick={() => openSaved(o)}>تابع</button>
                   <Link className="btn-primary !px-2 !py-1 text-xs" to={`/order/${o.order_number}?k=${o.tracking_key}`}>فتح</Link>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-mut mt-2">الطلبات محفوظة على هذا الجهاز فقط (الرقم + مفتاح المتابعة). لا تُجلب قائمة الطلبات من الخادم أبدًا.</p>
+          <p className="mt-2 text-xs text-muted">الطلبات محفوظة على هذا الجهاز فقط (الرقم + مفتاح المتابعة). لا تُجلب قائمة الطلبات من الخادم أبدًا.</p>
         </div>
       )}
 
       <div className="card p-3.5">
-        <b className="text-brand-900 block mb-1.5">تتبع برقم الطلب + مفتاح التتبع</b>
+        <b className="mb-1.5 block text-text">تتبع برقم الطلب + مفتاح التتبع</b>
         <div className="space-y-2">
-          <input className="input" placeholder="رقم الطلب مثال LB-1001" value={value} onChange={(e) => setValue(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && submit()} />
-          <input className="input" placeholder="مفتاح التتبع (من رابط الطلب)" value={trackKey} onChange={(e) => setTrackKey(e.target.value)} />
+          <input className="input" placeholder="رقم الطلب مثال LB-1001" value={value} onChange={(e) => setValue(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && submit()} aria-label="رقم الطلب" />
+          <input className="input" placeholder="مفتاح التتبع (من رابط الطلب)" value={trackKey} onChange={(e) => setTrackKey(e.target.value)} aria-label="مفتاح التتبع" />
           <button className="btn-primary mt-1.5" disabled={busy || !value || !trackKey} onClick={submit}>{busy ? "…" : "تابع"}</button>
         </div>
-        <p className="text-xs text-mut mt-1">الرقم وحده لا يكفي — لازم معاه مفتاح التتبع اللي اتصل مع رقم طلبك.</p>
+        <p className="mt-1 text-xs text-muted">الرقم وحده لا يكفي — لازم معاه مفتاح التتبع اللي اتصل مع رقم طلبك.</p>
       </div>
 
-      {busy && !result?.ok && <Spinner label="بندور على طلبك… 📍" />}
-      {error && <div className="card p-3.5 text-brand-900">{error}</div>}
+      {busy && !result?.ok && <Spinner label="بندور على طلبك…" />}
+      {error && <div className="msg-box">{error}</div>}
 
       {result?.ok && (
         <div className="card p-3.5">
-          <div className="flex items-center justify-between text-brand-900">
+          <div className="flex items-center justify-between text-text">
             <b dir="ltr">{result.order_number}</b>
-            <span className="text-mut text-sm">{result.updated_at ? fmtFull(result.updated_at) : ""}</span>
+            <span className="text-sm text-muted">{result.updated_at ? fmtFull(result.updated_at) : ""}</span>
           </div>
-          <div className="flex gap-1.5 my-3">
-            {STEPS.map((s, i) => (<div key={s} className={`st-step ${i <= activeIdx ? "on" : ""}`}>{STATUS[s].label}</div>))}
+          <div className="my-3 flex gap-1.5" role="list" aria-label="خطوات تحضير الطلب">
+            {STEPS.map((s, i) => {
+              const done = result.status === "done" || i < activeIdx;
+              const current = result.status !== "done" && i === activeIdx;
+              return (
+                <div key={s} role="listitem" className={`st-step ${done ? "done" : current ? "on" : ""}`}>
+                  {STATUS[s].label}
+                </div>
+              );
+            })}
           </div>
           <div className="msg-box">{STATUS[result.status ?? "received"].msg}</div>
-          {paymentMsg(result.payment_method, result.payment_status) && (
-            <div className="msg-box mt-2">{paymentMsg(result.payment_method, result.payment_status)}</div>
+          {paymentBadge(result.payment_method, result.payment_status) && (
+            <div className="mt-2">{paymentBadge(result.payment_method, result.payment_status)}</div>
           )}
           <p className="m-0 mt-3 text-center">
-            <button className="text-xs font-bold underline text-brand-800" onClick={() => fetchStatus(result.order_number!, trackKey)}>تحديث يدوي ↺</button>
+            <button className="rounded text-xs font-bold text-primary-strong underline underline-offset-2 outline-none transition hover:opacity-75 focus-visible:ring-2 focus-visible:ring-ring" onClick={() => fetchStatus(result.order_number!, trackKey)}>تحديث يدوي ↺</button>
           </p>
         </div>
       )}

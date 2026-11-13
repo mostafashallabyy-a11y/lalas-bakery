@@ -153,7 +153,7 @@ export default function PromosAdmin() {
 
   return (
     <div className="space-y-4 pb-24">
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
+      {err && <div className="status-danger border border-danger-text/30 text-danger-text rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
 
       {editing ? (
         <div className="card p-4 space-y-3">

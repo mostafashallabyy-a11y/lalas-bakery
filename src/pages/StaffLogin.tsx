@@ -42,7 +42,7 @@ export default function StaffLogin() {
 
   return (
     <div className="py-8 max-w-sm mx-auto space-y-2.5">
-      <h2 className="text-[22px] font-bold text-brand-700 text-center mt-1.5">دخول الإدارة 🔐</h2>
+      <h2 className="text-[21px] font-extrabold text-text text-center mt-1.5">دخول الإدارة 🔐</h2>
       <p className="text-sm text-mut">
         للزملاء والمدير فقط — الدخول بالإيميل والباسورد (بدل الرمز السري في النسخة التجريبية).
       </p>

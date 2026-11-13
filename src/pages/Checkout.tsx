@@ -150,12 +150,12 @@ export default function Checkout() {
       <CheckoutStepper step={2} />
 
       <div>
-        <h1 className="text-[20px] font-extrabold text-brand-800 dark:text-[#ffe3ea]">تأكيد طلبك</h1>
+        <h1 className="text-[20px] font-extrabold text-brand-800">تأكيد طلبك</h1>
         <p className="text-[13px] text-mut">اختار طريقة الاستلام والدفع، وهنسجّل طلبك على طول</p>
       </div>
 
       {/* طريقة الاستلام */}
-      <fieldset className="card p-3.5 text-brand-900 dark:text-brand-100">
+      <fieldset className="card p-3.5 text-brand-900">
         <legend className="sr-only">طريقة الاستلام</legend>
         <b className="text-[15px]">طريقة الاستلام</b>
         <div className="mt-2 grid gap-2">
@@ -167,14 +167,14 @@ export default function Checkout() {
                 key={d.key}
                 className={`flex cursor-pointer items-center gap-3 rounded-2xl border-[1.5px] p-3 outline-none transition ${
                   on
-                    ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200 dark:border-[#e8b4c4] dark:bg-white/10 dark:ring-white/10"
-                    : "border-brand-200 bg-white hover:border-brand-400 dark:border-white/12 dark:bg-white/5"
+                    ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200"
+                    : "border-brand-200 bg-surface hover:border-brand-400"
                 }`}
               >
                 <input type="radio" name="delivery" value={d.key} checked={on} onChange={() => setDelivery(d.key)} className="sr-only" />
                 <span
                   className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${
-                    on ? "bg-brand-600 text-white" : "bg-brand-100 text-brand-700 dark:bg-white/10 dark:text-[#ecc9d2]"
+                    on ? "bg-btnbg text-btnfg" : "bg-brand-100 text-brand-700"
                   }`}
                 >
                   <Icon size={20} aria-hidden="true" />
@@ -186,7 +186,7 @@ export default function Checkout() {
                 <span
                   aria-hidden="true"
                   className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${
-                    on ? "border-brand-600 bg-brand-600 text-white" : "border-brand-200"
+                    on ? "border-brand-600 bg-btnbg text-btnfg" : "border-brand-200"
                   }`}
                 >
                   {on && (
@@ -203,7 +203,7 @@ export default function Checkout() {
       </fieldset>
 
       {/* طريقة الدفع — كروت كبيرة */}
-      <fieldset className="card p-3.5 text-brand-900 dark:text-brand-100">
+      <fieldset className="card p-3.5 text-brand-900">
         <legend className="sr-only">طريقة الدفع</legend>
         <b className="text-[15px]">طريقة الدفع</b>
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -216,15 +216,15 @@ export default function Checkout() {
             onClick={() => canUseCash && setPaymentMethod("cash")}
             className={`relative flex min-h-[132px] flex-col items-center justify-center gap-1.5 rounded-2xl border-[1.5px] p-3 text-center outline-none transition focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[0.97] ${
               paymentMethod === "cash"
-                ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200 dark:border-[#e8b4c4] dark:bg-white/10 dark:ring-white/10"
-                : "border-brand-200 bg-white hover:border-brand-400 dark:border-white/12 dark:bg-white/5"
+                ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200"
+                : "border-brand-200 bg-surface hover:border-brand-400"
             } ${!canUseCash ? "cursor-not-allowed opacity-55" : ""}`}
           >
-            <Banknote size={34} strokeWidth={1.8} className="text-green-700 dark:text-green-400" aria-hidden="true" />
+            <Banknote size={34} strokeWidth={1.8} className="text-ok-text" aria-hidden="true" />
             <span className="text-[17px] font-extrabold">كاش</span>
             <span className="text-[11px] font-bold leading-4 text-mut">الدفع عند الاستلام</span>
             {paymentMethod === "cash" && (
-              <span className="absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-brand-600 text-white" aria-hidden="true">
+              <span className="absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-btnbg text-btnfg" aria-hidden="true">
                 <Check size={14} strokeWidth={3} />
               </span>
             )}
@@ -238,15 +238,15 @@ export default function Checkout() {
             onClick={() => setPaymentMethod("instapay")}
             className={`relative flex min-h-[132px] flex-col items-center justify-center gap-1.5 rounded-2xl border-[1.5px] p-3 text-center outline-none transition focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[0.97] ${
               paymentMethod === "instapay"
-                ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200 dark:border-[#e8b4c4] dark:bg-white/10 dark:ring-white/10"
-                : "border-brand-200 bg-white hover:border-brand-400 dark:border-white/12 dark:bg-white/5"
+                ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200"
+                : "border-brand-200 bg-surface hover:border-brand-400"
             }`}
           >
-            <Smartphone size={34} strokeWidth={1.8} className="text-violet-700 dark:text-violet-300" aria-hidden="true" />
+            <Smartphone size={34} strokeWidth={1.8} className="text-violet-700" aria-hidden="true" />
             <span className="text-[17px] font-extrabold">InstaPay</span>
             <span className="text-[11px] font-bold leading-4 text-mut">تحويل + رفع صورة التحويل</span>
             {paymentMethod === "instapay" && (
-              <span className="absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-brand-600 text-white" aria-hidden="true">
+              <span className="absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-btnbg text-btnfg" aria-hidden="true">
                 <Check size={14} strokeWidth={3} />
               </span>
             )}
@@ -254,10 +254,10 @@ export default function Checkout() {
         </div>
 
         {!cashEnabled && (
-          <p className="mt-2 text-[11px] font-bold text-rose-700 dark:text-rose-300">الدفع كاش غير متاح حاليًا في هذا الفرع.</p>
+          <p className="mt-2 text-[11px] font-bold text-danger-text">الدفع كاش غير متاح حاليًا في هذا الفرع.</p>
         )}
         {cashEnabled && !cashAllowedByAmount && (
-          <p className="mt-2 text-[11px] font-bold text-rose-700 dark:text-rose-300">
+          <p className="mt-2 text-[11px] font-bold text-danger-text">
             حد أقصى لطلبات الكاش {money(cashMaxAmount)} — اختار انستا باي للطلبات الأكبر.
           </p>
         )}
@@ -288,7 +288,7 @@ export default function Checkout() {
         </div>
         <div>
           <label htmlFor="cstm-phone" className="label">
-            رقم الموبايل {paymentMethod === "cash" ? <span className="text-rose-700">(مطلوب للكاش)</span> : <span className="text-mut">(اختياري)</span>}
+            رقم الموبايل {paymentMethod === "cash" ? <span className="text-danger-text">(مطلوب للكاش)</span> : <span className="text-mut">(اختياري)</span>}
           </label>
           <input
             id="cstm-phone"
@@ -308,7 +308,7 @@ export default function Checkout() {
       </div>
 
       {/* ملخص الفاتورة */}
-      <div className="card p-3.5 text-[13px] text-brand-900 dark:text-brand-100">
+      <div className="card p-3.5 text-[13px] text-text">
         <div className="flex justify-between gap-2">
           <span>فرع {branchName}</span>
           <span>{money(subtotal)}</span>
@@ -321,9 +321,9 @@ export default function Checkout() {
           <span>طريقة الدفع</span>
           <span>{paymentMethod === "cash" ? "كاش عند الاستلام" : "InstaPay"}</span>
         </div>
-        <div className="mt-1 flex items-center justify-between border-t border-brand-200 pt-1.5 dark:border-white/10">
-          <span className="text-base">الإجمالي</span>
-          <b className="text-[19px] text-brand-800 dark:text-[#ffe3ea]">{money(total)}</b>
+        <div className="mt-1 flex items-center justify-between border-t border-border pt-1.5">
+          <span className="text-base font-bold">الإجمالي</span>
+          <b className="text-[19px] font-extrabold text-primary-strong">{money(total)}</b>
         </div>
       </div>
 

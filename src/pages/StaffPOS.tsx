@@ -133,7 +133,7 @@ export default function StaffPOS() {
 
   return (
     <div className="space-y-3">
-      <h1 className="text-lg font-extrabold text-brand-700">تسجيل طلب من الفرع 🧾</h1>
+      <h1 className="text-lg font-extrabold text-text">تسجيل طلب من الفرع 🧾</h1>
 
       {error && <ErrorBox msg={error} />}
       {success && (
@@ -156,8 +156,8 @@ export default function StaffPOS() {
           <div className="flex-1">
             <label className="label">طريقة الدفع</label>
             <div className="flex gap-2">
-              <button className={`flex-1 px-3 py-2 rounded-lg border ${paymentMethod === "cash" ? "bg-brand-700 text-white border-brand-700" : "bg-white border-brand-200 text-brand-900"}`} onClick={() => setPaymentMethod("cash")}>كاش</button>
-              <button className={`flex-1 px-3 py-2 rounded-lg border ${paymentMethod === "instapay" ? "bg-brand-700 text-white border-brand-700" : "bg-white border-brand-200 text-brand-900"}`} onClick={() => setPaymentMethod("instapay")}>انستا باي</button>
+              <button className={`flex-1 px-3 py-2 rounded-lg border ${paymentMethod === "cash" ? "bg-btnbg text-btnfg border-brand-700" : "bg-surface border-brand-200 text-brand-900"}`} onClick={() => setPaymentMethod("cash")}>كاش</button>
+              <button className={`flex-1 px-3 py-2 rounded-lg border ${paymentMethod === "instapay" ? "bg-btnbg text-btnfg border-brand-700" : "bg-surface border-brand-200 text-brand-900"}`} onClick={() => setPaymentMethod("instapay")}>انستا باي</button>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@ export default function StaffPOS() {
                 <div className="flex items-center gap-1">
                   <button className="pill bg-brand-100 text-brand-800 text-xs" onClick={() => changeQty(p.id, -1)}>−</button>
                   <span className="w-6 text-center text-xs font-bold">{cart.find((i) => i.product_id === p.id)?.qty || 0}</span>
-                  <button className="pill bg-brand-700 text-white text-xs" onClick={() => addToCart(p)}>+</button>
+                  <button className="pill bg-btnbg text-btnfg text-xs" onClick={() => addToCart(p)}>+</button>
                 </div>
               </div>
             ))}
@@ -216,7 +216,7 @@ export default function StaffPOS() {
               <div key={i.product_id} className="flex items-center justify-between gap-2">
                 <span className="text-sm text-brand-900">{i.name} ×{i.qty}</span>
                 <div className="flex items-center gap-1">
-                  <button className="pill bg-white border border-brand-200 text-brand-900 text-xs" onClick={() => changeQty(i.product_id, -1)}>−</button>
+                  <button className="pill bg-surface border border-border text-brand-900 text-xs" onClick={() => changeQty(i.product_id, -1)}>−</button>
                   <span className="w-6 text-center text-xs font-bold">{i.qty}</span>
                   <button className="pill bg-brand-100 text-brand-800 text-xs" onClick={() => changeQty(i.product_id, 1)}>+</button>
                 </div>

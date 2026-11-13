@@ -83,25 +83,25 @@ export default function InventoryAdmin() {
 
   return (
     <div className="space-y-4 pb-24">
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
+      {err && <div className="status-danger border border-danger-text/30 text-danger-text rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
 
       {/* Low stock alerts */}
       {alerts && alerts.length > 0 && (
-        <div className="card p-4 space-y-3 bg-amber-50 border border-amber-200">
+        <div className="card p-4 space-y-3 status-warn border border-warn/40">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-amber-700 font-bold">⚠️ تنبيهات المخزون</span>
-            <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">{alerts.length}</span>
+            <span className="text-warn-text font-bold">⚠️ تنبيهات المخزون</span>
+            <span className="text-xs font-bold text-warn-text status-warn px-2 py-0.5 rounded">{alerts.length}</span>
           </div>
           <div className="space-y-1">
             {alerts.map((a) => (
-              <div key={a.id} className="flex items-center justify-between gap-2 bg-white p-2 rounded border border-amber-100">
+              <div key={a.id} className="flex items-center justify-between gap-2 bg-surface p-2 rounded border border-warn/30">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-brand-900 truncate">منتج بحاجة لإعادة تعبئة</p>
                   <p className="text-xs text-mut">المخزون: {a.stock_qty} · العتبة: {a.threshold}</p>
                 </div>
                 <div className="flex gap-1">
                   <button
-                    className="btn-outline !py-1 !px-2 text-xs text-amber-700"
+                    className="btn-outline !py-1 !px-2 text-xs text-warn-text"
                     onClick={() => resolveAlert(a.id)}
                   >
                     تم التعبئة
@@ -121,15 +121,15 @@ export default function InventoryAdmin() {
         </div>
         <div className="card p-3 text-center">
           <p className="text-xs text-brand-700 font-bold">منخفض المخزون</p>
-          <p className="text-2xl font-extrabold text-amber-700">{lowStockProducts.length}</p>
+          <p className="text-2xl font-extrabold text-warn-text">{lowStockProducts.length}</p>
         </div>
         <div className="card p-3 text-center">
           <p className="text-xs text-brand-700 font-bold">نفد المخزون</p>
-          <p className="text-2xl font-extrabold text-rose-700">{outOfStockProducts.length}</p>
+          <p className="text-2xl font-extrabold text-danger-text">{outOfStockProducts.length}</p>
         </div>
         <div className="card p-3 text-center">
           <p className="text-xs text-brand-700 font-bold">تنبيهات مفتوحة</p>
-          <p className="text-2xl font-extrabold text-amber-700">{alerts?.filter((a) => !a.resolved).length ?? 0}</p>
+          <p className="text-2xl font-extrabold text-warn-text">{alerts?.filter((a) => !a.resolved).length ?? 0}</p>
         </div>
       </div>
 
@@ -172,14 +172,14 @@ export default function InventoryAdmin() {
                   <td className="py-1 text-center">
                     <div className="flex gap-1">
                       <button
-                        className="btn-outline !py-1 !px-2 text-xs text-green-700"
+                        className="btn-outline !py-1 !px-2 text-xs text-ok-text"
                         onClick={() => adjustStock(p.id, 1, "restock")}
                         disabled={busy}
                       >
                         +
                       </button>
                       <button
-                        className="btn-outline !py-1 !px-2 text-xs text-rose-700"
+                        className="btn-outline !py-1 !px-2 text-xs text-danger-text"
                         onClick={() => adjustStock(p.id, -1, "manual_edit")}
                         disabled={busy || p.stock_qty <= 0}
                       >
@@ -228,7 +228,7 @@ export default function InventoryAdmin() {
 
 function stockBadge(p: Product) {
   if (!p.track_stock) return <span className="text-xs text-brand-400">بدون تتبع</span>;
-  if (p.stock_qty <= 0) return <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded">0</span>;
-  if (p.stock_qty <= p.low_stock_threshold) return <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">{p.stock_qty}</span>;
-  return <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded">{p.stock_qty}</span>;
+  if (p.stock_qty <= 0) return <span className="text-xs font-bold text-danger-text status-danger px-2 py-0.5 rounded">0</span>;
+  if (p.stock_qty <= p.low_stock_threshold) return <span className="text-xs font-bold text-warn-text status-warn px-2 py-0.5 rounded">{p.stock_qty}</span>;
+  return <span className="text-xs text-ok-text status-ok px-2 py-0.5 rounded">{p.stock_qty}</span>;
 }

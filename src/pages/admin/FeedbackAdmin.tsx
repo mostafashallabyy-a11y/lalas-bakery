@@ -27,7 +27,7 @@ export default function FeedbackAdmin() {
 
   return (
     <div className="space-y-4">
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
+      {err && <div className="status-danger border border-danger-text/30 text-danger-text rounded-xl px-3 py-2 text-sm font-bold">{err}</div>}
       <p className="text-sm font-bold text-brand-800">كل رسايل العملاء بتوصل هنا بأمان — خليك رد على اللي سمّوا نفسهم بجمايلك 🌸</p>
       {items.length === 0 && <EmptyBox msg="لسه مفيش آراء — هيتنور بوجودها 💞" />}
       <div className="grid gap-3">

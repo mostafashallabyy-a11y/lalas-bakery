@@ -27,7 +27,7 @@ export default function StaffLayout() {
     return (
       <div className="py-10 text-center space-y-3">
         <p className="text-2xl">⏳</p>
-        <h2 className="text-lg font-extrabold text-brand-800">حسابك لسه مش مفعّل</h2>
+        <h2 className="text-lg font-extrabold text-text">حسابك لسه مش مفعّل</h2>
         <p className="text-sm text-brand-800 font-bold">كلم المدير يفعّلك لاحقًا، وبعد التفعيل حاول تدخل تاني.</p>
       </div>
     );
@@ -47,7 +47,7 @@ export default function StaffLayout() {
               👑 لوحة الإدارة
             </NavLink>
             {lowStockCount > 0 && (
-              <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded mt-1">
+              <span className="text-xs font-bold text-danger-text status-danger px-2 py-1 rounded mt-1">
                 ⚠️ {lowStockCount} تنبيه مخزون
               </span>
             )}

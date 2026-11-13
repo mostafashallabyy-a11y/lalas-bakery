@@ -68,6 +68,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const add = useCallback((item: Omit<CartItem, "qty">) => {
+    // مانع: منتج بسعر غير موجب مينفعش يدخل السلة حتى لو زُر الزر غلط
+    if (!(Number(item.price) > 0)) {
+      toast("المنتج ده لسه مفيهوش سعر صحيح");
+      return;
+    }
     trackEvent("add_to_cart", { currency: "EGP", value: item.price, items: [{ item_id: item.product_id, item_name: item.name, price: item.price, quantity: 1 }] });
     toast("تمت الإضافة للسلة 🧺");
     setItems((prev) => {
