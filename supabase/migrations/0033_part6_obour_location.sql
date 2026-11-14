@@ -204,7 +204,7 @@ do $$
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
     perform cron.unschedule(jobid) from cron.job where jobname = 'expire-unconfirmed-obour-orders';
-    perform cron.schedule('expire-unconfirmed-obour-orders', '*/5 * * * *', $cmd$select public.expire_unconfirmed_obour_orders();$cmd$);
+    perform cron.schedule('expire-unconfirmed-obour-orders', '*/5 * * * *', 'select public.expire_unconfirmed_obour_orders();');
   end if;
 exception when others then
   null;
