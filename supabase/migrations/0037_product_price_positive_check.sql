@@ -4,14 +4,14 @@
 --   alter table products validate constraint products_price_positive;
 -- ملاحظة: هذه الهجرة كانت مسجلة مكررة بالرقم 0027؛ تم نقلها لـ 0037 حتى تُنفذ مرة واحدة وبصيغتها المطابقة للتاريخ.
 
-do $$ begin
+do $fn$ begin
   if not exists (select 1 from pg_constraint where conname = 'products_price_positive') then
     alter table products
       add constraint products_price_positive
       check (price > 0)
       not valid;
   end if;
-end $$;
+end $fn$;
 
 comment on constraint products_price_positive on products
 is 'السعر لازم يكون أكبر من صفر — يُتحقق على مستوى قاعدة البيانات (NOT VALID لحين تصحيح الصفوف القديمة)';
