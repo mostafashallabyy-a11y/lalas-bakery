@@ -21,10 +21,10 @@ alter table orders add column if not exists location_confirmed_by_staff uuid ref
 alter table orders add column if not exists location_confirmed_via text; -- 'customer' | 'staff'
 
 do $$ begin
-  alter table orders add constraint orders_delivery_address_len_check check (delivery_address is null or char_length(delivery_address) <= 300);
+  alter table orders add constraint orders_delivery_address_len_check check (delivery_address is null or char_length(delivery_address) <= 300) not valid;
 exception when duplicate_object then null; end $$;
 do $$ begin
-  alter table orders add constraint orders_delivery_landmark_len_check check (delivery_landmark is null or char_length(delivery_landmark) <= 120);
+  alter table orders add constraint orders_delivery_landmark_len_check check (delivery_landmark is null or char_length(delivery_landmark) <= 120) not valid;
 exception when duplicate_object then null; end $$;
 
 -- ---- 2) Customer RPC: confirm location (verifies order_number + tracking_key) ----

@@ -41,7 +41,7 @@ do $$ begin
     check (
       (delivery_type = 'table' and length(btrim(coalesce(delivery_floor,''))) > 0)
       or (delivery_type <> 'table')
-    );
+    ) not valid;
 exception when duplicate_object then null; end $$;
 
 -- Keep existing cash phone constraint semantics (POS cash exempt) intact
@@ -50,7 +50,7 @@ alter table orders add constraint orders_cash_phone_check check (
   payment_method <> 'cash'
   or source = 'pos'
   or length(btrim(coalesce(customer_phone, ''))) > 0
-);
+) not valid;
 
 -- ---- 3) submit_order_v2: add floor/spot params + validation (backward compatible) ----
 drop function if exists public.submit_order_v2(uuid, jsonb, text, text, text, text, text, text, text);

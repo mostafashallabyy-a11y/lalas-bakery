@@ -1,9 +1,7 @@
-﻿-- Consolidated migrations 0028-0036 for Lala's Bakery (apply in Supabase SQL Editor)
+-- Consolidated migrations 0028-0036 for Lala's Bakery (apply in Supabase SQL Editor)
 -- Run this as a single script, then verify pg_notify and obour expiry schedule.
 
-
 -- ========== BEGIN supabase/migrations/0028_part1_delivery_floor_spot.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0028 (Part 1): Floor + spot for in-branch delivery ("توصيل داخل الفرع")
 -- ============================================================
@@ -47,7 +45,7 @@ do $$ begin
     check (
       (delivery_type = 'table' and length(btrim(coalesce(delivery_floor,''))) > 0)
       or (delivery_type <> 'table')
-    );
+    ) not valid;
 exception when duplicate_object then null; end $$;
 
 -- Keep existing cash phone constraint semantics (POS cash exempt) intact
@@ -56,7 +54,7 @@ alter table orders add constraint orders_cash_phone_check check (
   payment_method <> 'cash'
   or source = 'pos'
   or length(btrim(coalesce(customer_phone, ''))) > 0
-);
+) not valid;
 
 -- ---- 3) submit_order_v2: add floor/spot params + validation (backward compatible) ----
 drop function if exists public.submit_order_v2(uuid, jsonb, text, text, text, text, text, text, text);
@@ -434,9 +432,7 @@ commit;
 
 -- ========== END supabase/migrations/0028_part1_delivery_floor_spot.sql ==========
 
-
 -- ========== BEGIN supabase/migrations/0029_part3_pos_fix.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0029 (Part 3): Fix POS order creation blockers
 -- ============================================================
@@ -452,7 +448,7 @@ alter table orders add constraint orders_cash_phone_check check (
   payment_method <> 'cash'
   or source = 'pos'
   or length(btrim(coalesce(customer_phone, ''))) > 0
-);
+) not valid;
 
 -- Floor required only for in-branch delivery (table) — applies to POS and online (correct);
 -- pickup/obour never require floor/spot.
@@ -462,7 +458,7 @@ do $$ begin
     check (
       (delivery_type = 'table' and length(btrim(coalesce(delivery_floor,''))) > 0)
       or (delivery_type <> 'table')
-    );
+    ) not valid;
 exception when duplicate_object then null; end $$;
 
 -- 2) POS RPC: staff counter orders must not be blocked by online-only rules
@@ -596,9 +592,7 @@ commit;
 
 -- ========== END supabase/migrations/0029_part3_pos_fix.sql ==========
 
-
 -- ========== BEGIN supabase/migrations/0030_part4_test_data_wipe.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0030 (Part 4): Manager test data/reports cleanup
 -- ============================================================
@@ -893,9 +887,7 @@ commit;
 
 -- ========== END supabase/migrations/0030_part4_test_data_wipe.sql ==========
 
-
 -- ========== BEGIN supabase/migrations/0031_part4_reports_exclude_test.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0031 (Part 4): Exclude is_test orders/shifts from reports
 -- ============================================================
@@ -1157,9 +1149,7 @@ commit;
 
 -- ========== END supabase/migrations/0031_part4_reports_exclude_test.sql ==========
 
-
 -- ========== BEGIN supabase/migrations/0032_part5_obour_controls.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0032 (Part 5): Manager control of Obour delivery
 -- ============================================================
@@ -1497,9 +1487,7 @@ commit;
 
 -- ========== END supabase/migrations/0032_part5_obour_controls.sql ==========
 
-
 -- ========== BEGIN supabase/migrations/0033_part6_obour_location.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0033 (Part 6): Obour address + WhatsApp location confirmation
 -- ============================================================
@@ -1523,10 +1511,10 @@ alter table orders add column if not exists location_confirmed_by_staff uuid ref
 alter table orders add column if not exists location_confirmed_via text; -- 'customer' | 'staff'
 
 do $$ begin
-  alter table orders add constraint orders_delivery_address_len_check check (delivery_address is null or char_length(delivery_address) <= 300);
+  alter table orders add constraint orders_delivery_address_len_check check (delivery_address is null or char_length(delivery_address) <= 300) not valid;
 exception when duplicate_object then null; end $$;
 do $$ begin
-  alter table orders add constraint orders_delivery_landmark_len_check check (delivery_landmark is null or char_length(delivery_landmark) <= 120);
+  alter table orders add constraint orders_delivery_landmark_len_check check (delivery_landmark is null or char_length(delivery_landmark) <= 120) not valid;
 exception when duplicate_object then null; end $$;
 
 -- ---- 2) Customer RPC: confirm location (verifies order_number + tracking_key) ----
@@ -1717,9 +1705,7 @@ commit;
 
 -- ========== END supabase/migrations/0033_part6_obour_location.sql ==========
 
-
 -- ========== BEGIN supabase/migrations/0034_part6_obour_submit_and_details.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0034 (Part 6 cont.): Obour address/phone in submit + order details
 -- ============================================================
@@ -2037,9 +2023,7 @@ commit;
 
 -- ========== END supabase/migrations/0034_part6_obour_submit_and_details.sql ==========
 
-
 -- ========== BEGIN supabase/migrations/0035_part7_customer_note.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0035 (Part 7): Order notes before payment
 -- ============================================================
@@ -2489,9 +2473,7 @@ commit;
 
 -- ========== END supabase/migrations/0035_part7_customer_note.sql ==========
 
-
 -- ========== BEGIN supabase/migrations/0036_instapay_quick_confirm.sql ==========
-
 -- ============================================================
 -- Lala's Bakery — 0036: InstaPay optimization (no proof upload, quick confirm)
 -- ============================================================
@@ -2785,10 +2767,8 @@ commit;
 
 -- ========== END supabase/migrations/0036_instapay_quick_confirm.sql ==========
 
-
 select pg_notify('pgrst','reload schema');
 
 -- Verify/schedule obour expiry (if pg_cron available):
 -- select jobname, schedule, command from cron.job where jobname = 'expire-unconfirmed-obour-orders';
--- If missing, schedule: select cron.schedule('expire-unconfirmed-obour-orders', '*/5 * * * *', $$select public.expire_unconfirmed_obour_orders()$$);
-
+-- If missing, schedule: select cron.schedule('expire-unconfirmed-obour-orders', '*/5 * * * *', 'select public.expire_unconfirmed_obour_orders();');

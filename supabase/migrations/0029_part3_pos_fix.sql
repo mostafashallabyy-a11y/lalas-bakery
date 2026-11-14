@@ -13,7 +13,7 @@ alter table orders add constraint orders_cash_phone_check check (
   payment_method <> 'cash'
   or source = 'pos'
   or length(btrim(coalesce(customer_phone, ''))) > 0
-);
+) not valid;
 
 -- Floor required only for in-branch delivery (table) — applies to POS and online (correct);
 -- pickup/obour never require floor/spot.
@@ -23,7 +23,7 @@ do $$ begin
     check (
       (delivery_type = 'table' and length(btrim(coalesce(delivery_floor,''))) > 0)
       or (delivery_type <> 'table')
-    );
+    ) not valid;
 exception when duplicate_object then null; end $$;
 
 -- 2) POS RPC: staff counter orders must not be blocked by online-only rules
