@@ -85,12 +85,12 @@ export function EmptyBox({ msg }: { msg: string }) {
   );
 }
 
-export function CopyButton({ text, label = "نسخ" }: { text: string; label?: string }) {
+export function CopyButton({ text, label = "نسخ", className }: { text: string; label?: string; className?: string }) {
   const [ok, setOk] = useState(false);
   return (
     <button
       type="button"
-      className={`!px-3 !py-1 ${ok ? "btn-dark" : "btn-outline"}`}
+      className={className || `!px-3 !py-1 ${ok ? "btn-dark" : "btn-outline"}`}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text);

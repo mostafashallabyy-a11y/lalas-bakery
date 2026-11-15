@@ -72,6 +72,11 @@ async function stubSupabase(page: Page) {
         order_number: "LB-1001",
         status: "received",
         branch_name: "فرع العبور الرئيسي",
+        customer_name: "زبون تجربة",
+        customer_phone: "01012345678",
+        payment_method: "instapay",
+        payment_status: "pending",
+        instapay_claimed_at: null,
         delivery_type: "pickup",
         delivery_fee: 0,
         subtotal: 110,
@@ -90,7 +95,7 @@ async function stubSupabase(page: Page) {
         branch_name: "فرع العبور الرئيسي",
       });
     }
-    if (url.includes("track_order_by_key")) {
+    if (url.includes("track_order_by_key") || url.includes("track_order_by_phone")) {
       return json(route, {
         ok: true,
         order_number: "LB-1001",
@@ -106,7 +111,11 @@ async function stubSupabase(page: Page) {
     if (url.includes("/branches")) return json(route, [branchRow]);
     if (url.includes("/categories")) return json(route, [categoryRow]);
     if (url.includes("/products")) return json(route, [productRow]);
-    if (url.includes("/settings")) return json(route, [{ key: "instapay_number", value: "01000000000" }]);
+    if (url.includes("/settings")) {
+      if (url.includes("key=eq.brand_whatsapp_number")) return json(route, { value: "+201141465063" });
+      if (url.includes("key=eq.instapay_number")) return json(route, { value: "01000000000" });
+      return json(route, []);
+    }
     if (url.includes("/order_status_public")) return json(route, []);
     return json(route, []);
   });
@@ -137,6 +146,7 @@ async function runFlow(page: Page) {
 
   await expect(page.locator("#cstm-name")).toBeVisible({ timeout: 10000 });
   await page.fill("#cstm-name", "زبون تجربة");
+  await page.fill("#cstm-phone", "01012345678");
   await page.getByRole("button", { name: /تأكيد الطلب/ }).click();
 
   // order page
@@ -148,7 +158,7 @@ async function runFlow(page: Page) {
   await page.getByRole("link", { name: /الذهاب/ }).click();
   await expect(page).toHaveURL(/\/pay\/LB-1001\?k=/, { timeout: 10000 });
   await expect(page.getByRole("heading", { name: /طلبك/ })).toBeVisible();
-  await expect(page.getByText("خطوات الدفع (InstaPay)")).toBeVisible();
+  await expect(page.getByText("الدفع عبر InstaPay (بدون رفع صورة)")).toBeVisible();
   // never a blank render
   const bodyText = await page.evaluate(() => document.body.innerText.trim().length);
   expect(bodyText).toBeGreaterThan(80);

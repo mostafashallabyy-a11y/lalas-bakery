@@ -120,6 +120,19 @@ if (mgrJwt) info("manager login", "ok"); else skip("manager-authenticated checks
   rejected ? pass("track_order_by_key rejects wrong key", `status=${r.status} code=${r.body?.code || "ok:false"}`) : fail("track_order_by_key wrong key", `status=${r.status} body=${JSON.stringify(r.body)}`);
 }
 {
+  const r = await post(`/rest/v1/rpc/track_order_by_phone`, { p_order_number: "LB-999999", p_phone: "01012345678" });
+  const rejected = (r.status >= 400) || r.body?.ok === false;
+  rejected ? pass("track_order_by_phone rejects wrong phone", `status=${r.status} code=${r.body?.code || "ok:false"}`) : fail("track_order_by_phone wrong phone", `status=${r.status} body=${JSON.stringify(r.body)}`);
+}
+{
+  let locked = true;
+  for (let i = 0; i < 6; i++) {
+    const r = await post(`/rest/v1/rpc/track_order_by_phone`, { p_order_number: "LB-999999", p_phone: "01012345678" });
+    if (!((r.status >= 400) || r.body?.ok === false)) { locked = false; break; }
+  }
+  locked ? pass("track_order_by_phone brute-force attempts stay rejected") : fail("track_order_by_phone brute-force lockout", "unexpected success after repeated wrong attempts");
+}
+{
   const r = await post(`/rest/v1/rpc/staff_confirm_payment`, { p_order_id: ZEROS });
   (r.status >= 400) ? pass("staff_confirm_payment rejects anon", `status=${r.status} code=${r.body?.code}`) : fail("staff_confirm_payment anon", `status=${r.status} body=${JSON.stringify(r.body)}`);
 }

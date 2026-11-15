@@ -91,6 +91,14 @@ export const PAYMENT_STATUS_LABEL: Record<string, string> = {
   refunded: "مسترد",
 };
 
+export function normalizeEgyptianPhone(phone: string): string {
+  const digits = (phone || "").replace(/[^0-9]/g, "");
+  if (/^0020[0-9]{10}$/.test(digits)) return `0${digits.slice(4)}`;
+  if (/^20[0-9]{10}$/.test(digits)) return `0${digits.slice(2)}`;
+  if (/^1[0125][0-9]{8}$/.test(digits)) return `0${digits}`;
+  return digits;
+}
+
 export function isValidEgyptianPhone(phone: string): boolean {
-  return /^01[0125][0-9]{8}$/.test((phone || "").replace(/\s+/g, ""));
+  return /^01[0125][0-9]{8}$/.test(normalizeEgyptianPhone(phone));
 }

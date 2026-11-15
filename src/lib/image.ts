@@ -1,9 +1,10 @@
-// ضغط صورتين 증명 الدفع من جهة العميل قبل الرفع
+// ضغط الصور من جهة العميل قبل الرفع (افتراضيًا WebP 800px للمنتجات)
 export const compressImage = (
   file: File,
-  options?: { maxWidth?: number; quality?: number }
+  options?: { maxWidth?: number; quality?: number; type?: "image/webp" | "image/jpeg" | "image/png" }
 ): Promise<File> => {
-  const { maxWidth = 1000, quality = 0.8 } = options || {};
+  const { maxWidth = 800, quality = 0.82, type } = options || {};
+  const requestedType = type || file.type;
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -22,20 +23,26 @@ export const compressImage = (
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return reject(new Error("فشل في ضغط الصورة"));
-            const compressed = new File([blob], file.name, {
-              type: file.type,
-              lastModified: Date.now(),
-            });
-            resolve(compressed);
-          },
-          file.type,
-          quality
-        );
+        const finish = (blob: Blob | null, finalType: string) => {
+          if (!blob) return reject(new Error("فشل في ضغط الصورة"));
+          const outType = blob.type || finalType;
+          const compressed = new File([blob], file.name.replace(/\.[^.]+$/, "") + (outType === "image/webp" ? ".webp" : file.name.match(/\.[^.]+$/)?.[0] || ".jpg"), {
+            type: outType,
+            lastModified: Date.now(),
+          });
+          resolve(compressed);
+        };
+        if (requestedType === "image/webp") {
+          canvas.toBlob((blob) => {
+            if (blob && blob.type === "image/webp") finish(blob, "image/webp");
+            else canvas.toBlob((jpeg) => finish(jpeg, "image/jpeg"), "image/jpeg", quality);
+          }, "image/webp", quality);
+        } else {
+          canvas.toBlob((blob) => finish(blob, requestedType), requestedType, quality);
+        }
       };
       img.onerror = () => reject(new Error("فشل في تحميل الصورة"));
     };
+    reader.onerror = () => reject(new Error("فشل في تحميل الصورة"));
   });
 };

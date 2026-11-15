@@ -231,8 +231,9 @@ export default function CatalogAdmin() {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       if (!["jpg", "jpeg", "png", "webp"].includes(ext)) throw new Error("صيغة الصورة مش مدعومة — استخدم jpg/png/webp");
       if (file.size > 3 * 1024 * 1024) throw new Error("الصورة أكبر من 3 ميجابايت");
-      const compressed = await compressImage(file, { maxWidth: 1000, quality: 0.85 });
-      const path = `products/${randomId()}.${ext}`;
+      const compressed = await compressImage(file, { maxWidth: 800, quality: 0.82, type: "image/webp" });
+      const outExt = compressed.type === "image/webp" ? "webp" : ext;
+      const path = `products/${randomId()}.${outExt}`;
       const { error } = await supabase.storage.from("product-images").upload(path, compressed, { contentType: compressed.type, upsert: false });
       if (error) throw error;
       const { data } = supabase.storage.from("product-images").getPublicUrl(path);

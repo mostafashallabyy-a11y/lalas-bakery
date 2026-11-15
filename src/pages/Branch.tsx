@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType, type SVGProps } from "react";
 import { useParams } from "react-router-dom";
 import { supabase, type Category, type Product } from "../lib/types";
 import { useCart } from "../context/CartContext";
@@ -39,6 +39,9 @@ export default function BranchPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCat, setActiveCat] = useState<string>("all");
   const [bName, setBName] = useState("");
+  const [lightbox, setLightbox] = useState<Product | null>(null);
+  const lightboxCloseRef = useRef<HTMLButtonElement | null>(null);
+  const lightboxTouch = useRef<{ x: number; y: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { items, add, inc, dec, branchId: cartBranch, branchName: cartBranchName } = useCart();
 
@@ -60,6 +63,23 @@ export default function BranchPage() {
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightbox(null); };
+    const onPop = () => setLightbox(null);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("popstate", onPop);
+    try { history.pushState({ lala_lightbox: true }, ""); } catch {}
+    lightboxCloseRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("popstate", onPop);
+    };
+  }, [lightbox]);
 
   useEffect(() => {
     supabase
@@ -84,6 +104,9 @@ export default function BranchPage() {
   if (error) return <EmptyBox msg={error} />;
 
   const shown = products?.filter((p) => activeCat === "all" || p.category_id === activeCat) ?? [];
+  const lb = lightbox;
+  const lbPrice = lb ? Number(lb.price) : 0;
+  const lbUnavailable = !lb || !(lbPrice > 0) || (lb.track_stock === true && (lb.stock_qty ?? 0) <= 0);
 
   return (
     <div className="space-y-3">
@@ -140,7 +163,7 @@ export default function BranchPage() {
       {!products ? (
         <ProductGridSkeleton count={6} />
       ) : (
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
           {shown.length === 0 && (
             <div className="card col-span-full p-4 text-center text-sm text-muted">
               القسم ده لسه فاضي في الفرع — شوف باقي الأقسام
@@ -184,19 +207,27 @@ export default function BranchPage() {
             return (
               <div key={p.id} className="prod-card flex flex-col items-center">
                 {p.image_url ? (
-                  <img
-                    src={p.image_url}
-                    alt={p.name}
-                    loading="lazy"
-                    decoding="async"
-                    width={240}
-                    height={140}
-                    className="mb-1.5 h-[104px] w-full rounded-2xl bg-surface2 object-cover"
-                  />
+                  <button type="button" className="prod-photo-btn mb-1.5 block w-full outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl" onClick={() => setLightbox(p)} aria-label={`عرض صورة ${p.name}`}>
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      loading="lazy"
+                      decoding="async"
+                      width={320}
+                      height={240}
+                      className="aspect-[4/3] min-h-[150px] w-full rounded-2xl bg-surface2 object-cover object-center"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; const ph = e.currentTarget.nextElementSibling as HTMLElement | null; ph?.classList.remove("hidden"); }}
+                    />
+                    <span className="prod-emoji hidden mb-1.5 !px-4 !py-2 aspect-[4/3] min-h-[150px] w-full items-center justify-center" aria-hidden="true">
+                      {productEmoji(p.name)}
+                    </span>
+                  </button>
                 ) : (
-                  <div className="prod-emoji mb-1.5 !px-4 !py-2" aria-hidden="true">
-                    {productEmoji(p.name)}
-                  </div>
+                  <button type="button" className="prod-photo-btn mb-1.5 block w-full outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl" onClick={() => setLightbox(p)} aria-label={`عرض ${p.name}`}>
+                    <span className="prod-emoji mb-1.5 !px-4 !py-2 aspect-[4/3] min-h-[150px] w-full flex items-center justify-center" aria-hidden="true">
+                      {productEmoji(p.name)}
+                    </span>
+                  </button>
                 )}
                 <b className="line-clamp-1 text-[13px] leading-5">{p.name}</b>
                 {p.note && <div className="clamp-2 min-h-[32px] text-[11px] leading-4 text-muted">{p.note}</div>}
@@ -248,6 +279,62 @@ export default function BranchPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {lb && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 sm:items-center sm:p-6"
+          role="presentation"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setLightbox(null); }}
+          onTouchStart={(e) => { const t = e.changedTouches[0]; lightboxTouch.current = { x: t.clientX, y: t.clientY }; }}
+          onTouchEnd={(e) => {
+            const start = lightboxTouch.current;
+            const t = e.changedTouches[0];
+            if (!start || !t) return;
+            const dx = t.clientX - start.x;
+            const dy = t.clientY - start.y;
+            if (Math.abs(dx) > 60 || Math.abs(dy) > 60) setLightbox(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={lb.name}
+            className="relative flex max-h-[94vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-surface shadow-2xl outline-none"
+          >
+            <button
+              ref={lightboxCloseRef}
+              type="button"
+              className="absolute left-2 top-2 z-10 grid h-11 w-11 place-items-center rounded-full bg-black/45 text-white text-xl outline-none focus-visible:ring-2 focus-visible:ring-white"
+              onClick={() => setLightbox(null)}
+              aria-label="إغلاق"
+            >×</button>
+            {lb.image_url ? (
+              <img src={lb.image_url} alt={lb.name} className="h-[46vh] min-h-[240px] w-full bg-surface2 object-cover object-center" decoding="async" />
+            ) : (
+              <div className="flex h-[46vh] min-h-[240px] w-full items-center justify-center bg-surface2 text-7xl" aria-hidden="true">{productEmoji(lb.name)}</div>
+            )}
+            <div className="flex flex-col gap-1 p-4">
+              <h2 className="text-xl font-extrabold text-text">{lb.name}</h2>
+              {lb.note && <p className="text-sm leading-6 text-muted">{lb.note}</p>}
+              <div className="mt-1 text-2xl font-extrabold text-primary-strong">{money(lbPrice)}</div>
+              {lbUnavailable ? (
+                <p className="mt-2 text-sm font-bold text-danger-text">غير متاح حاليًا</p>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-primary mt-2 w-full !py-3 text-base"
+                  onClick={() => {
+                    add({ product_id: lb.id, name: lb.name, price: Number(lb.price), note: lb.note || "", image_url: lb.image_url || "" });
+                    setLightbox(null);
+                  }}
+                >
+                  أضف للسلة 💗
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

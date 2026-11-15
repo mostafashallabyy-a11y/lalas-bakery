@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase, withTimeout, type Branch } from "../lib/types";
 import { useCart } from "../context/CartContext";
-import { money, DELIVERY_OPTIONS, type DeliveryKey, isValidEgyptianPhone } from "../lib/format";
+import { money, DELIVERY_OPTIONS, type DeliveryKey, isValidEgyptianPhone, normalizeEgyptianPhone } from "../lib/format";
 import { ErrorBox, EmptyBox } from "../components/Common";
 import { Turnstile } from "../components/Turnstile";
 import { storageGet, storageSet, storageGetJSON, storageSetJSON } from "../lib/storage";
@@ -102,7 +102,7 @@ export default function Checkout() {
   if (!branchId || items.length === 0) return <EmptyBox msg="السلة فاضية — اختار حاجة حلوة من المنيو." />;
 
   const cleanName = name.replace(/\s+/g, " ").trim();
-  const cleanPhone = phone.replace(/\s+/g, "").trim();
+  const cleanPhone = normalizeEgyptianPhone(phone);
   const cleanFloor = deliveryFloor.replace(/\s+/g, " ").trim();
   const cleanSpot = deliverySpot.replace(/\s+/g, " ").trim();
   const cleanAddress = obourAddress.replace(/\s+/g, " ").trim();
@@ -110,13 +110,15 @@ export default function Checkout() {
   const cleanNote = customerNote.replace(/\s+/g, " ").trim();
 
   const floorValid = delivery !== "table" || cleanFloor.length > 0;
-  const obourFieldsValid = delivery !== "obour" || (cleanName.length >= 2 && isValidEgyptianPhone(cleanPhone) && cleanAddress.length >= 10 && cleanAddress.length <= 300 && cleanLandmark.length <= 120);
+  const phoneValid = isValidEgyptianPhone(cleanPhone);
+  const obourFieldsValid = delivery !== "obour" || (cleanName.length >= 2 && phoneValid && cleanAddress.length >= 10 && cleanAddress.length <= 300 && cleanLandmark.length <= 120);
   const noteValid = cleanNote.length <= 300;
-  const canSubmit = !busy && floorValid && obourFieldsValid && noteValid && (delivery !== "obour" || obourAvailable);
+  const canSubmit = !busy && floorValid && phoneValid && obourFieldsValid && noteValid && (delivery !== "obour" || obourAvailable);
 
   const submit = async () => {
     setError(null);
     if (cleanName.length < 2 || cleanName.length > 60) { setError("اكتب اسمك (من حرفين لـ 60 حرف) عشان نعرف نناديك وقت الاستلام"); return; }
+    if (!isValidEgyptianPhone(cleanPhone)) { setError("اكتب رقم موبايل مصري صحيح (11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015)"); return; }
     if (delivery === "table") {
       if (!cleanFloor) { setError("اختار رقم الدور عشان الموظفة توصلك بسرعة 💗"); return; }
       if (cleanFloor.length > 60) { setError("رقم الدور طويل — اختصره شوية"); return; }
@@ -145,7 +147,7 @@ export default function Checkout() {
       p_customer_name: cleanName,
       p_turnstile_token: token || null,
       p_payment_method: paymentMethod,
-      p_customer_phone: (paymentMethod === "cash" || delivery === "obour") ? cleanPhone : (cleanPhone || null),
+      p_customer_phone: cleanPhone,
       p_delivery_floor: delivery === "table" ? cleanFloor : null,
       p_delivery_spot: delivery === "table" ? (cleanSpot || null) : null,
       p_delivery_address: delivery === "obour" ? cleanAddress : null,
@@ -269,7 +271,7 @@ export default function Checkout() {
           <input id="cstm-name" className="input" placeholder="الاسم" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
         </div>
         <div>
-          <label htmlFor="cstm-phone" className="label">رقم الموبايل {(paymentMethod === "cash" || delivery === "obour") ? <span className="text-danger-text">*</span> : <span className="text-mut">(اختياري)</span>}</label>
+          <label htmlFor="cstm-phone" className="label">رقم الموبايل <span className="text-danger-text">*</span></label>
           <input id="cstm-phone" className="input" dir="ltr" inputMode="tel" placeholder="01xxxxxxxxx" maxLength={15} value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
           {(paymentMethod === "cash" || delivery === "obour") && <p className="mt-1 text-[11px] text-mut">رقم مصري صحيح (11 رقم يبدأ بـ 010/011/012/015).</p>}
         </div>

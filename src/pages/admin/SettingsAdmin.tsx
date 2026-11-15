@@ -4,6 +4,7 @@ import { Spinner } from "../../components/Common";
 
 const FIELDS: { key: string; label: string; hint?: string }[] = [
   { key: "instapay_number", label: "رقم انستا باي", hint: "هيظهر للعملاء في صفحة الدفع — لازم يكون صح" },
+  { key: "brand_whatsapp_number", label: "رقم واتساب المحل", hint: "رقم العلامة التجارية للعملاء — الافتراضي ‎+201141465063 (يظهر في صفحة الدفع والعبور) وهيتستخدمه العميل في رسالة واتساب الجاهزة" },
   { key: "delivery_fee_table", label: "رسوم التقديم للترابيزة (ج.م)", hint: "الافتراضي 5" },
   { key: "delivery_fee_obour", label: "رسوم دليفري داخل العبور (ج.م)", hint: "الافتراضي 50" },
   { key: "cash_accept_timeout_minutes", label: "مهلة قبول طلب الكاش (دقائق)", hint: "الافتراضي 30 — لو الطلب ما اتقبلش خلال المدة يتم إلغاؤه تلقائيًا وإرجاع المخزون" },
@@ -64,7 +65,7 @@ export default function SettingsAdmin() {
           <input
             id={f.key}
             className="input"
-            dir={f.key === "instapay_number" || f.key === "turnstile_secret" ? "ltr" : "auto"}
+            dir={f.key === "instapay_number" || f.key === "brand_whatsapp_number" || f.key === "turnstile_secret" ? "ltr" : "auto"}
             value={values[f.key] ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
           />

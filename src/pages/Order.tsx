@@ -5,6 +5,8 @@ import { money, STATUS, PAYMENT_STATUS_LABEL } from "../lib/format";
 import { CopyButton, ErrorBox, Spinner, Logo } from "../components/Common";
 import CheckoutStepper from "../components/CheckoutStepper";
 import { trackEvent } from "../lib/analytics";
+import { buildOrderWhatsAppMessage, waMeLink } from "../lib/whatsapp";
+import { fetchBrandWhatsapp } from "../lib/settings";
 
 type OrderItem = { name: string; qty: number; unit_price: number; line_total: number };
 type OrderDetails = {
@@ -42,14 +44,6 @@ const DELIVERY_LABEL: Record<string, string> = {
   obour: "توصيل داخل نطاق العبور",
 };
 
-function normalizeWaNumber(raw: string): string {
-  const d = (raw || "").replace(/[^\d+]/g, "");
-  if (d.startsWith("+")) return d.slice(1);
-  if (d.startsWith("00")) return d.slice(2);
-  if (/^01[0125]\d{8}$/.test(d)) return "2" + d; // Egypt local -> international
-  return d;
-}
-
 async function copyText(text: string): Promise<boolean> {
   try { await navigator.clipboard.writeText(text); return true; } catch {}
   try {
@@ -69,10 +63,12 @@ export default function OrderPage() {
   const [details, setDetails] = useState<OrderDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedWa, setCopiedWa] = useState(false);
   const [locChecked, setLocChecked] = useState(false);
   const [locBusy, setLocBusy] = useState(false);
   const [locMsg, setLocMsg] = useState<string | null>(null);
+  const [brandWa, setBrandWa] = useState<string>("");
+
+  useEffect(() => { fetchBrandWhatsapp().then(setBrandWa).catch(() => setBrandWa("")); }, []);
 
   const load = async () => {
     if (!orderNumber || !trackingKey) {
@@ -116,16 +112,12 @@ export default function OrderPage() {
   const minsSince = createdMs ? (Date.now() - createdMs) / 60000 : 0;
   const showReminder = needsLocation && minsSince >= reminderMins;
 
-  const waNumber = details?.branch_obour_whatsapp || "";
-  const waText = useMemo(() => {
-    const tpl = details?.branch_obour_whatsapp_template || "مرحبًا، أنا {name}. رقم الطلب: {order_number}\nالعنوان: {address}\nهبعت اللوكيشن دلوقتي 📍";
-    const addr = [details?.delivery_address, details?.delivery_landmark ? `علامة مميزة: ${details.delivery_landmark}` : ""].filter(Boolean).join(" - ");
-    return tpl
-      .replace(/\{order_number\}/g, details?.order_number || orderNumber)
-      .replace(/\{name\}/g, details?.customer_name || "")
-      .replace(/\{address\}/g, addr);
-  }, [details, orderNumber]);
-  const waLink = waNumber ? `https://wa.me/${normalizeWaNumber(waNumber)}?text=${encodeURIComponent(waText)}` : "";
+  const waNumber = details?.branch_obour_whatsapp || brandWa || "";
+  const waText = useMemo(
+    () => details ? buildOrderWhatsAppMessage(details, "📍 تأكيد اللوكيشن — توصيل العبور", "أنا ابعت اللوكيشن هنا 📍") : "",
+    [details]
+  );
+  const waLink = waNumber && waText ? waMeLink(waNumber, waText) : "";
 
   const confirmLocation = async () => {
     if (!locChecked) return;
@@ -167,7 +159,7 @@ export default function OrderPage() {
           <button className="btn-outline !px-3" onClick={async () => { const ok = await copyText(trackingLink); setCopiedLink(ok); setTimeout(() => setCopiedLink(false), 2000); }}>{copiedLink ? "تم النسخ ✅" : "نسخ رابط المتابعة"}</button>
           <a className="btn-primary !px-3" href={`https://wa.me/?text=${whatsappShare}`} target="_blank" rel="noopener noreferrer">مشاركة على واتساب</a>
         </div>
-        <p className="mt-3 font-bold text-text">احتفظ برقم الطلب ومفتاح المتابعة</p>
+        <p className="mt-3 font-bold text-text">احتفظ برقم الطلب 💗</p>
         {details && <div className="text-mut text-sm mt-1">{details.branch_name} • الإجمالي {money(details.total)}</div>}
         {error && <ErrorBox msg={error} />}
       </div>
@@ -217,10 +209,12 @@ export default function OrderPage() {
           {!details.location_confirmed ? (
             <div className="space-y-2 rounded-xl border border-warn/40 bg-warn-bg/40 p-3">
               <p className="font-extrabold text-brand-900">ابعت لوكيشنك على واتساب</p>
-              <p className="text-sm">رقم واتساب الفرع: <b dir="ltr" className="text-lg">{waNumber || "—"}</b></p>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" className="btn-outline !px-3" onClick={async () => { if (!waNumber) return; const ok = await copyText(waNumber); setCopiedWa(ok); setTimeout(()=>setCopiedWa(false), 2000); }}> {copiedWa ? "تم النسخ ✅" : "نسخ الرقم"}</button>
-                {waLink ? <a className="btn-primary !px-3" href={waLink} target="_blank" rel="noopener noreferrer">افتح واتساب</a> : <span className="text-xs text-danger-text">رقم واتساب الفرع غير متاح — تواصل مع الفرع.</span>}
+              <p className="text-sm">رقم واتساب: <b dir="ltr" className="text-lg">{waNumber || "—"}</b></p>
+              <div className="rounded-2xl border border-border bg-surface2 p-2.5 text-sm leading-6 whitespace-pre-wrap" dir="rtl">{waText}</div>
+              <div className="grid gap-2">
+                {waNumber && <CopyButton text={waNumber} label="نسخ الرقم" className="btn-outline !px-3 !py-2 w-full" />}
+                <CopyButton text={waText} label="📋 نسخ الرسالة" className="btn-primary w-full !px-4 !py-2.5" />
+                {waLink ? <a className="btn-primary w-full !px-4 !py-2.5 text-center" href={waLink} target="_blank" rel="noopener noreferrer">💬 افتح واتساب وأرسلها</a> : <span className="text-xs text-danger-text">رقم واتساب غير متاح — تواصل مع الفرع.</span>}
               </div>
               <p className="text-xs text-mut font-bold">من واتساب اضغط + ثم الموقع وابعت موقعك الحالي 📍</p>
 
@@ -270,7 +264,7 @@ export default function OrderPage() {
         </div>
       )}
 
-      <p className="m-0"><Link to={`/track?k=${trackingKey}`} className="btn-outline">تابع طلبك</Link></p>
+      <p className="m-0"><Link to="/track" className="btn-outline">تابع طلبك</Link></p>
     </div>
   );
 }

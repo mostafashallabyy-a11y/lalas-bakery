@@ -1,21 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { supabase, type OrderStatus } from "../lib/types";
 import { money, PAYMENT_STATUS_LABEL } from "../lib/format";
 import { CopyButton, ErrorBox, Spinner, Logo } from "../components/Common";
 import CheckoutStepper from "../components/CheckoutStepper";
-import { storageGet } from "../lib/storage";
+import { buildOrderWhatsAppMessage, waMeLink, type ShareOrderDetails } from "../lib/whatsapp";
+import { fetchBrandWhatsapp } from "../lib/settings";
 
-type PayInfo = {
+type PayDetails = ShareOrderDetails & {
   ok: boolean;
-  order_id?: string;
-  order_number: string;
-  total: number;
-  status: OrderStatus;
-  branch_name: string;
-  payment_method?: "cash" | "instapay";
+  status?: OrderStatus;
   payment_status?: "pending" | "paid" | "rejected" | "refunded";
+  payment_method?: "cash" | "instapay";
   instapay_claimed_at?: string | null;
+  message?: string;
 };
 
 export default function Payment() {
@@ -25,33 +23,29 @@ export default function Payment() {
   const trackingKey = new URLSearchParams(search).get("k") || "";
 
   const [instapay, setInstapay] = useState<string | null>(null);
-  const [info, setInfo] = useState<PayInfo | null>(null);
+  const [brandWa, setBrandWa] = useState<string>("");
+  const [details, setDetails] = useState<PayDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [claimBusy, setClaimBusy] = useState(false);
   const [claimMsg, setClaimMsg] = useState<string | null>(null);
-
-  const customerName = storageGet("session", "lalas_name") || "";
 
   const load = async () => {
     if (!orderNumber || !trackingKey) {
       setError("رابط الدفع ناقص — افتح صفحة الدفع من رابط المتابعة الكامل (يحتوي على ?k=).");
       return;
     }
-    const { data: s } = await supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "instapay_number")
-      .maybeSingle();
-    setInstapay(s?.value || "");
-
-    const { data, error: e } = await supabase.rpc("get_payment_info", {
-      p_order_number: orderNumber,
-      p_tracking_key: trackingKey,
-    });
-    if (e || !(data as PayInfo | null)?.ok) {
-      setError((e as Error)?.message || "مش لاقيين الطلب ده، تأكد من الرقم ومفتاح المتابعة 💗");
+    const [detailsRes, instapayRes, brandWaRes] = await Promise.all([
+      supabase.rpc("get_order_details", { p_order_number: orderNumber, p_tracking_key: trackingKey }),
+      supabase.from("settings").select("value").eq("key", "instapay_number").maybeSingle(),
+      fetchBrandWhatsapp(),
+    ]);
+    const d = detailsRes.data as PayDetails | null;
+    setInstapay(instapayRes.data?.value || "");
+    setBrandWa(brandWaRes);
+    if (detailsRes.error || !d?.ok) {
+      setError((detailsRes.error as Error)?.message || d?.message || "مش لاقيين الطلب ده، تأكد من الرقم ومفتاح المتابعة 💗");
     } else {
-      setInfo(data as unknown as PayInfo);
+      setDetails(d);
       setError(null);
     }
   };
@@ -63,15 +57,21 @@ export default function Payment() {
     let cancelled = false;
     const timer = setInterval(async () => {
       if (cancelled) return;
-      const { data } = await supabase.rpc("get_payment_info", {
+      const { data } = await supabase.rpc("get_order_details", {
         p_order_number: orderNumber,
         p_tracking_key: trackingKey,
       });
-      const r = data as PayInfo | null;
-      if (r?.ok) setInfo(r);
+      const d = data as PayDetails | null;
+      if (d?.ok) setDetails(d);
     }, 20000);
     return () => { cancelled = true; clearInterval(timer); };
   }, [orderNumber, trackingKey]);
+
+  const message = useMemo(
+    () => (details ? buildOrderWhatsAppMessage(details, "طلب جديد 💗") : ""),
+    [details]
+  );
+  const waLink = waMeLink(brandWa, message);
 
   const claimPaid = async () => {
     setClaimBusy(true);
@@ -92,12 +92,11 @@ export default function Payment() {
   };
 
   if (!orderNumber) return <ErrorBox msg="رقم الطلب مش موجود في اللنك 🥲" />;
-  if (!info && !error) return <Spinner label="بنجهزلك صفحة الدفع… 💳" />;
+  if (!details && !error) return <Spinner label="بنجهزلك صفحة الدفع… 💳" />;
 
-  const method = info?.payment_method || "instapay";
-  const payStatus = info?.payment_status || "pending";
-  const claimed = !!info?.instapay_claimed_at;
-  const noteText = `${orderNumber}${customerName ? " " + customerName : ""}`;
+  const method = details?.payment_method || "instapay";
+  const payStatus = details?.payment_status || "pending";
+  const claimed = !!details?.instapay_claimed_at;
 
   return (
     <div className="space-y-3.5">
@@ -106,9 +105,9 @@ export default function Payment() {
         <Logo className="mx-auto mb-1 h-20 w-auto" alt="Lala's Bakery" />
         <h1 className="text-[20px] font-extrabold text-brand-800 my-1">طلبك {orderNumber}</h1>
         <div className="text-mut text-sm">
-          {[customerName, info?.branch_name].filter(Boolean).join(" – ") || "\u00a0"}
+          {[details?.customer_name, details?.branch_name].filter(Boolean).join(" – ") || "\u00a0"}
         </div>
-        {info && <div className="mt-1 font-bold text-brand-800">الإجمالي: {money(info.total)}</div>}
+        {details && <div className="mt-1 font-bold text-brand-800">الإجمالي: {money(details.total)}</div>}
         {error && <ErrorBox msg={error} />}
       </div>
 
@@ -116,7 +115,7 @@ export default function Payment() {
         <div className="card p-3.5 text-brand-900">
           <b>طريقة الدفع: كاش عند الاستلام 💵</b>
           <div className="msg-box mt-2">
-            تمام! هتدفع كاش وقت الاستلام 💗 جهّز المبلغ: <b>{info ? money(info.total) : "…"}</b>
+            تمام! هتدفع كاش وقت الاستلام 💗 جهّز المبلغ: <b>{details ? money(details.total) : "…"}</b>
           </div>
           <div className="text-sm mt-2">
             حالة الدفع: <b>{PAYMENT_STATUS_LABEL[payStatus] || payStatus}</b>
@@ -139,12 +138,27 @@ export default function Payment() {
               {instapay === "" ? (
                 <ErrorBox msg="لسه المدير مظبطش رقم انستا باي — كلمنا في الفرع مباشرة ونظبطلك الطلب 🥺" />
               ) : (
-                <ol className="list-decimal pr-5 space-y-1.5">
-                  <li>انسخ رقم انستا باي: <b className="text-brand-700" dir="ltr">{instapay}</b> {instapay && <CopyButton text={instapay} />}</li>
-                  <li>حوّل المبلغ: <b>{info ? money(info.total) : "…"}</b></li>
-                  <li>اكتب في ملاحظة التحويل (مهم): <b dir="ltr">{noteText}</b> <CopyButton text={noteText} /></li>
-                  <li>بعد إتمام التحويل اضغط الزر بالأسفل لإرسال تأكيد التحويل برقم الطلب (بدون رفع صورة).</li>
-                </ol>
+                <>
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span>رقم انستا باي: <b className="text-brand-700" dir="ltr">{instapay}</b></span>
+                    <CopyButton text={instapay || ""} label="نسخ" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span>رقم واتساب المحل: <b className="text-brand-700" dir="ltr">{brandWa || "…"}</b></span>
+                    {brandWa && <CopyButton text={brandWa} label="نسخ الرقم" />}
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-surface2 p-2.5 text-sm leading-6 whitespace-pre-wrap" dir="rtl">{message}</div>
+                  <div className="grid gap-2">
+                    <CopyButton text={message} label="📋 نسخ الرسالة" className="btn-primary w-full !px-4 !py-3 text-base" />
+                    {waLink ? (
+                      <a className="btn-primary w-full !px-4 !py-3 text-base text-center" href={waLink} target="_blank" rel="noopener noreferrer">💬 افتح واتساب وأرسلها</a>
+                    ) : (
+                      <button type="button" className="btn-primary w-full !px-4 !py-3 text-base opacity-60" disabled>💬 افتح واتساب وأرسلها</button>
+                    )}
+                  </div>
+                  <p className="m-0 text-xs text-muted font-bold">بعد التحويل ابعت الرسالة وصورة التحويل على واتساب 💗</p>
+                </>
               )}
               <button type="button" className="btn-primary w-full mt-1" disabled={claimBusy || !instapay} onClick={claimPaid}>
                 {claimBusy ? "جارٍ الإرسال…" : "تم التحويل — أرسل تأكيد الدفع"}
@@ -160,7 +174,7 @@ export default function Payment() {
           <div className="text-mut text-sm">سيتم تأكيد طلبك بسرعة بمجرّد مراجعة رقم الطلب. تقدر تتابع حالة الطلب من صفحة المتابعة.</div>
           <p className="m-0 mt-2 flex gap-2 justify-center flex-wrap">
             <Link to={`/order/${orderNumber}?k=${trackingKey}`} className="btn-outline">صفحة الطلب</Link>
-            <Link to={`/track?k=${trackingKey}`} className="btn-primary">تابع طلبك</Link>
+            <Link to="/track" className="btn-primary">تابع طلبك</Link>
           </p>
         </div>
       )}

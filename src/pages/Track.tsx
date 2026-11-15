@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase, withTimeout, type TrackResult, type OrderStatus } from "../lib/types";
-import { STATUS, fmtFull, money } from "../lib/format";
+import { STATUS, fmtFull, money, normalizeEgyptianPhone, isValidEgyptianPhone } from "../lib/format";
 import { Spinner } from "../components/Common";
 
 const STEPS: OrderStatus[] = ["received", "preparing", "done"];
@@ -19,12 +19,11 @@ type SavedOrder = {
 
 export default function Track() {
   const [value, setValue] = useState("");
-  const [trackKey, setTrackKey] = useState("");
+  const [phone, setPhone] = useState("");
   const [result, setResult] = useState<TrackResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState<SavedOrder[]>([]);
-  const { search } = useLocation();
 
   useEffect(() => {
     try {
@@ -35,11 +34,6 @@ export default function Track() {
       }
     } catch {}
   }, []);
-
-  useEffect(() => {
-    const parsedKey = new URLSearchParams(search).get("k");
-    if (parsedKey) setTrackKey(parsedKey);
-  }, [search]);
 
   useEffect(() => {
     if (!saved.length) return;
@@ -64,34 +58,39 @@ export default function Track() {
     return () => { cancelled = true; clearInterval(timer); };
   }, [saved]);
 
-  const fetchStatus = async (num: string, key: string) => {
-    if (!num || !key) { setError("رقم الطلب ومفتاح التتبع المطلوبان."); return; }
+  const fetchSavedStatus = async (o: SavedOrder) => {
+    if (!o.order_number || !o.tracking_key) { setError("رقم الطلب مش مكتمل."); return; }
     setBusy(true);
     setError(null);
     setResult(null);
     const res = await withTimeout<TrackResult>(
-      supabase.rpc("track_order_by_key", { p_order_number: num, p_tracking_key: key }),
+      supabase.rpc("track_order_by_key", { p_order_number: o.order_number, p_tracking_key: o.tracking_key }),
       15000
     );
     setBusy(false);
     const resData = res?.data as unknown as TrackResult;
-    if (!resData?.ok) setError(resData?.message || res?.error?.message || "مش لاقيين الطلب ده، تأكد من الرقم ومفتاح المتابعة 💗");
+    if (!resData?.ok) setError("مش لاقيين الطلب ده — جرّب من جديد");
     else { setError(null); setResult(resData); }
   };
 
-  const submit = () => {
+  const fetchByPhone = async () => {
     const num = value.trim().toUpperCase();
-    const key = trackKey.trim();
-    if (!num || !key) return;
-    fetchStatus(num, key);
-  };
-
-  const openSaved = (o: SavedOrder) => {
-    setValue(o.order_number);
-    setTrackKey(o.tracking_key);
-    setResult(null);
+    const normalized = normalizeEgyptianPhone(phone);
+    if (!num || !isValidEgyptianPhone(normalized)) {
+      setError("اكتب رقم الطلب والموبايل الصحيح (01x xxxxxxxx).");
+      return;
+    }
+    setBusy(true);
     setError(null);
-    fetchStatus(o.order_number, o.tracking_key);
+    setResult(null);
+    const res = await withTimeout<TrackResult>(
+      supabase.rpc("track_order_by_phone", { p_order_number: num, p_phone: normalized }),
+      15000
+    );
+    setBusy(false);
+    const resData = res?.data as unknown as TrackResult;
+    if (!resData?.ok) setError("مش لاقيين الطلب، راجع الرقم");
+    else { setError(null); setResult(resData); }
   };
 
   const activeIdx = STEPS.indexOf((result?.status ?? "received") as OrderStatus);
@@ -132,24 +131,24 @@ export default function Track() {
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1.5">
-                  <button className="btn-outline !px-2 !py-1 text-xs" onClick={() => openSaved(o)}>تابع</button>
+                  <button className="btn-outline !px-2 !py-1 text-xs" onClick={() => fetchSavedStatus(o)}>تابع</button>
                   <Link className="btn-primary !px-2 !py-1 text-xs" to={`/order/${o.order_number}?k=${o.tracking_key}`}>فتح</Link>
                 </div>
               </div>
             ))}
           </div>
-          <p className="mt-2 text-xs text-muted">الطلبات محفوظة على هذا الجهاز فقط (الرقم + مفتاح المتابعة). لا تُجلب قائمة الطلبات من الخادم أبدًا.</p>
+          <p className="mt-2 text-xs text-muted">الطلبات محفوظة على هذا الجهاز فقط. لا تُجلب قائمة الطلبات من الخادم أبدًا.</p>
         </div>
       )}
 
       <div className="card p-3.5">
-        <b className="mb-1.5 block text-text">تتبع برقم الطلب + مفتاح التتبع</b>
+        <b className="mb-1.5 block text-text">تتبع طلبك من أي جهاز</b>
         <div className="space-y-2">
-          <input className="input" placeholder="رقم الطلب مثال LB-1001" value={value} onChange={(e) => setValue(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && submit()} aria-label="رقم الطلب" />
-          <input className="input" placeholder="مفتاح التتبع (من رابط الطلب)" value={trackKey} onChange={(e) => setTrackKey(e.target.value)} aria-label="مفتاح التتبع" />
-          <button className="btn-primary mt-1.5" disabled={busy || !value || !trackKey} onClick={submit}>{busy ? "…" : "تابع"}</button>
+          <input className="input" placeholder="رقم الطلب مثال LB-1001" value={value} onChange={(e) => setValue(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === "Enter" && fetchByPhone()} aria-label="رقم الطلب" inputMode="text" autoComplete="off" />
+          <input className="input" placeholder="رقم الموبايل اللي طلبت بيه" value={phone} onChange={(e) => setPhone(e.target.value)} onKeyDown={(e) => e.key === "Enter" && fetchByPhone()} aria-label="رقم الموبايل" dir="ltr" inputMode="tel" autoComplete="tel" />
+          <button className="btn-primary mt-1.5" disabled={busy || !value || !isValidEgyptianPhone(normalizeEgyptianPhone(phone))} onClick={fetchByPhone}>{busy ? "…" : "تابع"}</button>
         </div>
-        <p className="mt-1 text-xs text-muted">الرقم وحده لا يكفي — لازم معاه مفتاح التتبع اللي اتصل مع رقم طلبك.</p>
+        <p className="mt-1 text-xs text-muted">رقم الطلب والموبايل اللي طلبت بيه — مفيش أي مفتاح طويل محتاج تكتبه 💗</p>
       </div>
 
       {busy && !result?.ok && <Spinner label="بندور على طلبك…" />}
@@ -176,9 +175,7 @@ export default function Track() {
           {paymentBadge(result.payment_method, result.payment_status) && (
             <div className="mt-2">{paymentBadge(result.payment_method, result.payment_status)}</div>
           )}
-          <p className="m-0 mt-3 text-center">
-            <button className="rounded text-xs font-bold text-primary-strong underline underline-offset-2 outline-none transition hover:opacity-75 focus-visible:ring-2 focus-visible:ring-ring" onClick={() => fetchStatus(result.order_number!, trackKey)}>تحديث يدوي ↺</button>
-          </p>
+          <p className="m-0 mt-3 text-center text-xs text-muted">تم استلام الطلب ← جاري التحضير ← تم الانتهاء 💗</p>
         </div>
       )}
     </div>
