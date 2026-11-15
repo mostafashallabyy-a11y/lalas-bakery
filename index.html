@@ -43,6 +43,71 @@
       })();
     </script>
 
+    <!--
+      تسخين المنيو: بنبدأ طلب بيانات المنيو وأول 5 صور فورًا وReact لسه بينزل.
+      النتيجة: الصورة الكبيرة بتظهر أسرع بكتير على النت البطيء.
+      لو أي حاجة فشلت، React بيجيب البيانات بنفسه عادي (fallback).
+    -->
+    <script>
+      (function () {
+        var m = location.pathname.match(
+          /^\/branch\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+        );
+        if (!m) return;
+        var base = "%VITE_SUPABASE_URL%";
+        var key = "%VITE_SUPABASE_PUBLISHABLE_KEY%";
+        if (base.indexOf("http") !== 0 || !key || key.indexOf("%") === 0) return;
+
+        var H = { apikey: key, Authorization: "Bearer " + key };
+        var id = m[1];
+        var get = function (path) {
+          return fetch(base + "/rest/v1/" + path, { headers: H })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .catch(function () { return null; });
+        };
+
+        var products = get("products?select=*&branch_id=eq." + id + "&is_active=eq.true&order=sort_order");
+        var categories = get("categories?select=*&is_active=eq.true&order=sort_order");
+        var branchName = get("branches?select=name&id=eq." + id).then(function (rows) {
+          return rows && rows[0] ? rows[0].name : null;
+        });
+
+        window.__menuBoot = { branchId: id, products: products, categories: categories, branchName: branchName };
+
+        // خريطة الصور المحسّنة اللي بتتحقن وقت البناء من src/lib/image-map.json
+        var MAP = /*__IMAGE_MAP__*/ {};
+        var local = function (u) {
+          if (!u) return "";
+          var s = String(u);
+          var b = s.match(/\/storage\/v1\/object\/public\/product-images\/(.+)$/);
+          if (b) {
+            var p = b[1];
+            try { p = decodeURIComponent(p); } catch (e) { p = b[1]; }
+            if (MAP[p]) return "/img/p/" + MAP[p] + "-400.webp";
+          }
+          if (MAP[s]) return "/img/p/" + MAP[s] + "-400.webp";
+          if (/-800\.(webp|jpe?g|png)$/i.test(s)) return s.replace(/-800\./, "-400.");
+          return "";
+        };
+
+        products.then(function (rows) {
+          if (!Array.isArray(rows)) return;
+          // المميز الأول (هو أول كارت في شريط "مميز") وبعده باقي المنتجات
+          var list = rows.filter(function (p) { return p && Number(p.price) > 0; });
+          list.sort(function (a, b) { return (b.featured ? 1 : 0) - (a.featured ? 1 : 0); });
+          var started = 0;
+          for (var i = 0; i < list.length && started < 5; i++) {
+            var src = local(list[i].image_url);
+            if (!src) continue;
+            var img = new Image();
+            img.decoding = "async";
+            img.src = src;
+            started++;
+          }
+        });
+      })();
+    </script>
+
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <script type="application/ld+json">

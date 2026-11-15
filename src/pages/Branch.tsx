@@ -18,6 +18,20 @@ import {
 
 type IconCmp = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
 
+/** بيانات المنيو اللي اتطلبت بدري من index.html (تسخين أول رسم) */
+type MenuBoot = {
+  branchId: string;
+  products?: Promise<Product[] | null>;
+  categories?: Promise<Category[] | null>;
+  branchName?: Promise<string | null>;
+};
+
+declare global {
+  interface Window {
+    __menuBoot?: MenuBoot;
+  }
+}
+
 function categoryIcon(name: string): IconCmp {
   const n = name || "";
   if (/ساخن|اسبريسو|امريكان|فرنساوي|تركي|قهوه|قهوة|شاي|هوت/.test(n)) return Coffee;
@@ -39,7 +53,7 @@ const priced = (p: Product) => Number(p.price) > 0;
 
 function MenuSkeleton() {
   return (
-    <div className="min-h-[calc(100vh-60px)] space-y-3" aria-hidden="true">
+    <div className="min-h-[calc(100vh-40px)] space-y-3" aria-hidden="true">
       <div className="skeleton h-[68px] w-full rounded-[20px]" />
       <div className="no-scrollbar flex gap-2.5 overflow-hidden">
         <div className="skeleton h-[116px] w-[290px] shrink-0 rounded-[18px]" />
@@ -85,7 +99,12 @@ export default function BranchPage() {
     load();
     // اسم الفرع: من السلة لو هي هي، وإلا نجيبه من قاعدة البيانات
     if (cartBranch === branchId && cartBranchName) setBName(cartBranchName);
-    else
+    else if (typeof window !== "undefined" && window.__menuBoot?.branchId === branchId) {
+      // الطلب بدأ من index.html بدري — بنستنى نفس النتيجة بدل طلب جديد
+      window.__menuBoot.branchName?.then((n) => {
+        if (n) setBName(n);
+      });
+    } else
       supabase
         .from("branches")
         .select("name")
@@ -99,21 +118,44 @@ export default function BranchPage() {
 
   async function load() {
     if (!branchId) return;
-    const [prodRes, catRes] = await Promise.all([
-      supabase
+    const boot = typeof window !== "undefined" && window.__menuBoot?.branchId === branchId
+      ? window.__menuBoot
+      : undefined;
+
+    // نفس استعلامات supabase-js بالظبط — بس لو الطلب المبكر فشل بنرجّع للطريقة العادية
+    const fetchProducts = async (): Promise<Product[] | null> => {
+      if (boot?.products) {
+        const d = await boot.products;
+        if (Array.isArray(d)) return d as Product[];
+      }
+      const { data, error } = await supabase
         .from("products")
         .select("*")
         .eq("branch_id", branchId)
         .eq("is_active", true)
-        .order("sort_order"),
-      supabase.from("categories").select("*").eq("is_active", true).order("sort_order"),
-    ]);
-    if (prodRes.error) {
+        .order("sort_order");
+      return error ? null : ((data as Product[]) ?? []);
+    };
+    const fetchCategories = async (): Promise<Category[]> => {
+      if (boot?.categories) {
+        const d = await boot.categories;
+        if (Array.isArray(d)) return d as Category[];
+      }
+      const { data } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order");
+      return (data as Category[]) ?? [];
+    };
+
+    const [prods, cats] = await Promise.all([fetchProducts(), fetchCategories()]);
+    if (!prods) {
       setError("المنيو مش نازل دلوقتي — جرّب تاني بعد قليل");
       return;
     }
-    setProducts((prodRes.data as Product[]) ?? []);
-    setCategories((catRes.data as Category[]) ?? []);
+    setProducts(prods);
+    setCategories(cats);
   }
 
   // بيانات البيع الحقيقية: الزبون المجهول مش مسموح له يقرأ order_items،

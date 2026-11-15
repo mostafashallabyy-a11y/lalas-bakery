@@ -36,8 +36,17 @@ const StockReport = lazy(() => import("./pages/admin/StockReport"));
 const ReportsAdmin = lazy(() => import("./pages/admin/ReportsAdmin"));
 
 export default function App() {
+  // الانتظار بياخد ارتفاع الشاشة كلها، فالفوتر مايتحركش لما المحتوى ينزل (CLS = 0)
   const page = (children: ReactNode, label = "لحظة…") => (
-    <Suspense fallback={<Spinner label={label} />}>{children}</Suspense>
+    <Suspense
+      fallback={
+        <div className="grid min-h-[calc(100vh-40px)] place-items-center">
+          <Spinner label={label} />
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
   );
   return (
     <ErrorBoundary>
