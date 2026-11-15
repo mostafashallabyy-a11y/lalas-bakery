@@ -49,7 +49,7 @@ const productRow = {
 const json = (route: Route, data: unknown, status = 200) =>
   route.fulfill({ status, headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
 
-async function stubSupabase(page: Page) {
+async function stubSupabase(page: Page, mode: "instapay" | "cash" = "instapay") {
   // Storage (proof upload) — never actually uploaded in a stubbed test
   await page.route("**/storage/v1/object/**", (r) =>
     json(r, { Key: `payment-proofs/LB-1001/${TRACK_KEY}.jpg` })
@@ -64,6 +64,8 @@ async function stubSupabase(page: Page) {
         order_id: "order-1",
         tracking_key: TRACK_KEY,
         total: 110,
+        payment_method: mode,
+        payment_status: "pending",
       });
     }
     if (url.includes("get_order_details")) {
@@ -74,7 +76,7 @@ async function stubSupabase(page: Page) {
         branch_name: "فرع العبور الرئيسي",
         customer_name: "زبون تجربة",
         customer_phone: "01012345678",
-        payment_method: "instapay",
+        payment_method: mode,
         payment_status: "pending",
         instapay_claimed_at: null,
         delivery_type: "pickup",
@@ -126,13 +128,19 @@ async function stubSupabase(page: Page) {
   );
 }
 
-async function runFlow(page: Page) {
+async function runFlow(page: Page, mode: "instapay" | "cash" = "instapay") {
   // home -> branch landing -> menu (the real user path)
   await page.goto("/");
   await page.getByRole("button", { name: /شوف المنيو/ }).click();
   await expect(page).toHaveURL(/\/landing/, { timeout: 15000 });
   await page.getByRole("link", { name: /شوف المنيو/ }).or(page.getByRole("button", { name: /شوف المنيو/ })).click();
   await expect(page.getByRole("button", { name: /أضف .+ للسلة/ }).first()).toBeVisible({ timeout: 15000 });
+
+  // product photo opens a lightbox and Escape closes it
+  await page.getByRole("button", { name: /عرض إسبريسو لالة/ }).first().click();
+  await expect(page.getByRole("dialog", { name: "إسبريسو لالة" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "إسبريسو لالة" })).toHaveCount(0);
 
   // add product
   await page.getByRole("button", { name: /أضف .+ للسلة/ }).first().click();
@@ -147,27 +155,54 @@ async function runFlow(page: Page) {
   await expect(page.locator("#cstm-name")).toBeVisible({ timeout: 10000 });
   await page.fill("#cstm-name", "زبون تجربة");
   await page.fill("#cstm-phone", "01012345678");
-  await page.getByRole("button", { name: /تأكيد الطلب/ }).click();
+  if (mode === "cash") {
+    await page.getByRole("radio", { name: /كاش/ }).click();
+  }
+  if (mode === "cash") {
+    await page.getByRole("button", { name: /تأكيد طلب الكاش/ }).click();
+  } else {
+    await page.getByRole("button", { name: /تأكيد الطلب/ }).click();
+  }
 
   // order page
   await expect(page).toHaveURL(/\/order\/LB-1001\?k=/, { timeout: 10000 });
   await expect(page.getByRole("heading", { name: /طلبك/ })).toBeVisible();
   await expect(page.getByText("LB-1001").first()).toBeVisible();
 
-  // go to payment — THE step that was broken on iPhone
-  await page.getByRole("link", { name: /الذهاب/ }).click();
-  await expect(page).toHaveURL(/\/pay\/LB-1001\?k=/, { timeout: 10000 });
-  await expect(page.getByRole("heading", { name: /طلبك/ })).toBeVisible();
-  await expect(page.getByText("الدفع عبر InstaPay (بدون رفع صورة)")).toBeVisible();
+  // go to payment (InstaPay) or stay on the cash order page
+  if (mode === "instapay") {
+    await page.getByRole("link", { name: /الذهاب/ }).click();
+    await expect(page).toHaveURL(/\/pay\/LB-1001\?k=/, { timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /طلبك/ })).toBeVisible();
+    await expect(page.getByText("الدفع عبر InstaPay (بدون رفع صورة)")).toBeVisible();
+    await expect(page.getByText("📋 نسخ الرسالة")).toBeVisible();
+    await expect(page.getByText(/رقم الطلب: LB-1001/)).toBeVisible();
+    await expect(page.getByText("💬 افتح واتساب وأرسلها")).toBeVisible();
+    await expect(page.getByRole("button", { name: /تم التحويل/ })).toBeVisible();
+  } else {
+    await expect(page.getByText("💵 كاش عند الاستلام")).toBeVisible();
+  }
   // never a blank render
   const bodyText = await page.evaluate(() => document.body.innerText.trim().length);
   expect(bodyText).toBeGreaterThan(80);
+
+  // tracking page: phone field, no long key field
+  await page.getByRole("link", { name: /تابع طلبك/ }).first().click();
+  await expect(page).toHaveURL(/\/track/, { timeout: 10000 });
+  await expect(page.getByLabel("رقم الطلب")).toBeVisible();
+  await expect(page.getByLabel("رقم الموبايل")).toBeVisible();
+  await expect(page.getByLabel("مفتاح التتبع")).toHaveCount(0);
 }
 
 test.describe("order -> payment smoke (stubbed API)", () => {
   test("normal flow reaches the payment page", async ({ page }) => {
-    await stubSupabase(page);
-    await runFlow(page);
+    await stubSupabase(page, "instapay");
+    await runFlow(page, "instapay");
+  });
+
+  test("cash flow reaches the cash payment page", async ({ page }) => {
+    await stubSupabase(page, "cash");
+    await runFlow(page, "cash");
   });
 
   test("iPhone-private-mode (storage throws) still reaches the payment page", async ({ page }) => {
@@ -184,7 +219,23 @@ test.describe("order -> payment smoke (stubbed API)", () => {
       Object.defineProperty(window, "localStorage", { get() { return throwingProxy; } });
       Object.defineProperty(window, "sessionStorage", { get() { return throwingProxy; } });
     });
-    await stubSupabase(page);
-    await runFlow(page);
+    await stubSupabase(page, "instapay");
+    await runFlow(page, "instapay");
   });
 });
+
+const VIEWPORTS = [
+  { name: "360px", width: 360, height: 800 },
+  { name: "390px", width: 390, height: 844 },
+  { name: "430px", width: 430, height: 932 },
+];
+
+for (const vp of VIEWPORTS) {
+  test.describe(`InstaPay smoke @ ${vp.name}`, () => {
+    test.use({ viewport: { width: vp.width, height: vp.height } });
+    test("full checkout -> InstaPay prepared message -> track", async ({ page }) => {
+      await stubSupabase(page, "instapay");
+      await runFlow(page, "instapay");
+    });
+  });
+}
