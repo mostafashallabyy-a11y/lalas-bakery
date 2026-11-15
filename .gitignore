@@ -27,3 +27,10 @@ supabase/.temp/
 # Playwright / test artifacts
 test-results/
 playwright-report/
+
+# Lighthouse reports (محلية — النتايج بتتكتب في التقرير)
+lighthouse-menu*.json
+lighthouse-*.html
+
+# لقطات الشاشة الأصلية ثقيلة — بنحفظ نسخة WebP مضغوطة بس
+screenshots/**/*.png

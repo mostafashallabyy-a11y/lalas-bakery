@@ -4,7 +4,11 @@ import { useState, type ReactNode } from "react";
 export function Logo({ className, alt = "Lala's Bakery" }: { className?: string; alt?: string }) {
   return (
     <picture>
-      <source srcSet="/lalas-logo.webp" type="image/webp" />
+      <source
+        srcSet="/lalas-logo-240.webp 240w, /lalas-logo-480.webp 480w, /lalas-logo.webp 1014w"
+        sizes="(max-width: 640px) 90px, 200px"
+        type="image/webp"
+      />
       <img
         src="/lalas-logo.png"
         alt={alt}

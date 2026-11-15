@@ -21,35 +21,48 @@ function loadScript(src: string, id: string) {
   document.head.appendChild(s);
 }
 
+/** بنأجل تحميل سكربتات التحليلات لحد ما الصفحة تخلص وتفضى — مش في المسار الحرج */
+function whenIdle(fn: () => void) {
+  const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void };
+  if (typeof w.requestIdleCallback === "function") w.requestIdleCallback(fn, { timeout: 3000 });
+  else window.setTimeout(fn, 2000);
+}
+
 export function initAnalytics() {
   if (inited || typeof window === "undefined") return;
   inited = true;
 
+  // الأحداث بتتخزن في الطابور بتاع كل أداة لحد ما السكربت ينزل، فمفيش حدث بيضيع
   if (GA_ID) {
-    loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_ID)}`, "ga4-script");
     window.dataLayer = window.dataLayer || [];
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer!.push(args);
-    };
+    window.gtag =
+      window.gtag ||
+      function gtag(...args: unknown[]) {
+        window.dataLayer!.push(args);
+      };
     window.gtag("js", new Date());
     window.gtag("config", GA_ID, { send_page_view: false });
   }
 
-  if (META_PIXEL_ID) {
-    if (!window.fbq) {
-      const fbq: any = function (...args: unknown[]) {
-        if (fbq.callMethod) fbq.callMethod(...args);
-        else fbq.queue.push(args);
-      };
-      fbq.push = fbq;
-      fbq.loaded = true;
-      fbq.version = "2.0";
-      fbq.queue = [];
-      window.fbq = fbq;
-    }
-    loadScript("https://connect.facebook.net/en_US/fbevents.js", "meta-pixel-script");
+  if (META_PIXEL_ID && !window.fbq) {
+    const fbq: any = function (...args: unknown[]) {
+      if (fbq.callMethod) fbq.callMethod(...args);
+      else fbq.queue.push(args);
+    };
+    fbq.push = fbq;
+    fbq.loaded = true;
+    fbq.version = "2.0";
+    fbq.queue = [];
+    window.fbq = fbq;
     window.fbq!("init", META_PIXEL_ID);
   }
+
+  const loadAll = () => {
+    if (GA_ID) loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_ID)}`, "ga4-script");
+    if (META_PIXEL_ID) loadScript("https://connect.facebook.net/en_US/fbevents.js", "meta-pixel-script");
+  };
+  if (document.readyState === "complete") whenIdle(loadAll);
+  else window.addEventListener("load", () => whenIdle(loadAll), { once: true });
 }
 
 export function trackPageView(path?: string) {

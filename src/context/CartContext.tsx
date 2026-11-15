@@ -26,6 +26,8 @@ type CartCtx = {
   items: CartItem[];
   // تغيير الفرع يمسح العربة (زي ما المطلوب)
   setBranch: (id: string, name: string) => void;
+  /** ربط السلة بفرع من غير مسح أي حاجة — للينك المباشر للمنيو */
+  bindBranch: (id: string, name: string) => void;
   add: (item: Omit<CartItem, "qty">) => void;
   inc: (productId: string) => void;
   dec: (productId: string) => void;
@@ -67,6 +69,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     persist(next);
   }, []);
 
+  const bindBranch = useCallback((id: string, name: string) => {
+    setBranchId(id);
+    setBranchName(name);
+    setItems((prev) => {
+      persist({ branchId: id, branchName: name, items: prev });
+      return prev;
+    });
+  }, []);
+
   const add = useCallback((item: Omit<CartItem, "qty">) => {
     // مانع: منتج بسعر غير موجب مينفعش يدخل السلة حتى لو زُر الزر غلط
     if (!(Number(item.price) > 0)) {
@@ -74,7 +85,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
     trackEvent("add_to_cart", { currency: "EGP", value: item.price, items: [{ item_id: item.product_id, item_name: item.name, price: item.price, quantity: 1 }] });
-    toast("تمت الإضافة للسلة 🧺");
+    toast("تمت الإضافة 💗");
     setItems((prev) => {
       const found = prev.find((i) => i.product_id === item.product_id);
       const next = found
@@ -124,7 +135,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <C.Provider
-      value={{ branchId, branchName, items, setBranch, add, inc: (p) => changeQty(p, 1), dec: (p) => changeQty(p, -1), remove, clear, subtotal, count }}
+      value={{ branchId, branchName, items, setBranch, bindBranch, add, inc: (p) => changeQty(p, 1), dec: (p) => changeQty(p, -1), remove, clear, subtotal, count }}
     >
       {children}
     </C.Provider>

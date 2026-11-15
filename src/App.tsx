@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
@@ -6,15 +6,17 @@ import Layout from "./components/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Seo from "./components/Seo";
 import { Spinner } from "./components/Common";
-import Home from "./pages/Home";
-import BranchPage from "./pages/Branch";
-import BranchLanding from "./pages/BranchLanding";
-import CartPage from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import Payment from "./pages/Payment";
-import OrderPage from "./pages/Order";
-import Track from "./pages/Track";
-import FeedbackPage from "./pages/Feedback";
+
+// كل صفحة في ملف لوحدها — أول فتح للمنيو بينزل كود المنيو بس (أسرع على الموبايل)
+const Home = lazy(() => import("./pages/Home"));
+const BranchPage = lazy(() => import("./pages/Branch"));
+const BranchLanding = lazy(() => import("./pages/BranchLanding"));
+const CartPage = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Payment = lazy(() => import("./pages/Payment"));
+const OrderPage = lazy(() => import("./pages/Order"));
+const Track = lazy(() => import("./pages/Track"));
+const FeedbackPage = lazy(() => import("./pages/Feedback"));
 
 // منطقة الموظفين والإدارة — تُحمّل عند الحاجة فقط (تقليل حجم الحزمة للزبائن)
 const StaffLogin = lazy(() => import("./pages/StaffLogin"));
@@ -34,6 +36,9 @@ const StockReport = lazy(() => import("./pages/admin/StockReport"));
 const ReportsAdmin = lazy(() => import("./pages/admin/ReportsAdmin"));
 
 export default function App() {
+  const page = (children: ReactNode, label = "لحظة…") => (
+    <Suspense fallback={<Spinner label={label} />}>{children}</Suspense>
+  );
   return (
     <ErrorBoundary>
     <AuthProvider>
@@ -41,15 +46,15 @@ export default function App() {
         <Seo />
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/branch/:id" element={<BranchPage />} />
-            <Route path="/branch/:id/landing" element={<BranchLanding />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/pay/:orderNumber" element={<ErrorBoundary><Payment /></ErrorBoundary>} />
-            <Route path="/order/:orderNumber" element={<ErrorBoundary><OrderPage /></ErrorBoundary>} />
-            <Route path="/track" element={<ErrorBoundary><Track /></ErrorBoundary>} />
-            <Route path="/feedback" element={<FeedbackPage />} />
+            <Route path="/" element={page(<Home />, "بنجهّز الفروع…")} />
+            <Route path="/branch/:id" element={page(<BranchPage />, "بنجهّز المنيو…")} />
+            <Route path="/branch/:id/landing" element={page(<BranchLanding />)} />
+            <Route path="/cart" element={page(<CartPage />)} />
+            <Route path="/checkout" element={page(<Checkout />)} />
+            <Route path="/pay/:orderNumber" element={<ErrorBoundary>{page(<Payment />)}</ErrorBoundary>} />
+            <Route path="/order/:orderNumber" element={<ErrorBoundary>{page(<OrderPage />)}</ErrorBoundary>} />
+            <Route path="/track" element={<ErrorBoundary>{page(<Track />)}</ErrorBoundary>} />
+            <Route path="/feedback" element={page(<FeedbackPage />)} />
 
             {/* منطقة الموظفين والمدير (تسجيل دخول مطلوب) */}
             <Route path="/staff/login" element={<Suspense fallback={<Spinner label="بنجهز لوحة التحكم…" />}><StaffLogin /></Suspense>} />

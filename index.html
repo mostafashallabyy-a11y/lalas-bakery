@@ -9,6 +9,8 @@
     <title>Lala's Bakery | مخبوزات وقهوة منزلية</title>
 
     <link rel="canonical" href="https://www.lalasbakery.app/" />
+    <link rel="preconnect" href="https://lnyodqfksuvgmqkamvbp.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://lnyodqfksuvgmqkamvbp.supabase.co" />
 
     <meta property="og:title" content="Lala's Bakery | مخبوزات وقهوة منزلية" />
     <meta property="og:description" content="مخبوزات وقهوة منزلية تُحضّر بكل حب من لالا." />
@@ -66,17 +68,86 @@
     </script>
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://lnyodqfksuvgmqkamvbp.supabase.co" />
-    <link rel="dns-prefetch" href="https://lnyodqfksuvgmqkamvbp.supabase.co" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- هيكل البداية: بيترسم فورًا (قبل ما الجافاسكريبت ينزل) وبعدين React بيستبدله -->
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        background: #fbf3f4;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #241a1d;
+        }
+      }
+      html[data-theme="light"] body {
+        background: #fbf3f4;
+      }
+      html[data-theme="dark"] body {
+        background: #241a1d;
+      }
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      }
+      .boot img {
+        width: 104px;
+        height: auto;
+        opacity: 0.92;
+      }
+      .boot-t {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #8d5163;
+      }
+      html[data-theme="dark"] .boot-t {
+        color: #e2b6c3;
+      }
+      @media (prefers-color-scheme: dark) {
+        html:not([data-theme="light"]) .boot-t {
+          color: #e2b6c3;
+        }
+      }
+      .boot-bar {
+        width: 118px;
+        height: 6px;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #f0cfd7, #d98aa1, #f0cfd7);
+        background-size: 200% 100%;
+        animation: boot-sh 1.15s linear infinite;
+      }
+      @keyframes boot-sh {
+        from {
+          background-position: 200% 0;
+        }
+        to {
+          background-position: -200% 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-bar {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status" aria-label="بنجهّز المنيو…">
+        <img src="/lalas-logo-240.webp" width="240" height="183" alt="Lala's Bakery" />
+        <p class="boot-t">بنجهّز المنيو…</p>
+        <span class="boot-bar"></span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

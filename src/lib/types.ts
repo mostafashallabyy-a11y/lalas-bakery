@@ -100,6 +100,10 @@ export type Product = {
   stock_qty: number;
   low_stock_threshold: number;
   track_stock: boolean;
+  /** المدير بيختارها تظهر في شريط "مميز" */
+  featured?: boolean;
+  /** شارة "جديد" — بتتظبط من لوحة الإدارة */
+  is_new?: boolean;
   categories?: { name: string } | null;
 };
 

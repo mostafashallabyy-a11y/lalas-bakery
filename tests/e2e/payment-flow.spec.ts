@@ -136,11 +136,9 @@ async function runFlow(page: Page, mode: "instapay" | "cash" = "instapay") {
   await page.getByRole("link", { name: /شوف المنيو/ }).or(page.getByRole("button", { name: /شوف المنيو/ })).click();
   await expect(page.getByRole("button", { name: /أضف .+ للسلة/ }).first()).toBeVisible({ timeout: 15000 });
 
-  // product photo opens a lightbox and Escape closes it
-  await page.getByRole("button", { name: /عرض إسبريسو لالة/ }).first().click();
-  await expect(page.getByRole("dialog", { name: "إسبريسو لالة" })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog", { name: "إسبريسو لالة" })).toHaveCount(0);
+  // الصورة بقت جزء من الكارت — مفيش لايتبوكس يفتح بالضغط عليها
+  await expect(page.getByRole("button", { name: /^عرض/ })).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   // add product
   await page.getByRole("button", { name: /أضف .+ للسلة/ }).first().click();

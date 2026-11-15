@@ -119,7 +119,7 @@ export default function Layout() {
   return (
     <div className="flex min-h-dvh flex-col">
       {/* ============ الهيدر: نفس الشكل في كل الصفحات ============ */}
-      <header className="print-hidden sticky top-0 z-30 h-[72px] border-b border-border bg-surface">
+      <header className="print-hidden sticky top-0 z-30 h-[60px] border-b border-border bg-surface sm:h-[72px]">
         <div className="mx-auto flex h-full max-w-[720px] items-center justify-between gap-2 px-3">
           <Link
             to="/"
@@ -128,7 +128,7 @@ export default function Layout() {
           >
             <Logo
               alt="Lala's Bakery — كوفي ومخبوزات منزلية"
-              className="h-[56px] w-auto max-w-[200px] object-contain py-0.5 sm:h-[60px] sm:max-w-[220px]"
+              className="h-[44px] w-auto max-w-[170px] object-contain py-0.5 sm:h-[58px] sm:max-w-[220px]"
             />
           </Link>
 
@@ -191,7 +191,14 @@ export default function Layout() {
       </div>
 
       {/* ============ محتوى الصفحة مع انتقال ناعم ============ */}
-      <main key={pathname} className="page-enter mx-auto w-full max-w-[720px] flex-1 px-3.5 pt-3 pb-[calc(84px+env(safe-area-inset-bottom,0px))] md:pb-10">
+      <main
+        key={pathname}
+        className={`page-enter mx-auto w-full max-w-[720px] flex-1 px-3.5 pt-3 md:pb-10 ${
+          showCartBar
+            ? "pb-[calc(146px+env(safe-area-inset-bottom,0px))]"
+            : "pb-[calc(84px+env(safe-area-inset-bottom,0px))]"
+        }`}
+      >
         <OfflineBanner />
         <Outlet />
       </main>
@@ -204,13 +211,18 @@ export default function Layout() {
           aria-live="polite"
         >
           <div className="pointer-events-auto mx-auto flex max-w-[720px] items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-3 py-2" style={{ boxShadow: "var(--shadow-pop)" }}>
-            <span className="flex items-center gap-2 text-sm font-bold text-text">
-              <ShoppingCart size={18} aria-hidden="true" className="text-primary-strong" />
-              <span>{count} {count === 1 ? "منتج" : "منتجات"}</span>
-              <span className="text-muted">·</span>
-              <span className="text-primary-strong">{money(subtotal)}</span>
+            <span className="flex min-w-0 items-center gap-2 text-sm font-bold text-text">
+              <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface2 text-primary-strong">
+                <ShoppingCart size={17} aria-hidden="true" />
+                <span className="absolute -top-1 -end-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-badge px-1 text-[10px] font-extrabold text-badge-fg">
+                  {count > 99 ? "+99" : count}
+                </span>
+              </span>
+              <span className="truncate text-[12px] text-muted">{count} منتج</span>
+              <span className="text-muted" aria-hidden="true">·</span>
+              <b className="shrink-0 text-[16px] font-extrabold tabular-nums text-primary-strong">{money(subtotal)}</b>
             </span>
-            <Link to="/cart" className="btn-primary !min-h-[44px] shrink-0 !px-5 text-sm">
+            <Link to="/cart" className="btn-primary !min-h-[44px] shrink-0 !px-4 text-sm">
               السلة
               <ChevronLeft size={17} aria-hidden="true" />
             </Link>
